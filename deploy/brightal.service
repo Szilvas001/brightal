@@ -1,0 +1,57 @@
+# ══════════════════════════════════════════════════════════════════
+#  BRIGHTAL — systemd szolgáltatás
+# ══════════════════════════════════════════════════════════════════
+#  Telepítés a szerveren (root-ként):
+#      cp /opt/brightal/deploy/brightal.service /etc/systemd/system/
+#      systemctl daemon-reload
+#      systemctl enable --now brightal
+#
+#  Napló:      journalctl -u brightal -f
+#  Újraindítás: systemctl restart brightal
+# ══════════════════════════════════════════════════════════════════
+
+[Unit]
+Description=BRIGHTAL webshop (Node.js)
+Documentation=file:///opt/brightal/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=brightal
+Group=brightal
+WorkingDirectory=/opt/brightal
+ExecStart=/usr/bin/node server/index.js
+Environment=NODE_ENV=production
+
+# újraindítás összeomlás esetén
+Restart=always
+RestartSec=5
+StartLimitBurst=10
+StartLimitIntervalSec=120
+
+# naplózás a journalba
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=brightal
+
+# ---- biztonsági korlátozások ----
+# A folyamat csak a saját adat- és feltöltési mappáját írhatja.
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+ReadWritePaths=/opt/brightal/data /opt/brightal/public/uploads
+
+# ---- erőforráskorlát ----
+LimitNOFILE=8192
+MemoryMax=1G
+
+[Install]
+WantedBy=multi-user.target

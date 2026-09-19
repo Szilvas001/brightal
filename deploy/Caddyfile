@@ -1,0 +1,64 @@
+# ══════════════════════════════════════════════════════════════════
+#  BRIGHTAL — Caddy webszerver konfiguráció
+# ══════════════════════════════════════════════════════════════════
+#  A Caddy automatikusan kér és újít Let's Encrypt tanúsítványt,
+#  SSL-t nem kell vásárolni. Feltétel: a domain A rekordja már a
+#  szerver IP-jére mutasson.
+#
+#  Telepítés (root-ként):
+#      cp /opt/brightal/deploy/Caddyfile /etc/caddy/Caddyfile
+#      nano /etc/caddy/Caddyfile      # <- ÍRD ÁT A DOMAINT
+#      systemctl reload caddy
+#
+#  Napló: journalctl -u caddy -f
+# ══════════════════════════════════════════════════════════════════
+
+# ⚠  CSERÉLD KI a saját domainedre mindkét helyen.
+brightal.hu, www.brightal.hu {
+
+    # ---- tömörítés ----
+    encode gzip zstd
+
+    # ---- képfeltöltés: a Caddy alapértelmezése kevés lenne ----
+    # 4 kép × 8 MB + tartalék
+    request_body {
+        max_size 40MB
+    }
+
+    # ---- a Node alkalmazás ----
+    reverse_proxy 127.0.0.1:3000 {
+        # a valódi látogatói IP továbbítása (a rate limiting miatt fontos)
+        header_up X-Real-IP {remote_host}
+        health_uri /api/health
+        health_interval 30s
+        health_timeout 5s
+    }
+
+    # ---- naplózás ----
+    log {
+        output file /var/log/caddy/brightal.log {
+            roll_size 20MB
+            roll_keep 10
+        }
+        format json
+    }
+
+    # ---- a feltöltött képeket soha ne gyorsítótárazza köztes szerver ----
+    @uploads path /uploads/*
+    header @uploads Cache-Control "private, no-store"
+
+    # ---- a statikus arculati elemek hosszan cache-elhetők ----
+    @assets path /assets/*
+    header @assets Cache-Control "public, max-age=604800"
+}
+
+# ─────────────────────────────────────────────────────────────────
+#  Ha a www-t átirányítanád a csupasz domainre, használd inkább ezt:
+#
+#  www.brightal.hu {
+#      redir https://brightal.hu{uri} permanent
+#  }
+#  brightal.hu {
+#      ... a fenti blokk tartalma ...
+#  }
+# ─────────────────────────────────────────────────────────────────

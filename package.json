@@ -1,0 +1,31 @@
+{
+  "name": "brightal-webshop",
+  "version": "2.0.0",
+  "description": "BRIGHTAL — costum ring webshop: egyedi gyűrű készítés feltöltött kép alapján, Barion fizetéssel",
+  "type": "commonjs",
+  "main": "server/index.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "build": "babel public/app.jsx --presets @babel/preset-react --out-file public/app.js",
+    "build:watch": "babel public/app.jsx --presets @babel/preset-react --out-file public/app.js --watch",
+    "hash-password": "node scripts/hash-password.js",
+    "gen-secret": "node -e \"console.log('SESSION_SECRET=' + require('crypto').randomBytes(32).toString('hex'))\"",
+    "postinstall": "node -e \"try{require('fs').accessSync('public/app.js')}catch(e){console.log('app.js hianyzik - futtasd: npm run build')}\""
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "multer": "^2.2.0",
+    "nodemailer": "^9.0.4"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.24.0",
+    "@babel/core": "^7.24.0",
+    "@babel/preset-react": "^7.23.3"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}
