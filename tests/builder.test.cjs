@@ -20,7 +20,7 @@ test("all styles and side layouts build finite renderable models", async () => {
   const { OPTIONS, normalize } = await state();
   for (const style of OPTIONS.style)
     for (const sideMode of OPTIONS.sideMode) {
-      const { group } = buildRing(
+      const { group, gems } = buildRing(
         normalize({
           style,
           sideMode,
@@ -45,8 +45,24 @@ test("all styles and side layouts build finite renderable models", async () => {
         assert.ok(o.scale.toArray().every(Number.isFinite), style);
         geometries.add(o.geometry);
         materials.add(o.material);
+        if (o.userData.gem) {
+          assert.ok(
+            o.material.isShaderMaterial,
+            "Every accent must trace refraction",
+          );
+          assert.ok(
+            gems.includes(o),
+            "Every stone must receive camera updates",
+          );
+          assert.ok(o.material.uniforms.count.value > 16);
+        }
       });
       assert.ok(meshes > 1, style);
+      assert.equal(
+        new Set(gems.map((g) => g.material.uniforms.localEye.value)).size,
+        gems.length,
+        "Stone-local eye coordinates must never be shared",
+      );
       geometries.forEach((g) => g.dispose());
       materials.forEach((m) => m.dispose());
     }

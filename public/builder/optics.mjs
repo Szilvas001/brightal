@@ -152,6 +152,10 @@ export function createStudioEnvironment() {
     height = 512,
     pixels = new Float32Array(width * height * 4);
   const boxes = [
+    // Broad neutral fill cards keep gold luminous without erasing the
+    // dark/light reflection contrast that reveals polished curvature.
+    [0.55, -0.15, 0.65, 0.6, 0.85],
+    [-2.9, -0.5, 0.42, 0.5, 0.7],
     [-2.2, 0.78, 0.3, 0.3, 12],
     [-0.4, 0.42, 0.065, 0.38, 18],
     [1.45, 0.62, 0.24, 0.2, 9],
@@ -170,7 +174,7 @@ export function createStudioEnvironment() {
     for (let x = 0; x < width; x++) {
       const az = (x / width) * Math.PI * 2 - Math.PI,
         el = (y / height) * Math.PI - Math.PI / 2;
-      const base = 0.065 + Math.max(0, Math.sin(el)) * 0.25;
+      const base = 0.14 + Math.max(0, Math.sin(el)) * 0.32;
       let r = base,
         g = base * 1.025,
         b = base * 1.06;

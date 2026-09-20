@@ -1,18 +1,14 @@
 import * as T from "three";
-import {
-  outline,
-  gemGeometry,
-  gemstoneMaterial,
-  GEM_TONES,
-} from "./optics.mjs";
+import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
+import { outline, gemGeometry, gemstoneMaterial } from "./optics.mjs";
 
 export const METAL_COLORS = {
-  yellow14: 0xd8b678,
-  yellow18: 0xe7be74,
-  white14: 0xd5d9df,
-  white18: 0xe2e4e7,
-  rose14: 0xdba58c,
-  rose18: 0xe0a18a,
+  yellow14: 0xf2d69b,
+  yellow18: 0xf5cd83,
+  white14: 0xe8e7e3,
+  white18: 0xeeeae3,
+  rose14: 0xf1c5ad,
+  rose18: 0xeeb397,
   platinum: 0xe5e7eb,
 };
 
@@ -20,7 +16,6 @@ export const METAL_COLORS = {
 export function buildRing(s, environment) {
   const group = new T.Group(),
     gems = [],
-    geometries = new Map(),
     materials = new Map();
   const metalFor = (key) => {
     if (!materials.has(key))
@@ -31,7 +26,8 @@ export function buildRing(s, environment) {
           metalness: 1,
           roughness:
             s.finish === "polished" ? 0.105 : s.finish === "satin" ? 0.29 : 0.4,
-          clearcoat: s.finish === "polished" ? 0.28 : 0,
+          // Bare polished metal, not a lacquer-coated plastic surface.
+          clearcoat: 0,
           anisotropy: s.finish === "brushed" ? 0.75 : 0,
         }),
       );
@@ -45,7 +41,7 @@ export function buildRing(s, environment) {
     parent.add(o);
     return o;
   };
-  const beadGeo = new T.SphereGeometry(1, 12, 8);
+  const beadGeo = new T.SphereGeometry(1, 20, 12);
   const bead = (r, pos, parent = group, mat = head) => {
     const o = mesh(beadGeo, mat, pos, parent);
     o.scale.setScalar(r);
@@ -61,7 +57,7 @@ export function buildRing(s, environment) {
         ),
         Math.max(24, points.length * 3),
         r,
-        8,
+        12,
         closed,
       ),
       mat,
@@ -75,8 +71,8 @@ export function buildRing(s, environment) {
   const band = (splitSign = 0) => {
     const vertices = [],
       indices = [],
-      uN = 160,
-      vN = 20;
+      uN = 192,
+      vN = 32;
     for (let i = 0; i <= uN; i++) {
       const a = (i / uN) * Math.PI * 2;
       for (let j = 0; j <= vN; j++) {
@@ -111,8 +107,12 @@ export function buildRing(s, environment) {
     const geo = new T.BufferGeometry();
     geo.setAttribute("position", new T.Float32BufferAttribute(vertices, 3));
     geo.setIndex(indices);
-    geo.computeVertexNormals();
-    mesh(geo, metal);
+    // Weld the sweep's coincident seams before averaging normals: no false
+    // dark line at the bottom of the band or along its polished profile.
+    const smooth = mergeVertices(geo, 0.00001);
+    smooth.computeVertexNormals();
+    geo.dispose();
+    mesh(smooth, metal);
   };
   if (s.style === "split") {
     band(-1);
@@ -129,37 +129,22 @@ export function buildRing(s, environment) {
   ) => {
     if (!cuts.has(shape)) cuts.set(shape, gemGeometry(shape));
     const { geometry, planes } = cuts.get(shape);
-    let mat;
-    if (hero)
-      mat = gemstoneMaterial(
-        planes,
-        environment,
-        tone,
-        s.color,
-        s.light,
-        s.fire,
-      );
-    else {
-      const key = "gem-" + tone;
-      if (!materials.has(key))
-        materials.set(
-          key,
-          new T.MeshPhysicalMaterial({
-            color: GEM_TONES[tone].color,
-            roughness: 0.04,
-            metalness: 0.15,
-            clearcoat: 1,
-            envMapIntensity: 2,
-            ior: GEM_TONES[tone].ior,
-          }),
-        );
-      mat = materials.get(key);
-    }
+    // Every stone uses the identical facet-tracing optical pipeline, including
+    // tiny pavé and hidden halos. Uniforms are per stone (camera in local space).
+    const mat = gemstoneMaterial(
+      planes,
+      environment,
+      tone,
+      s.color,
+      s.light,
+      s.fire,
+    );
     const o = mesh(geometry, mat, pos, parent);
     o.scale.setScalar(scale);
     o.userData.gem = true;
     o.userData.tone = tone;
-    if (hero) gems.push(o);
+    o.userData.hero = hero;
+    gems.push(o);
     return o;
   };
   const seat = (shape, scale, parent, y = -0.25, r = 0.12) => {
@@ -170,14 +155,15 @@ export function buildRing(s, environment) {
     return tube(points, r, parent, head, true);
   };
   const setting = (shape, scale, pos, tone, rotation = 0, hero = true) => {
+    const fitting = Math.min(1, Math.max(0.4, scale / 1.5));
     const assembly = new T.Group();
     assembly.position.set(...pos);
     assembly.rotation.y = rotation;
     group.add(assembly);
     gem(shape, scale, [0, 0, 0], tone, hero, assembly);
     if (s.setting === "bezel") {
-      seat(shape, scale * 1.02, assembly, scale * 0.05, 0.16);
-      seat(shape, scale * 0.94, assembly, -scale * 0.13, 0.13);
+      seat(shape, scale * 1.02, assembly, scale * 0.05, 0.16 * fitting);
+      seat(shape, scale * 0.94, assembly, -scale * 0.13, 0.13 * fitting);
     } else
       for (let i = 0; i < s.prongs; i++) {
         const a = (2 * Math.PI * (i + 0.5)) / s.prongs;
@@ -192,14 +178,19 @@ export function buildRing(s, environment) {
               [x * scale * 0.8, -scale * 0.25, z * scale * 0.8],
               tip,
             ],
-            s.setting === "doubleclaw" ? 0.07 : 0.11,
+            (s.setting === "doubleclaw" ? 0.07 : 0.11) * fitting,
             assembly,
             head,
           );
-          bead(s.setting === "doubleclaw" ? 0.11 : 0.15, tip, assembly);
+          const claw = bead(
+            (s.setting === "doubleclaw" ? 0.11 : 0.15) * fitting,
+            tip,
+            assembly,
+          );
+          claw.scale.y *= 0.65;
         }
       }
-    seat(shape, scale * 0.72, assembly, -scale * 0.32, 0.115);
+    seat(shape, scale * 0.72, assembly, -scale * 0.32, 0.115 * fitting);
     return assembly;
   };
   const size = 2.4 * Math.cbrt(s.carat),
@@ -302,13 +293,28 @@ export function buildRing(s, environment) {
             0.19,
           );
           if (s.sideMode === "cluster")
-            for (const z of [-1, 1])
-              gem(
+            for (const z of [-1, 1]) {
+              const satellite = setting(
                 "round",
                 scale * 0.45,
                 [sign * (offset + 0.3), y - 0.5, z * scale * 1.2],
                 s.sideTone,
               );
+              satellite.rotation.z = sign * -0.14;
+              tube(
+                [
+                  [sign * offset, y - scale * 0.65, 0],
+                  [
+                    sign * (offset + 0.3),
+                    y - 0.5 - scale * 0.32,
+                    z * scale * 1.2,
+                  ],
+                ],
+                0.1,
+                group,
+                head,
+              );
+            }
           if (s.sideMode === "five") {
             const o = setting(
               s.sideShape,
