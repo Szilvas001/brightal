@@ -1,4 +1,4 @@
-# BRIGHTAL Atelier
+# BRIGHTAL Design Lab
 
 The designer is available at `/ring-builder`, in both languages and both navigation layouts. Its JS bundle loads only when the route opens. Three.js and the procedural studio environment are bundled locally; the renderer requires no remote textures, models or services.
 
@@ -15,12 +15,15 @@ npm start
 
 ## Architecture
 
-- `state.js`: allowlisted, bounded version-2 configuration, eight presets and share-link parsing. Existing v1 local saves remain compatible.
+- `state.js`: allowlisted, bounded configuration, fourteen presets and share-link parsing. Existing v1 local saves remain compatible.
 - `index.jsx`: bilingual six-step UI, undo/redo, eight-design local library, JSON import/export, URL sharing, image export and quote handoff. Gallery thumbnails come from the real 3D models.
 - `model.mjs`: ten procedural ring families, nine center cuts, independently sized/shaped/colored side stones, two-tone settings, double halos, independent hidden halos, split shanks, cathedral bridges and configurable band accents.
+- `fashion.mjs`: six additional sculptural families: wave, rope, dome, signet, open cuff and stacked bands. Controls change amplitude, rhythm, layers, spacing, signet shape/size/inlay and mixed metals. These intentionally have no center-stone, pavé or engraving controls; incompatible state is normalized away. The stack is a coordinated set of separate bands, not a fused manufacturing solid.
 - `optics.mjs`: convex facet geometry, gemstone materials and the shared procedural HDR lighting environment.
 - `renderer.js`: scene, camera, interactive controls, inner engraving and rendering lifecycle. Geometries, materials and textures are disposed on rebuild and unmount.
-- `builder.css` and `atelier.css`: scoped responsive styles and original cream/merlot Atelier identity; existing store styles are preserved. Both the homepage and navigation offer photo upload and the designer.
+- `builder.css`, `atelier.css` and `lab.css`: scoped responsive styling, expanded 1920px Design Lab workspace, focus canvas and teal/graphite visual identity. Existing store styles are preserved. Both the homepage and navigation offer photo upload and the designer.
+
+The creative toolbar generates an optional randomized fashion variation; it never changes a saved design automatically and is reversible through undo. Style filters, context-sensitive silhouette/contrast steps and fourteen actual 3D preset thumbnails support exploration. Focus mode hides the controls temporarily, with an explicit return button. There are no streaks, countdowns, engagement notifications or auto-running motion.
 
 Configurations are independent of the renderer. Certificate, origin and clarity are requested specifications, not fabricated inventory records. Shape, carat, color, metal, finish, width, size, profile, prongs, accents and engraving affect the preview. Clarity is not mapped to arbitrary visible defects; an actual inclusion pattern requires the selected stone's scan.
 
@@ -36,4 +39,4 @@ The current PNG and complete specifications populate the existing authenticated 
 
 ## Validation
 
-Unit tests cover adversarial configuration values, Unicode/share round-trips, compatibility constraints, all 40 style/side-layout combinations, and finite, outward-facing convex geometry for all nine cuts within the shader plane budget. Browser checks cover desktop/mobile layouts, independent side stones, saved-design library, quote handoff and live 3D rendering. Live payments, real certificate inventory and manufacturing validation are outside this local preview.
+Unit tests cover adversarial configuration values, Unicode/share round-trips, compatibility constraints, all 64 style/side-layout inputs (incompatible fashion side layouts normalize to none), geometry changes for each fashion family's primary control, and finite outward-facing convex geometry for all nine cuts within the shader plane budget. Browser checks cover desktop/mobile layouts, signet inlays, two-tone stacks, focus mode, variation/undo, independent side stones, saved-design library, quote handoff and live 3D rendering. Live payments, real certificate inventory and manufacturing validation are outside this local preview.

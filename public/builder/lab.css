@@ -1,73 +1,302 @@
 /* Spacious, quiet-tech creative studio. Motion is opt-in, never attention bait. */
-.rb-lab { background:#10191e; background-image:radial-gradient(ellipse at 10% 0%,#26414b88,transparent 55%); padding:90px 2.2vw 30px; --rb-accent:#276b6a; }
-.rb-lab .rb-heading,.rb-lab .rb-workspace,.rb-lab .rb-presets {max-width:1920px;}
-.rb-lab .rb-heading {margin:0 auto 24px;}
-.rb-lab .rb-heading h1 {color:#f3f5ed;font-size:clamp(45px,5vw,78px);letter-spacing:-2px;}
-.rb-lab .rb-heading h1 em {color:#a9e1ca;}
-.rb-lab .rb-heading p {color:#a8b9bc;font-size:13px;line-height:1.7;}
-.rb-lab .rb-eyebrow {color:#abd4cd;font-size:10px;}
-.rb-lab .rb-tag {background:#234347;color:#b9ddd7;border-color:#496269;}
-.rb-lab .rb-path-switch {background:#1c2a30;border-color:#425058;margin:0 0 26px auto;}
-.rb-lab .rb-path-switch button {color:#c0cfd0;}
-.rb-lab .rb-path-switch .active {background:#d4eee0;color:#123e39;}
-.rb-lab .rb-library-button {color:#c4dad3;}
-.rb-lab .rb-save {background:#cceddc;color:#163f38;border-color:#9cc7b4;}
-.rb-lab-toolbar {max-width:1920px;margin:0 auto 14px;display:flex;align-items:center;justify-content:space-between;gap:15px;color:#a9e1ca;font:11px/1.5 var(--sans);letter-spacing:1px;}
-.rb-lab-toolbar small {color:#8ea4aa;letter-spacing:.4px;}
-.rb-lab-toolbar>div {display:flex;gap:8px;}
-.rb-lab-toolbar button {border:1px solid #466169;background:#22333a;color:#d4e9e5;border-radius:9px;padding:11px 17px;font-size:12px;cursor:pointer;}
-.rb-lab-toolbar button:hover {background:#344e54;}
-.rb-lab .rb-workspace {grid-template-columns:minmax(0,1.75fr) minmax(370px,1fr);gap:16px;}
-.rb-lab .rb-stage,.rb-lab .rb-panel {height:clamp(740px,83vh,1060px);border-radius:18px;}
-.rb-lab .rb-stage {background:radial-gradient(ellipse at 42% 32%,#fffdf6,#dee4df 62%,#bac9c5);border-color:#8aaba7;}
-.rb-lab .rb-light-evening {background:radial-gradient(ellipse at 45% 30%,#f1e3cc,#bec5c0 80%);}
-.rb-lab .rb-light-daylight {background:radial-gradient(ellipse at 45% 30%,#fff,#e3eff0 80%);}
-.rb-lab .rb-canvas {inset:30px 0 115px;}
-.rb-lab .rb-watermark {color:#416c6220;}
-.rb-lab .rb-panel {border-color:#5b7275;background:#fafbf8;}
-.rb-lab .rb-steps {background:#edf2ef;}
-.rb-lab .rb-steps button {font-size:11px;color:#52645f;}
-.rb-lab .rb-steps button.active {color:#164f45;border-color:#296f5b;}
-.rb-lab .rb-controls {padding:25px;}
-.rb-lab .rb-controls h2 {font-size:30px;color:#24423b;}
-.rb-lab .rb-controls h3 {font-size:11px;color:#4b6860;}
-.rb-lab .rb-controls p,.rb-lab .rb-fine {font-size:12px;line-height:1.7;}
-.rb-lab .rb-choice {font-size:12px;border-radius:10px;}
-.rb-lab .rb-choice.selected {background:#e3eee7;border-color:#6c9b87;color:#214d3c;}
-.rb-lab .rb-select {font-size:12px;}
-.rb-lab .rb-select select {font-size:12px;background-color:#fff;}
-.rb-lab .rb-toggle {font-size:12px;color:#426158;}
-.rb-lab .rb-panel-footer {background:#edf3ed;border-color:#d4dfd9;}
-.rb-lab .rb-panel-footer button {background:#245c4c;}
-.rb-lab .rb-range input {accent-color:#34795e;}
-.rb-family {display:flex;gap:5px;margin:12px 0 18px;flex-wrap:wrap;}
-.rb-family button {flex:1;padding:10px 8px;border:1px solid #c7d7cf;background:#f8faf8;border-radius:20px;color:#456657;font-size:11px;cursor:pointer;}
-.rb-family button[aria-pressed=true] {color:#f6fff9;background:#2a5b48;}
-.rb-sculpt-controls {border-top:1px solid #d6e3dc;margin-top:25px;padding-top:12px;}
-.rb-lab .rb-presets h2,.rb-lab .rb-presets-heading h2 {color:#e1ece6;}
-.rb-lab .rb-preset {background:#dfe9e1;}
-.rb-lab .rb-trust {color:#9fb8af;}
-.rb-lab.rb-focus .rb-workspace {grid-template-columns:1fr;}
-.rb-lab.rb-focus .rb-panel {display:none;}
-.rb-lab.rb-focus .rb-stage {height:85vh;min-height:520px;}
-@media(min-width:1800px){.rb-lab .rb-workspace{grid-template-columns:minmax(0,2.2fr) minmax(430px,1fr);}}
-@media(max-width:1100px){
- .rb-lab .rb-workspace{grid-template-columns:1fr;}
- .rb-lab .rb-stage{height:650px;}
- .rb-lab .rb-panel{height:auto;}
- .rb-lab .rb-controls{max-height:none;}
- .rb-lab .rb-stage{position:relative;}
+.rb-lab {
+  background: #10191e;
+  background-image: radial-gradient(
+    ellipse at 10% 0%,
+    #26414b88,
+    transparent 55%
+  );
+  padding: 90px 2.2vw 30px;
+  --rb-accent: #276b6a;
 }
-@media(max-width:600px){
- .rb-lab{padding:85px 12px 20px;}
- .rb-lab .rb-heading h1{font-size:48px;}
- .rb-lab .rb-heading p{max-width:85%;}
- .rb-lab .rb-path-switch{margin:0 auto 23px;}
- .rb-lab-toolbar{flex-direction:column;align-items:stretch;font-size:10px;}
- .rb-lab-toolbar>div button{flex:1;padding:11px 6px;font-size:11px;}
- .rb-lab .rb-stage{height:500px;}
- .rb-lab .rb-canvas{inset:35px 0 108px;}
- .rb-lab .rb-controls{padding:22px 16px;}
- .rb-lab .rb-steps button{font-size:10px;}
+.rb-lab .rb-heading,
+.rb-lab .rb-workspace,
+.rb-lab .rb-presets {
+  max-width: 1920px;
 }
-@media(prefers-reduced-motion:reduce){.rb-lab *{scroll-behavior:auto!important;transition:none!important;animation:none!important;}}
+.rb-lab .rb-heading {
+  margin: 0 auto 24px;
+}
+.rb-lab .rb-heading h1 {
+  color: #f3f5ed;
+  font-size: clamp(45px, 5vw, 78px);
+  letter-spacing: -2px;
+}
+.rb-lab .rb-heading h1 em {
+  color: #a9e1ca;
+}
+.rb-lab .rb-heading p {
+  color: #a8b9bc;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.rb-lab .rb-eyebrow {
+  color: #abd4cd;
+  font-size: 10px;
+}
+.rb-lab .rb-tag {
+  background: #234347;
+  color: #b9ddd7;
+  border-color: #496269;
+}
+.rb-lab .rb-path-switch {
+  background: #1c2a30;
+  border-color: #425058;
+  margin: 0 0 26px auto;
+}
+.rb-lab .rb-path-switch button {
+  color: #c0cfd0;
+}
+.rb-lab .rb-path-switch .active {
+  background: #d4eee0;
+  color: #123e39;
+}
+.rb-lab .rb-library-button {
+  color: #c4dad3;
+}
+.rb-lab .rb-save {
+  background: #cceddc;
+  color: #163f38;
+  border-color: #9cc7b4;
+}
+.rb-lab-toolbar {
+  max-width: 1920px;
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  color: #a9e1ca;
+  font: 11px/1.5 var(--sans);
+  letter-spacing: 1px;
+}
+.rb-lab-toolbar small {
+  color: #8ea4aa;
+  letter-spacing: 0.4px;
+}
+.rb-lab-toolbar > div {
+  display: flex;
+  gap: 8px;
+}
+.rb-lab-toolbar button {
+  border: 1px solid #466169;
+  background: #22333a;
+  color: #d4e9e5;
+  border-radius: 9px;
+  padding: 11px 17px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.rb-lab-toolbar button:hover {
+  background: #344e54;
+}
+.rb-lab .rb-workspace {
+  grid-template-columns: minmax(0, 1.75fr) minmax(370px, 1fr);
+  gap: 16px;
+}
+.rb-lab .rb-stage,
+.rb-lab .rb-panel {
+  height: clamp(740px, 83vh, 1060px);
+  border-radius: 18px;
+}
+.rb-lab .rb-stage {
+  background: radial-gradient(
+    ellipse at 42% 32%,
+    #fffdf6,
+    #dee4df 62%,
+    #bac9c5
+  );
+  border-color: #8aaba7;
+}
+.rb-lab .rb-light-evening {
+  background: radial-gradient(ellipse at 45% 30%, #f1e3cc, #bec5c0 80%);
+}
+.rb-lab .rb-light-daylight {
+  background: radial-gradient(ellipse at 45% 30%, #fff, #e3eff0 80%);
+}
+.rb-lab .rb-canvas {
+  inset: 30px 0 115px;
+}
+.rb-lab .rb-watermark {
+  color: #416c6220;
+}
+.rb-lab .rb-panel {
+  border-color: #5b7275;
+  background: #fafbf8;
+}
+.rb-lab .rb-steps {
+  background: #edf2ef;
+}
+.rb-lab .rb-steps button {
+  font-size: 11px;
+  color: #52645f;
+}
+.rb-lab .rb-steps button.active {
+  color: #164f45;
+  border-color: #296f5b;
+}
+.rb-lab .rb-controls {
+  padding: 25px;
+}
+.rb-lab .rb-controls h2 {
+  font-size: 30px;
+  color: #24423b;
+}
+.rb-lab .rb-controls h3 {
+  font-size: 11px;
+  color: #4b6860;
+}
+.rb-lab .rb-controls p,
+.rb-lab .rb-fine {
+  font-size: 12px;
+  line-height: 1.7;
+}
+.rb-lab .rb-choice {
+  font-size: 12px;
+  border-radius: 10px;
+}
+.rb-lab .rb-choice.selected {
+  background: #e3eee7;
+  border-color: #6c9b87;
+  color: #214d3c;
+}
+.rb-lab .rb-select {
+  font-size: 12px;
+}
+.rb-lab .rb-select select {
+  font-size: 12px;
+  background-color: #fff;
+}
+.rb-lab .rb-toggle {
+  font-size: 12px;
+  color: #426158;
+}
+.rb-lab .rb-panel-footer {
+  background: #edf3ed;
+  border-color: #d4dfd9;
+}
+.rb-lab .rb-panel-footer button {
+  background: #245c4c;
+}
+.rb-lab .rb-range input {
+  accent-color: #34795e;
+}
+.rb-family {
+  display: flex;
+  gap: 5px;
+  margin: 12px 0 18px;
+  flex-wrap: wrap;
+}
+.rb-family button {
+  flex: 1;
+  padding: 10px 8px;
+  border: 1px solid #c7d7cf;
+  background: #f8faf8;
+  border-radius: 20px;
+  color: #456657;
+  font-size: 11px;
+  cursor: pointer;
+}
+.rb-family button[aria-pressed="true"] {
+  color: #f6fff9;
+  background: #2a5b48;
+}
+.rb-sculpt-controls {
+  border-top: 1px solid #d6e3dc;
+  margin-top: 25px;
+  padding-top: 12px;
+}
+.rb-lab .rb-presets h2,
+.rb-lab .rb-presets-heading h2 {
+  color: #e1ece6;
+}
+.rb-lab .rb-preset {
+  background: #dfe9e1;
+}
+.rb-lab .rb-trust {
+  color: #9fb8af;
+}
+.rb-lab .rb-inspiration {
+  max-width: 1920px;
+}
+.rb-lab .rb-inspiration h2 {
+  color: #dfede6;
+}
+.rb-lab .rb-assurance {
+  color: #a4bab2;
+}
+.rb-lab.rb-focus .rb-workspace {
+  grid-template-columns: 1fr;
+}
+.rb-lab.rb-focus .rb-panel {
+  display: none;
+}
+.rb-lab.rb-focus .rb-stage {
+  height: 85vh;
+  min-height: 520px;
+}
+@media (min-width: 1800px) {
+  .rb-lab .rb-workspace {
+    grid-template-columns: minmax(0, 2.2fr) minmax(430px, 1fr);
+  }
+}
+@media (max-width: 1100px) {
+  .rb-lab .rb-workspace {
+    grid-template-columns: 1fr;
+  }
+  .rb-lab .rb-stage {
+    height: 650px;
+  }
+  .rb-lab .rb-panel {
+    height: auto;
+  }
+  .rb-lab .rb-controls {
+    max-height: none;
+  }
+  .rb-lab .rb-stage {
+    position: relative;
+  }
+}
+@media (max-width: 600px) {
+  .rb-lab {
+    padding: 85px 12px 20px;
+  }
+  .rb-lab .rb-heading h1 {
+    font-size: 48px;
+  }
+  .rb-lab .rb-heading p {
+    max-width: 85%;
+  }
+  .rb-lab .rb-path-switch {
+    margin: 0 auto 23px;
+  }
+  .rb-lab-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    font-size: 10px;
+  }
+  .rb-lab-toolbar > div button {
+    flex: 1;
+    padding: 11px 6px;
+    font-size: 11px;
+  }
+  .rb-lab .rb-stage {
+    height: 500px;
+  }
+  .rb-lab .rb-canvas {
+    inset: 35px 0 108px;
+  }
+  .rb-lab .rb-controls {
+    padding: 22px 16px;
+  }
+  .rb-lab .rb-steps button {
+    font-size: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rb-lab * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}

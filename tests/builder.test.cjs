@@ -1,6 +1,57 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
+test("fashion controls change geometry and incompatible gemstone state is cleared", async () => {
+  const { buildRing } = await import("../public/builder/model.mjs");
+  const { normalize, FASHION_STYLES, description } = await state();
+  const { FASHION_STYLES: rendered } =
+    await import("../public/builder/fashion.mjs");
+  assert.deepEqual(FASHION_STYLES, rendered);
+  const controls = {
+    wave: ["sculpt", 0.4, 2.5],
+    rope: ["rhythm", 2, 8],
+    dome: ["sculpt", 0.4, 2.5],
+    signet: ["faceSize", 5, 11],
+    open: ["gap", 0.3, 1.5],
+    stack: ["layers", 2, 4],
+  };
+  for (const style of FASHION_STYLES) {
+    const config = normalize({
+      style,
+      hiddenHalo: true,
+      sideMode: "cluster",
+      accents: "pave",
+    });
+    assert.equal(config.hiddenHalo, false);
+    assert.equal(config.sideMode, "none");
+    assert.equal(config.accents, "none");
+    assert.ok(description(config).length < 1000);
+    const [key, min, max] = controls[style];
+    const signature = (value) => {
+      const { group } = buildRing(normalize({ ...config, [key]: value }), null);
+      let signature = 0,
+        count = 0;
+      const geo = new Set(),
+        mat = new Set();
+      group.traverse((o) => {
+        if (!o.isMesh) return;
+        count++;
+        geo.add(o.geometry);
+        mat.add(o.material);
+        o.geometry.computeBoundingBox();
+        const b = o.geometry.boundingBox;
+        signature += b.max.x + b.max.y + b.max.z + o.position.y;
+        const vertices = o.geometry.attributes.position.array;
+        for (let i = 0; i < vertices.length; i += 17)
+          signature += vertices[i] * ((i % 97) + 1);
+      });
+      geo.forEach((g) => g.dispose());
+      mat.forEach((m) => m.dispose());
+      return `${count}/${signature}`;
+    };
+    assert.notEqual(signature(min), signature(max), style);
+  }
+});
 test("advanced compatibility constraints and legacy hidden halos", async () => {
   const { normalize } = await state();
   assert.equal(normalize({ accents: "hidden" }).hiddenHalo, true);

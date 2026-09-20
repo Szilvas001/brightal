@@ -1,5 +1,12 @@
-export const FASHION_STYLES = ['wave', 'rope', 'dome', 'signet', 'open', 'stack'];
-export const isFashion = s => FASHION_STYLES.includes(s.style);
+export const FASHION_STYLES = [
+  "wave",
+  "rope",
+  "dome",
+  "signet",
+  "open",
+  "stack",
+];
+export const isFashion = (s) => FASHION_STYLES.includes(s.style);
 export const OPTIONS = {
   style: [
     "solitaire",
@@ -76,9 +83,9 @@ export const OPTIONS = {
   coverage: ["shoulders", "half", "full"],
   halo: ["single", "double"],
   engravingFont: ["serif", "script", "modern"],
-  face: ['oval', 'cushion', 'round'],
-  inlay: ['metal', 'onyx', 'ivory', 'teal', 'coral'],
-  secondaryMetal: ['platinum', 'yellow18', 'rose18'],
+  face: ["oval", "cushion", "round"],
+  inlay: ["metal", "onyx", "ivory", "teal", "coral"],
+  secondaryMetal: ["platinum", "yellow18", "rose18"],
 };
 export const DEFAULT = Object.freeze({
   style: "solitaire",
@@ -118,11 +125,11 @@ export const DEFAULT = Object.freeze({
   sculpt: 1.2,
   rhythm: 4,
   layers: 3,
-  gap: .7,
+  gap: 0.7,
   faceSize: 7,
-  face: 'oval',
-  inlay: 'metal',
-  secondaryMetal: 'platinum',
+  face: "oval",
+  inlay: "metal",
+  secondaryMetal: "platinum",
   mixedMetal: false,
 });
 export function normalize(input = {}) {
@@ -139,11 +146,11 @@ export function normalize(input = {}) {
     ["haloSize", 0.6, 1.6, 0.1],
     ["height", 0.5, 2.5, 0.1],
     ["fire", 0.5, 1.5, 0.1],
-    ['sculpt', .4, 2.5, .1],
-    ['rhythm', 2, 8, 1],
-    ['layers', 2, 4, 1],
-    ['gap', .3, 1.5, .1],
-    ['faceSize', 5, 11, .5],
+    ["sculpt", 0.4, 2.5, 0.1],
+    ["rhythm", 2, 8, 1],
+    ["layers", 2, 4, 1],
+    ["gap", 0.3, 1.5, 0.1],
+    ["faceSize", 5, 11, 0.5],
   ]) {
     const n = Number(input[key]);
     if (Number.isFinite(n) && input[key] !== undefined)
@@ -166,7 +173,12 @@ export function normalize(input = {}) {
       : "";
   s.rotate = input.rotate === true;
   s.mixedMetal = input.mixedMetal === true;
-  if (isFashion(s)) { s.accents = 'none'; s.profile = 'round'; s.engraving = ''; }
+  if (["wave", "dome"].includes(s.style)) s.mixedMetal = false;
+  if (isFashion(s)) {
+    s.accents = "none";
+    s.profile = "round";
+    s.engraving = "";
+  }
   if (isBand(s) && s.accents === "hidden") s.accents = "none";
   if (isBand(s)) s.sideMode = "none";
   if (s.style === "eternity") {
@@ -176,7 +188,8 @@ export function normalize(input = {}) {
   if (s.style === "trilogy" && s.sideMode === "none") s.sideMode = "pair";
   return s;
 }
-export const isBand = (s) => ["band", "eternity", ...FASHION_STYLES].includes(s.style);
+export const isBand = (s) =>
+  ["band", "eternity", ...FASHION_STYLES].includes(s.style);
 export function readDesign() {
   try {
     const shared = new URLSearchParams(location.hash.slice(1)).get("design");
@@ -198,12 +211,74 @@ export function description(s) {
   );
 }
 export const PRESETS = [
-  {name:['Liquid Wave','Liquid Wave'],config:{...DEFAULT,style:'wave',width:2.5,sculpt:1.5,rhythm:3,metal:'yellow18'}},
-  {name:['Soft Armor','Soft Armor'],config:{...DEFAULT,style:'dome',width:4.5,sculpt:2,metal:'rose18'}},
-  {name:['Midnight Seal','Midnight Seal'],config:{...DEFAULT,style:'signet',width:3.5,faceSize:8,inlay:'onyx',metal:'yellow14'}},
-  {name:['Orbit Stack','Orbit Stack'],config:{...DEFAULT,style:'stack',width:1.8,layers:3,gap:.7,mixedMetal:true,metal:'yellow18',secondaryMetal:'platinum'}},
-  {name:['Golden Rope','Golden Rope'],config:{...DEFAULT,style:'rope',width:2.5,rhythm:6,mixedMetal:true,secondaryMetal:'rose18'}},
-  {name:['Open Current','Open Current'],config:{...DEFAULT,style:'open',sculpt:1.4,gap:1.1,width:2.4,metal:'platinum',mixedMetal:true}},
+  {
+    name: ["Liquid Wave", "Liquid Wave"],
+    config: {
+      ...DEFAULT,
+      style: "wave",
+      width: 2.5,
+      sculpt: 1.5,
+      rhythm: 3,
+      metal: "yellow18",
+    },
+  },
+  {
+    name: ["Soft Armor", "Soft Armor"],
+    config: {
+      ...DEFAULT,
+      style: "dome",
+      width: 4.5,
+      sculpt: 2,
+      metal: "rose18",
+    },
+  },
+  {
+    name: ["Midnight Seal", "Midnight Seal"],
+    config: {
+      ...DEFAULT,
+      style: "signet",
+      width: 3.5,
+      faceSize: 8,
+      inlay: "onyx",
+      metal: "yellow14",
+    },
+  },
+  {
+    name: ["Orbit Stack", "Orbit Stack"],
+    config: {
+      ...DEFAULT,
+      style: "stack",
+      width: 1.8,
+      layers: 3,
+      gap: 0.7,
+      mixedMetal: true,
+      metal: "yellow18",
+      secondaryMetal: "platinum",
+    },
+  },
+  {
+    name: ["Golden Rope", "Golden Rope"],
+    config: {
+      ...DEFAULT,
+      style: "rope",
+      width: 2.5,
+      rhythm: 6,
+      mixedMetal: true,
+      secondaryMetal: "rose18",
+    },
+  },
+  {
+    name: ["Open Current", "Open Current"],
+    config: {
+      ...DEFAULT,
+      style: "open",
+      sculpt: 1.4,
+      gap: 1.1,
+      width: 2.4,
+      metal: "platinum",
+      mixedMetal: true,
+    },
+  },
   { name: ["Örök klasszikus", "Timeless oval"], config: { ...DEFAULT } },
   {
     name: ["Párizsi fények", "Parisian halo"],
