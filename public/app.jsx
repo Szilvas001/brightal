@@ -1149,7 +1149,7 @@ function Steps() {
 }
 
 function HomePage() {
-  const { t, navigate, isAdmin } = useA();
+  const { t, navigate, isAdmin, lang } = useA();
   return <div>
     <section className="hero">
       <div className="hero-glow a" /><div className="hero-glow b" />
@@ -1168,7 +1168,7 @@ function HomePage() {
           {!isAdmin && <button className="btn btn-gold btn-lg" onClick={() => navigate('upload')}>
             <Ico.upload s={16} /> {t('hero_cta')}
           </button>}
-          <button className="btn btn-outline btn-lg" onClick={() => navigate('how')}>{t('hero_cta2')}</button>
+          <button className="btn btn-dark btn-lg" onClick={() => navigate('builder')}><Ico.gem s={17}/>{lang === 'en' ? 'Design your ring in 3D' : 'Tervezd meg 3D-ben'}</button>
         </div>
         <div className="fade-in d3 hero-trust">
           {[t('hero_trust_1'), t('hero_trust_2'), t('hero_trust_3')].map(x =>
@@ -2392,7 +2392,7 @@ function BuilderPage() {
   if (failed) return <div className="center-screen"><p>{lang === 'en' ? 'The designer could not load. Please reload.' : 'A tervező nem töltődött be. Kérjük, töltsd újra az oldalt.'}</p><button className="btn btn-dark" onClick={() => location.reload()}>{lang === 'en' ? 'Reload' : 'Újratöltés'}</button></div>;
   if (!loaded) return <div className="center-screen"><Spinner dark size={28}/></div>;
   const Builder = window.BrightalBuilder.RingBuilder;
-  return <Builder lang={lang} onQuote={draft => {
+  return <Builder lang={lang} onUpload={() => navigate('upload')} onQuote={draft => {
     window.brightalRingDraft = draft;
     try { const { file, ...saved } = draft; sessionStorage.setItem('brightal-quote-v1', JSON.stringify(saved)); } catch (e) {}
     navigate('upload');

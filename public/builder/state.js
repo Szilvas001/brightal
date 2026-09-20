@@ -1,5 +1,5 @@
 export const OPTIONS = {
-  style: ["solitaire", "halo", "trilogy", "vintage", "pave", "band"],
+  style: ["solitaire", "halo", "trilogy", "vintage", "pave", "band", "duet", "cathedral", "split", "eternity"],
   shape: [
     "round",
     "oval",
@@ -9,6 +9,7 @@ export const OPTIONS = {
     "princess",
     "marquise",
     "radiant",
+    "asscher",
   ],
   metal: [
     "yellow14",
@@ -24,9 +25,19 @@ export const OPTIONS = {
   clarity: ["FL", "IF", "VVS1", "VVS2", "VS1", "VS2", "SI1"],
   certificate: ["GIA", "IGI", "HRD"],
   origin: ["lab", "natural"],
-  accents: ["none", "pave", "channel", "hidden"],
+  accents: ["none", "pave", "channel"],
   profile: ["round", "flat", "knife"],
   light: ["studio", "daylight", "evening"],
+  gemTone: ["ice", "champagne", "blush", "canary", "sapphire", "emeraldGreen", "ruby"],
+  sideTone: ["ice", "champagne", "blush", "canary", "sapphire", "emeraldGreen", "ruby"],
+  sideShape: ["round", "oval", "pear", "emerald", "marquise", "princess", "asscher"],
+  sideMode: ["none", "pair", "cluster", "five"],
+  setting: ["claw", "bezel", "doubleclaw"],
+  orientation: ["north", "east"],
+  headMetal: ["match", "platinum", "yellow18", "rose18"],
+  coverage: ["shoulders", "half", "full"],
+  halo: ["single", "double"],
+  engravingFont: ["serif", "script", "modern"],
 };
 export const DEFAULT = Object.freeze({
   style: "solitaire",
@@ -46,6 +57,11 @@ export const DEFAULT = Object.freeze({
   engraving: "",
   light: "studio",
   rotate: false,
+  gemTone: "ice", sideTone: "ice", sideShape: "round", sideMode: "none", sideCarat: .3,
+  setting: "claw", orientation: "north", headMetal: "match", coverage: "shoulders",
+  accentSize: 1, accentRows: 1, halo: "single", haloSize: 1, height: 1,
+  engravingFont: "serif", fire: 1,
+  hiddenHalo: false,
 });
 export function normalize(input = {}) {
   if (!input || typeof input !== "object" || Array.isArray(input)) input = {};
@@ -56,6 +72,8 @@ export function normalize(input = {}) {
     ["carat", 0.3, 5, 0.1],
     ["width", 1.6, 5, 0.1],
     ["size", 44, 72, 1],
+    ["sideCarat", .1, 1.5, .05], ["accentSize", .6, 2, .1], ["haloSize", .6, 1.6, .1],
+    ["height", .5, 2.5, .1], ["fire", .5, 1.5, .1],
   ]) {
     const n = Number(input[key]);
     if (Number.isFinite(n) && input[key] !== undefined)
@@ -63,15 +81,22 @@ export function normalize(input = {}) {
         (Math.round(Math.min(max, Math.max(min, n)) / step) * step).toFixed(2),
       );
   }
-  s.prongs = Number(input.prongs) === 6 ? 6 : 4;
+  s.prongs = [4,6,8].includes(Number(input.prongs)) ? Number(input.prongs) : 4;
+  s.accentRows = Number(input.accentRows) === 2 ? 2 : 1;
+  s.accentSize = Math.floor(Math.min(s.accentSize, s.width / (s.accentRows + .4))*10)/10;
+  s.hiddenHalo = (input.hiddenHalo === true || input.accents === 'hidden') && !isBand(s);
   s.engraving =
     typeof input.engraving === "string"
       ? input.engraving.replace(/[\u0000-\u001f]/g, "").slice(0, 24)
       : "";
   s.rotate = input.rotate === true;
-  if (s.style === "band" && s.accents === "hidden") s.accents = "none";
+  if (isBand(s) && s.accents === "hidden") s.accents = "none";
+  if (isBand(s)) s.sideMode = "none";
+  if (s.style === "eternity") { s.coverage = "full"; if(s.accents === 'none')s.accents='pave'; }
+  if (s.style === "trilogy" && s.sideMode === 'none') s.sideMode = 'pair';
   return s;
 }
+export const isBand = s => ['band','eternity'].includes(s.style);
 export function readDesign() {
   try {
     const shared = new URLSearchParams(location.hash.slice(1)).get("design");
@@ -85,7 +110,7 @@ export function readDesign() {
 }
 export function description(s) {
   return (
-    "BRIGHTAL Atelier / v1\n" +
+    "BRIGHTAL Atelier / v2\n" +
     Object.entries(normalize(s))
       .filter(([k]) => !["rotate", "light"].includes(k))
       .map(([k, v]) => `${k}: ${v}`)
@@ -110,6 +135,7 @@ export const PRESETS = [
     config: {
       ...DEFAULT,
       style: "trilogy",
+      sideMode: "pair", sideShape: "emerald", sideCarat: .5,
       shape: "emerald",
       metal: "yellow18",
       carat: 2.4,
@@ -135,4 +161,7 @@ export const PRESETS = [
       accents: "channel",
     },
   },
+  {name:["Éjszakai múzsa","Midnight muse"],config:{...DEFAULT,style:'cathedral',gemTone:'sapphire',shape:'cushion',sideMode:'pair',sideCarat:.4,metal:'platinum'}},
+  {name:["Toi & Moi","Toi & Moi"],config:{...DEFAULT,style:'duet',shape:'pear',sideShape:'emerald',sideTone:'blush',sideCarat:1.1,metal:'rose18'}},
+  {name:["Aranyhíd","Golden bridge"],config:{...DEFAULT,style:'split',shape:'radiant',setting:'bezel',headMetal:'platinum',accents:'pave',width:3}},
 ];

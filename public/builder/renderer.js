@@ -1,6 +1,7 @@
 import * as T from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { outline, gemGeometry, createStudioEnvironment, gemstoneMaterial, GEM_TONES } from "./optics.mjs";
+import { createStudioEnvironment } from "./optics.mjs";
+import { buildRing } from "./model.mjs";
 
 export class RingRenderer {
   constructor(host, onError) {
@@ -139,195 +140,19 @@ export class RingRenderer {
     this.config = s;
     this.controls.autoRotate = s.rotate;
     this.disposeModel();
-    const colors = {
-      yellow14: 0xd9b477,
-      yellow18: 0xe8be73,
-      white14: 0xd5d9df,
-      white18: 0xe2e4e7,
-      rose14: 0xdba58c,
-      rose18: 0xe0a18a,
-      platinum: 0xe5e7eb,
+    const model = buildRing(s, this.studioTexture);
+    this.group.add(model.group);
+    this.gems = model.gems;
+    const {radius, width} = model;
+    const mesh = (geometry, material) => {
+      const o = new T.Mesh(geometry, material); this.group.add(o); return o;
     };
-    const metal = new T.MeshPhysicalMaterial({
-      color: colors[s.metal],
-      metalness: 1,
-      roughness:
-        s.finish === "polished" ? 0.12 : s.finish === "satin" ? 0.32 : 0.43,
-      clearcoat: s.finish === "polished" ? 0.4 : 0,
-      anisotropy: s.finish === "brushed" ? 0.7 : 0,
-    });
-    let smallGem;
-    const mesh = (g, m, pos) => {
-      const o = new T.Mesh(g, m);
-      if (pos) o.position.set(...pos);
-      this.group.add(o);
-      return o;
-    };
-    const radius = (s.size / (2 * Math.PI)) * 0.8,
-      width = s.width * 0.8,
-      thick = 0.65;
-    // Sweep a comfort-fit cross-section around the finger axis, with editable width/profile.
-    const points = [],
-      indices = [],
-      uN = 160,
-      vN = 16;
-    for (let i = 0; i <= uN; i++) {
-      const a = (i / uN) * Math.PI * 2;
-      for (let j = 0; j <= vN; j++) {
-        const b = (j / vN) * Math.PI * 2,
-          co = Math.cos(b),
-          si = Math.sin(b);
-        const r =
-          radius +
-          thick *
-            (s.profile === "flat"
-              ? Math.sign(co) * Math.pow(Math.abs(co), 0.4)
-              : co);
-        const z =
-          width *
-          0.5 *
-          (s.profile === "knife" ? si * (0.65 + (0.35 * (1 - co)) / 2) : si);
-        points.push(Math.sin(a) * r, Math.cos(a) * r, z);
-        if (i < uN && j < vN) {
-          const k = i * (vN + 1) + j;
-          indices.push(k, k + 1, k + vN + 1, k + 1, k + vN + 2, k + vN + 1);
-        }
-      }
-    }
-    const band = new T.BufferGeometry();
-    band.setAttribute("position", new T.Float32BufferAttribute(points, 3));
-    band.setIndex(indices);
-    band.computeVertexNormals();
-    mesh(band, metal);
-    const size = 2.4 * Math.cbrt(s.carat),
-      top = radius + 1.7;
-    const sphere = (r, pos) => mesh(new T.SphereGeometry(r, 12, 8), metal, pos);
-    const rod = (a, b, r) => {
-      const start = new T.Vector3(...a),
-        end = new T.Vector3(...b),
-        delta = end.clone().sub(start);
-      const o = mesh(
-        new T.CylinderGeometry(r, r * 0.8, delta.length(), 12),
-        metal,
-      );
-      o.position.copy(start).add(end).multiplyScalar(0.5);
-      o.quaternion.setFromUnitVectors(
-        new T.Vector3(0, 1, 0),
-        delta.normalize(),
-      );
-    };
-    const gemstone = (shape, scale, pos, hero = false) => {
-      const { geometry, planes } = gemGeometry(shape);
-      let material;
-      if (!hero) {
-        smallGem ||= new T.MeshPhysicalMaterial({
-          color: 0xf4f8ff,
-          metalness: 0.05,
-          roughness: 0.035,
-          ior: 2.417,
-          clearcoat: 1,
-          envMapIntensity: 2.8,
-        });
-        material = smallGem;
-      }
-      if (hero) material = gemstoneMaterial(planes, this.studioTexture, s.gemTone || "ice", s.color, s.light, s.fire || 1);
-      const o = mesh(geometry, material, pos);
-      o.scale.setScalar(scale);
-      if (hero) this.gems.push(o);
-      return o;
-    };
-    if (s.style !== "band") {
-      gemstone(s.shape, size, [0, top, 0], true);
-      for (let i = 0; i < s.prongs; i++) {
-        const a = (2 * Math.PI * (i + 0.5)) / s.prongs,
-          [x, z] = outline(s.shape, a);
-        const end = [x * size * 1.01, top + 0.15, z * size * 1.01];
-        rod([x * size * 0.45, radius - 0.1, z * size * 0.45], end, 0.13);
-        sphere(0.18, end);
-      }
-      const collar = mesh(
-        new T.TorusGeometry(size * 0.64, 0.115, 8, 64),
-        metal,
-        [0, top - 0.55, 0],
-      );
-      collar.rotation.x = Math.PI / 2;
-      if (["halo", "vintage"].includes(s.style))
-        for (let i = 0; i < 24; i++) {
-          const [x, z] = outline(s.shape, (2 * Math.PI * i) / 24);
-          gemstone("round", 0.33, [
-            x * (size + 0.55),
-            top - 0.03,
-            z * (size + 0.55),
-          ]);
-          sphere(0.105, [x * (size + 0.9), top - 0.09, z * (size + 0.9)]);
-        }
-      if (s.style === "trilogy")
-        for (const sign of [-1, 1]) {
-          gemstone(
-            s.shape === "emerald" ? "emerald" : "round",
-            size * 0.5,
-            [sign * size * 1.6, top - 0.8, 0],
-            true,
-          );
-          for (const z of [-1, 1])
-            rod(
-              [sign * size * 1.35, radius - 0.6, z * 0.3],
-              [sign * size * 1.6, top - 0.65, z * size * 0.52],
-              0.11,
-            );
-        }
-      if (s.accents === "hidden")
-        for (let i = 0; i < 20; i++) {
-          const a = (i / 20) * Math.PI * 2;
-          const o = gemstone("round", 0.18, [
-            Math.cos(a) * size * 0.76,
-            top - 0.5,
-            Math.sin(a) * size * 0.76,
-          ]);
-          o.rotation.z = Math.PI / 2;
-        }
-    }
-    if (
-      s.accents === "pave" ||
-      s.accents === "channel" ||
-      s.style === "pave" ||
-      s.style === "vintage"
-    ) {
-      for (let i = -15; i <= 15; i++) {
-        const a = i * 0.088;
-        if (s.style !== "band" && Math.abs(a) < 0.4) continue;
-        const o = gemstone("round", Math.min(0.34, width * 0.26), [
-          Math.sin(a) * (radius + 0.65),
-          Math.cos(a) * (radius + 0.65),
-          0,
-        ]);
-        o.rotation.z = -a;
-      }
-      if (s.accents === "channel")
-        for (const z of [-width * 0.37, width * 0.37]) {
-          const rail = mesh(
-            new T.TorusGeometry(radius + 0.52, 0.12, 8, 160),
-            metal,
-          );
-          rail.position.z = z;
-        }
-    }
-    if (s.style === "vintage")
-      for (let i = 0; i < 110; i++) {
-        const a = (i / 110) * Math.PI * 2;
-        for (const z of [-width * 0.44, width * 0.44])
-          sphere(0.095, [
-            Math.sin(a) * (radius + 0.35),
-            Math.cos(a) * (radius + 0.35),
-            z,
-          ]);
-      }
     if (s.engraving) {
       const c = document.createElement("canvas");
       c.width = 1024;
       c.height = 128;
       const ctx = c.getContext("2d");
-      ctx.font = "52px Georgia";
+      ctx.font = s.engravingFont === 'script' ? 'italic 52px cursive' : s.engravingFont === 'modern' ? '48px sans-serif' : '52px Georgia';
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillStyle = "#503b29";
@@ -357,7 +182,8 @@ export class RingRenderer {
       o.rotation.x = Math.PI / 2;
     }
     this.scene.environmentIntensity =
-      s.light === "evening" ? 0.75 : s.light === "daylight" ? 1.7 : 1.25;
+      s.light === "evening" ? 0.7 : s.light === "daylight" ? 1.1 : 0.85;
+    this.scene.environmentRotation.y = -(s.light === 'evening' ? .7 : s.light === 'daylight' ? -.5 : 0);
     this.key.color.set(s.light === "evening" ? 0xffd7ae : 0xffffff);
     this.renderer.toneMappingExposure = s.light === "evening" ? 0.95 : 1.15;
     this.shadow.position.y = -radius - 0.75;

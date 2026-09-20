@@ -1736,7 +1736,8 @@ function HomePage() {
   const {
     t,
     navigate,
-    isAdmin
+    isAdmin,
+    lang
   } = useA();
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("section", {
     className: "hero"
@@ -1780,9 +1781,11 @@ function HomePage() {
   }, /*#__PURE__*/React.createElement(Ico.upload, {
     s: 16
   }), " ", t('hero_cta')), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-outline btn-lg",
-    onClick: () => navigate('how')
-  }, t('hero_cta2'))), /*#__PURE__*/React.createElement("div", {
+    className: "btn btn-dark btn-lg",
+    onClick: () => navigate('builder')
+  }, /*#__PURE__*/React.createElement(Ico.gem, {
+    s: 17
+  }), lang === 'en' ? 'Design your ring in 3D' : 'Tervezd meg 3D-ben')), /*#__PURE__*/React.createElement("div", {
     className: "fade-in d3 hero-trust"
   }, [t('hero_trust_1'), t('hero_trust_2'), t('hero_trust_3')].map(x => /*#__PURE__*/React.createElement("span", {
     key: x
@@ -3682,6 +3685,7 @@ function BuilderPage() {
   const Builder = window.BrightalBuilder.RingBuilder;
   return /*#__PURE__*/React.createElement(Builder, {
     lang: lang,
+    onUpload: () => navigate('upload'),
     onQuote: draft => {
       window.brightalRingDraft = draft;
       try {
