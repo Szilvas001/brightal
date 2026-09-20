@@ -1,119 +1,6 @@
 import * as T from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
-
-// Closed, convex faceted cuts. Coordinates are in millimetre-proportional units.
-export function outline(shape, a) {
-  let x = Math.cos(a),
-    z = Math.sin(a);
-  if (shape === "oval") z *= 1.35;
-  if (shape === "marquise") {
-    x *= 0.78;
-    z *= 1.65;
-    x *= 0.68 + 0.32 * Math.abs(x);
-  }
-  if (shape === "pear") {
-    x *= 0.82 * (1 - 0.3 * z);
-    z *= 1.42;
-  }
-  if (["princess", "cushion", "emerald", "radiant"].includes(shape)) {
-    const power = shape === "cushion" ? 0.5 : 0.24;
-    x = Math.sign(x) * Math.pow(Math.abs(x), power) * 0.9;
-    z =
-      Math.sign(z) *
-      Math.pow(Math.abs(z), power) *
-      (shape === "emerald" || shape === "radiant" ? 1.25 : 0.9);
-  }
-  return [x, z];
-}
-export function gemGeometry(shape) {
-  const n = 16,
-    vertices = [],
-    planes = [];
-  const p = (i, r, y) => {
-    const [x, z] = outline(shape, (2 * Math.PI * i) / n);
-    return new T.Vector3(x * r, y, z * r);
-  };
-  const face = (a, b, c) => {
-    let normal = new T.Vector3()
-      .subVectors(b, a)
-      .cross(new T.Vector3().subVectors(c, a))
-      .normalize();
-    if (normal.dot(a) < 0) {
-      [b, c] = [c, b];
-      normal.negate();
-    }
-    vertices.push(...a.toArray(), ...b.toArray(), ...c.toArray());
-    const plane = new T.Vector4(normal.x, normal.y, normal.z, normal.dot(a));
-    if (
-      !planes.some(
-        (q) =>
-          Math.abs(q.x - plane.x) +
-            Math.abs(q.y - plane.y) +
-            Math.abs(q.z - plane.z) +
-            Math.abs(q.w - plane.w) <
-          0.0001,
-      )
-    )
-      planes.push(plane);
-  };
-  for (let i = 0; i < n; i++) {
-    const j = (i + 1) % n;
-    face(new T.Vector3(0, 0.36, 0), p(j, 0.53, 0.36), p(i, 0.53, 0.36));
-    face(p(i, 0.53, 0.36), p(j, 0.53, 0.36), p(i, 1, 0));
-    face(p(j, 0.53, 0.36), p(j, 1, 0), p(i, 1, 0));
-    face(p(i, 1, 0), p(j, 1, 0), new T.Vector3(0, -0.7, 0));
-  }
-  const geometry = new T.BufferGeometry();
-  geometry.setAttribute("position", new T.Float32BufferAttribute(vertices, 3));
-  geometry.computeVertexNormals();
-  return { geometry, planes };
-}
-
-// Snell refraction, Fresnel reflectance and up to five internal facet bounces.
-// Spectral exit offsets approximate dispersion; this is a real-time preview, not optical CAD.
-const vertex = `varying vec3 p; varying vec3 n; varying vec3 eye; uniform vec3 localEye;
-void main(){p=position;n=normal;eye=localEye;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`;
-const fragment = `precision highp float;
-varying vec3 p; varying vec3 n; varying vec3 eye;
-uniform vec4 planes[64]; uniform int count; uniform mat3 worldRotation; uniform vec3 tint; uniform float mood;
-vec3 studio(vec3 d){
- d=normalize(worldRotation*d);
- vec3 base=mix(vec3(.075,.09,.12),vec3(.8,.84,.9),smoothstep(-.4,.9,d.y));
- float box=pow(max(0.,dot(d,normalize(vec3(-.6,.8,.5)))),22.);
- float strip=pow(max(0.,dot(d,normalize(vec3(.9,.25,-.4)))),90.);
- float point=pow(max(0.,dot(d,normalize(vec3(-.4,.3,-.8)))),260.);
- return base*.8+vec3(1.0,.96,.88)*box*4.+vec3(.8,.9,1.)*strip*5.+vec3(1.,.87,.7)*point*(5.+mood*5.);
-}
-void main(){
- vec3 normal=normalize(n),incident=normalize(p-eye);
- float f=.172+(1.-.172)*pow(1.-max(0.,dot(-incident,normal)),5.);
- vec3 result=studio(reflect(incident,normal))*f;
- vec3 ray=refract(incident,normal,1./2.417),pos=p+ray*.002;
- float energy=1.-f;
- for(int bounce=0;bounce<5;bounce++){
-   float nearest=10000.;vec3 hitNormal=normal;
-   for(int i=0;i<64;i++){
-     if(i>=count)break;
-     float denom=dot(planes[i].xyz,ray);
-     if(denom>.0001){float t=(planes[i].w-dot(planes[i].xyz,pos))/denom;
-       if(t>.0001&&t<nearest){nearest=t;hitNormal=planes[i].xyz;}}
-   }
-   if(nearest>9000.)break;
-   pos+=ray*nearest;
-   vec3 outRay=refract(ray,-hitNormal,2.417);
-   if(dot(outRay,outRay)>.01){
-     vec3 red=refract(ray,-hitNormal,2.407),blue=refract(ray,-hitNormal,2.435);
-     vec3 spectrum=vec3(studio(length(red)>.01?red:outRay).r,studio(outRay).g,studio(length(blue)>.01?blue:outRay).b);
-     result+=spectrum*energy*.82;energy*=.18;
-   }
-   ray=reflect(ray,hitNormal);pos+=ray*.002;
- }
- result+=studio(ray)*energy*.5;
- gl_FragColor=vec4(result*tint,1.);
- #include <tonemapping_fragment>
- #include <colorspace_fragment>
-}`;
+import { outline, gemGeometry, createStudioEnvironment, gemstoneMaterial, GEM_TONES } from "./optics.mjs";
 
 export class RingRenderer {
   constructor(host, onError) {
@@ -152,11 +39,10 @@ export class RingRenderer {
     this.controls.addEventListener("change", () => {
       this.dirty = true;
     });
-    const room = new RoomEnvironment(),
-      pmrem = new T.PMREMGenerator(this.renderer);
-    this.environment = pmrem.fromScene(room, 0.04);
+    this.studioTexture = createStudioEnvironment();
+    const pmrem = new T.PMREMGenerator(this.renderer);
+    this.environment = pmrem.fromEquirectangular(this.studioTexture);
     this.scene.environment = this.environment.texture;
-    room.dispose();
     pmrem.dispose();
     this.scene.add(new T.HemisphereLight(0xffffff, 0x8b7564, 2));
     this.key = new T.DirectionalLight(0xffffff, 3);
@@ -344,28 +230,7 @@ export class RingRenderer {
         });
         material = smallGem;
       }
-      if (hero) {
-        const list = planes.slice();
-        while (list.length < 64) list.push(new T.Vector4());
-        material = new T.ShaderMaterial({
-          vertexShader: vertex,
-          fragmentShader: fragment,
-          uniforms: {
-            planes: { value: list },
-            count: { value: planes.length },
-            localEye: { value: new T.Vector3() },
-            worldRotation: { value: new T.Matrix3() },
-            tint: {
-              value: new T.Color(
-                1,
-                1 - (s.color.charCodeAt(0) - 68) * 0.009,
-                1 - (s.color.charCodeAt(0) - 68) * 0.025,
-              ),
-            },
-            mood: { value: s.light === "evening" ? 1 : 0 },
-          },
-        });
-      }
+      if (hero) material = gemstoneMaterial(planes, this.studioTexture, s.gemTone || "ice", s.color, s.light, s.fire || 1);
       const o = mesh(geometry, material, pos);
       o.scale.setScalar(scale);
       if (hero) this.gems.push(o);
@@ -573,6 +438,7 @@ export class RingRenderer {
     this.controls.dispose();
     this.disposeModel();
     this.environment.dispose();
+    this.studioTexture.dispose();
     this.shadow.geometry.dispose();
     this.shadow.material.dispose();
     this.shadowTexture.dispose();

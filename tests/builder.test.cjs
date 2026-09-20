@@ -47,20 +47,11 @@ test("wedding band does not retain an invisible hidden halo", async () => {
   assert.equal(normalize({ style: "band", accents: "hidden" }).accents, "none");
 });
 test("all cuts produce finite closed outward-facing geometry within shader plane budget", async () => {
-  // Geometry-only extraction keeps tests independent of a WebGL/browser context.
-  const src = fs.readFileSync("public/builder/renderer.js", "utf8");
-  const geometryCode = src
-    .slice(
-      src.indexOf("export function outline"),
-      src.indexOf("// Snell refraction"),
-    )
-    .replaceAll("export function", "function");
-  const T = await import("three");
-  const geometry = new Function("T", geometryCode + ";return gemGeometry;")(T);
+  const { gemGeometry: geometry } = await import('../public/builder/optics.mjs');
   const { OPTIONS } = await state();
   for (const shape of OPTIONS.shape) {
     const { geometry: g, planes } = geometry(shape);
-    assert.ok(planes.length > 16 && planes.length <= 64, shape);
+    assert.ok(planes.length > 16 && planes.length <= 128, shape);
     const pos = g.attributes.position.array;
     assert.ok(Array.from(pos).every(Number.isFinite));
     for (const plane of planes) {
