@@ -6,11 +6,16 @@ import {
   description,
   PRESETS,
   isBand,
+  isFashion,
+  FASHION_STYLES,
 } from "./state.js";
 import { RingRenderer } from "./renderer.js";
 import { GEM_TONES } from "./optics.mjs";
 const { useState, useEffect, useRef } = React;
 const names = {
+  wave: ['Hullám', 'Wave'], rope: ['Sodrott', 'Rope'], dome: ['Domború', 'Dome'],
+  signet: ['Pecsétgyűrű', 'Signet'], open: ['Nyitott', 'Open cuff'], stack: ['Többsoros', 'Stack'],
+  metal: ['Tömör fém', 'Solid metal'], onyx: ['Ónixfekete betét', 'Onyx-black inlay'], ivory: ['Elefántcsontszínű betét', 'Ivory inlay'], teal: ['Türkiz betét', 'Teal inlay'], coral: ['Korall betét', 'Coral inlay'],
   solitaire: ["Szoliter", "Solitaire"],
   halo: ["Halo", "Halo"],
   trilogy: ["Háromköves", "Three stone"],
@@ -115,7 +120,8 @@ function Shape({ shape, style }) {
       {style ? (
         <>
           <ellipse cx="32" cy="32" rx="17" ry="15" />
-          {!["band", "eternity"].includes(style) && (
+          {FASHION_STYLES.includes(style) && <path d={({wave:'M15 29q8-15 17 0t17 0',rope:'M16 27q8-12 16 0t16 0M16 32q8-12 16 0t16 0',dome:'M14 27Q32 2 50 27Z',signet:'M22 10h20v17H22z',open:'M18 23l-4-5m32 5 4-5',stack:'M15 25q17-15 34 0M15 38q17 16 34 0'})[style]} />}
+          {!["band", "eternity", ...FASHION_STYLES].includes(style) && (
             <>
               <path d="m22 16 5-7h10l5 7-10 12-10-12Zm0 0h20M27 9l5 19 5-19" />
               {style === "trilogy" && (
@@ -213,6 +219,8 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
     [busy, setBusy] = useState(false),
     [saved, setSaved] = useState(false);
   const [thumbs, setThumbs] = useState([]);
+  const [family, setFamily] = useState('all');
+  const [focus, setFocus] = useState(false);
   const [library, setLibrary] = useState(() => {
     try {
       const v = JSON.parse(localStorage.getItem("brightal-library-v2") || "[]");
@@ -342,7 +350,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
   }, []);
   const choices = (key, visual = false) => (
     <div className={"rb-choices " + (visual ? "rb-visual" : "")}>
-      {OPTIONS[key].map((value) => (
+      {OPTIONS[key].filter(value => key !== 'style' || family === 'all' || (family === 'fashion') === FASHION_STYLES.includes(value)).map((value) => (
         <button
           key={value}
           type="button"
@@ -539,16 +547,30 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
       );
     }
   };
+  const fashionControls = () => <div className="rb-sculpt-controls">
+    <h3>{L('Alakítsd a sziluettet','Sculpt the silhouette')}</h3>
+    {['wave','dome','open'].includes(s.style) && slider('sculpt',L('Forma intenzitása','Sculptural intensity'),.4,2.5,.1,'')}
+    {['wave','rope'].includes(s.style) && slider('rhythm',L('Forma ritmusa','Pattern rhythm'),2,8,1,'')}
+    {s.style==='stack' && slider('layers',L('Gyűrűsorok száma','Number of bands'),2,4,1,'')}
+    {['stack','open'].includes(s.style) && slider('gap',L('Távolság / nyitás','Spacing / opening'),.3,1.5,.1,'')}
+    {s.style==='signet' && <>{slider('faceSize',L('Pecsét mérete','Signet face size'),5,11,.5,'mm')}{select('face',L('Pecsét formája','Face shape'))}{select('inlay',L('Dekoratív betét','Decorative inlay'))}</>}
+    {slider('width',L('Sín szélessége','Band width'),1.6,5,.1,'mm')}
+  </div>;
+  const remix = () => {
+    const pick = values => values[Math.floor(Math.random()*values.length)];
+    change({...s,style:pick(FASHION_STYLES),metal:pick(OPTIONS.metal),secondaryMetal:pick(OPTIONS.secondaryMetal),mixedMetal:Math.random()>.4,sculpt:pick([.7,1.2,1.8,2.3]),rhythm:pick([3,4,6]),layers:pick([2,3,4]),inlay:pick(OPTIONS.inlay),width:pick([1.8,2.4,3.2,4.2]),faceSize:pick([6,8,10])});
+    setStep(0); setFamily('fashion'); notify(L('Új variáció — egy kattintással visszavonható.','New variation — undo is always available.'));
+  };
   const steps = [
     L("Stílus", "Style"),
-    L("Gyémánt", "Diamond"),
+    isFashion(s)?L('Sziluett','Silhouette'):L("Gyémánt", "Diamond"),
     L("Nemesfém", "Metal"),
-    L("Oldalkövek", "Side stones"),
+    isFashion(s)?L('Kontraszt','Contrast'):L("Oldalkövek", "Side stones"),
     L("Részletek", "Details"),
     L("A terved", "Your design"),
   ];
   return (
-    <main className="rb-page">
+    <main className={'rb-page rb-lab '+(focus?'rb-focus':'')}>
       <div className="rb-path-switch">
         <button className="active" aria-current="page">
           <Icon type="gem" size={16} />
@@ -563,15 +585,15 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
       <header className="rb-heading">
         <div>
           <div className="rb-eyebrow">
-            <span /> BRIGHTAL / ATELIER <span className="rb-tag">VOL. 02</span>
+            <span /> BRIGHTAL / DESIGN LAB <span className="rb-tag">VOL. 03</span>
           </div>
           <h1>
-            {L("Forma. Fény.", "Form. Light.")} <em>{L("Te.", "You.")}</em>
+            {L("Ne kövesd.", "Don't follow.")} <em>{L("Alkosd.", "Create.")}</em>
           </h1>
           <p>
             {L(
-              "Egy kis képzelet. Egy csipet bátorság. Egy gyűrű, amilyen senki másnak nincs.",
-              "A little imagination. A touch of courage. A ring like no one else's.",
+              "16 forma. Végtelen önkifejezés. A következő kedvenc gyűrűdet te tervezed.",
+              "16 forms. Endless expression. Design your next favorite ring.",
             )}
           </p>
         </div>
@@ -589,6 +611,10 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
           </button>
         </div>
       </header>
+      <div className="rb-lab-toolbar">
+        <span>● {L('ÉLŐ 3D MŰHELY','LIVE 3D STUDIO')} <small> / {label(s.style)}</small></span>
+        <div><button onClick={remix}>✧ {L('Lepj meg egy variációval','Surprise me')}</button><button aria-pressed={focus} onClick={()=>setFocus(!focus)}>{focus?L('Vissza a vezérlőkhöz','Back to controls'):L('Nagy munkatér ↗','Focus canvas ↗')}</button></div>
+      </div>
       <div className="rb-workspace">
         <section
           className={"rb-stage rb-light-" + s.light}
@@ -799,7 +825,9 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
             {step === 0 && (
               <>
                 <h3>{L("Gyűrű stílusa", "Ring style")}</h3>
+                <div className="rb-family">{[['all',L('Mind a 16','All 16')],['fashion',L('Önkifejezés','Self-expression')],['classic',L('Klasszikus','Classic')]].map(([key,title])=><button key={key} aria-pressed={family===key} onClick={()=>setFamily(key)}>{title}</button>)}</div>
                 {choices("style", true)}
+                {isFashion(s) && fashionControls()}
                 {!isBand(s) && (
                   <>
                     <h3>{L("A kő foglalata", "Stone setting")}</h3>
@@ -835,7 +863,8 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                 </div>
               </>
             )}
-            {step === 1 &&
+            {step === 1 && isFashion(s) && fashionControls()}
+            {step === 1 && !isFashion(s) &&
               (isBand(s) ? (
                 <div className="rb-editorial">
                   <Icon />
@@ -912,7 +941,13 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                 </p>
               </>
             )}
-            {step === 3 && (
+            {step === 3 && isFashion(s) && <>
+              <h3>{L('Fémek párbeszéde','A dialogue of metals')}</h3>
+              {['rope','stack','open','signet'].includes(s.style)?<><label className="rb-toggle"><input type="checkbox" checked={s.mixedMetal} onChange={e=>change({mixedMetal:e.target.checked})}/>{L('Kéttónusú kompozíció','Two-tone composition')}</label>{s.mixedMetal && select('secondaryMetal',L('Második nemesfém','Secondary metal'))}</>:<p>{L('Ezt az egybefüggő formát egy nemesfémből tervezzük. A Nemesfém lépésben válthatsz színt és felületet.','This continuous form uses one metal. Explore colors and finishes in Metal.')}</p>}
+              {s.style==='signet'&&select('inlay',L('Dekoratív betét','Decorative inlay'))}
+              <p className="rb-fine">{L('A betétek színezett dekorációs látványtervek, nem tanúsított drágakövek.','Inlays are colored decorative concepts, not certified gemstones.')}</p>
+            </>}
+            {step === 3 && !isFashion(s) && (
               <>
                 {!isBand(s) && (
                   <>
@@ -1079,7 +1114,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                   "mm",
                 )}
                 <div className="rb-select-row">
-                  {select("profile", L("Sín profilja", "Band profile"))}
+                  {!isFashion(s) && select("profile", L("Sín profilja", "Band profile"))}
                   {!isBand(s) && s.setting !== "bezel" && (
                     <label className="rb-select">
                       {L("Karmok", "Prongs")}
@@ -1105,7 +1140,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                     0.1,
                     "mm",
                   )}
-                <label className="rb-select rb-engraving">
+                {!isFashion(s) && <><label className="rb-select rb-engraving">
                   {L("A ti titkos üzenetetek", "Your secret message")}
                   <input
                     maxLength="24"
@@ -1127,12 +1162,16 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                 {select(
                   "engravingFont",
                   L("Gravírozás betűje", "Engraving lettering"),
-                )}
+                )}</>}
               </>
             )}
             {step === 5 && (
               <>
                 <dl className="rb-summary">
+                  {isFashion(s)&&<>
+                    <div><dt>{L('Szobrászi paraméterek','Sculptural parameters')}</dt><dd>{['wave','rope'].includes(s.style)?`${L('Ritmus','Rhythm')}: ${s.rhythm}`:s.style==='stack'?`${s.layers} ${L('sor','bands')}`:s.style==='signet'?`${s.faceSize} mm · ${label(s.face)} · ${label(s.inlay)}`:`${L('Intenzitás','Intensity')}: ${s.sculpt}`}</dd></div>
+                    {s.mixedMetal&&['rope','open','stack','signet'].includes(s.style)&&<div><dt>{L('Második nemesfém','Secondary metal')}</dt><dd>{label(s.secondaryMetal)}</dd></div>}
+                  </>}
                   {[
                     ["style", L("Stílus", "Style")],
                     ...(isBand(s)

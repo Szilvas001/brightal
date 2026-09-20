@@ -1,4 +1,5 @@
 import * as T from "three";
+import { buildFashion, FASHION_STYLES } from './fashion.mjs';
 import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import { outline, gemGeometry, gemstoneMaterial } from "./optics.mjs";
 
@@ -14,6 +15,10 @@ export const METAL_COLORS = {
 
 /** Independent procedural model: usable in scene, thumbnails and geometry tests. */
 export function buildRing(s, environment) {
+  if (FASHION_STYLES.includes(s.style)) {
+    const material = key => new T.MeshPhysicalMaterial({color:METAL_COLORS[key],metalness:1,roughness:s.finish==='polished'?.105:s.finish==='satin'?.29:.4,anisotropy:s.finish==='brushed'?.75:0});
+    return buildFashion(s,material(s.metal),material(s.secondaryMetal));
+  }
   const group = new T.Group(),
     gems = [],
     materials = new Map();

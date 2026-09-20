@@ -57,7 +57,7 @@ test("all styles and side layouts build finite renderable models", async () => {
           assert.ok(o.material.uniforms.count.value > 16);
         }
       });
-      assert.ok(meshes > 1, style);
+      assert.ok(meshes >= 1, style);
       assert.equal(
         new Set(gems.map((g) => g.material.uniforms.localEye.value)).size,
         gems.length,
