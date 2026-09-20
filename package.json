@@ -10,7 +10,8 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
-    "build": "babel public/app.jsx --presets @babel/preset-react --out-file public/app.js",
+    "build": "node scripts/build.js",
+    "test:builder": "node --test tests/builder.test.cjs",
     "build:watch": "babel public/app.jsx --presets @babel/preset-react --out-file public/app.js --watch",
     "hash-password": "node scripts/hash-password.js",
     "gen-secret": "node -e \"console.log('SESSION_SECRET=' + require('crypto').randomBytes(32).toString('hex'))\"",
@@ -19,12 +20,14 @@
   "dependencies": {
     "express": "^4.19.2",
     "multer": "^2.2.0",
-    "nodemailer": "^9.0.4"
+    "nodemailer": "^9.0.4",
+    "three": "^0.180.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.24.0",
     "@babel/core": "^7.24.0",
-    "@babel/preset-react": "^7.23.3"
+    "@babel/preset-react": "^7.23.3",
+    "esbuild": "^0.28.2"
   },
   "license": "UNLICENSED",
   "private": true

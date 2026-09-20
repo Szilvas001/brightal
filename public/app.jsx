@@ -589,6 +589,7 @@ function useReveal() {
 /* ═══════════ ÚTVONALAK ═══════════ */
 
 const ROUTES = [
+  ['builder', /^\/ring-builder\/?$/, () => '/ring-builder'],
   ['home', /^\/$/, () => '/'],
   ['how', /^\/(hogyan|how)\/?$/, () => (LANG === 'en' ? '/how' : '/hogyan')],
   ['upload', /^\/(feltoltes|upload)\/?$/, () => (LANG === 'en' ? '/upload' : '/feltoltes')],
@@ -879,8 +880,8 @@ function Nav() {
   useEffect(() => { document.body.style.overflow = mob ? 'hidden' : ''; }, [mob]);
 
   const items = isAdmin
-    ? [['admin', t('nav_admin')], ['about', t('nav_about')], ['contact', t('nav_contact')]]
-    : [['how', t('nav_how')], ['upload', t('nav_upload')], ['inspiration', t('nav_inspiration')],
+    ? [['admin', t('nav_admin')], ['builder', lang === 'en' ? 'Ring designer' : 'Gyűrűtervező'], ['about', t('nav_about')], ['contact', t('nav_contact')]]
+    : [['builder', lang === 'en' ? 'Ring designer' : 'Gyűrűtervező'], ['how', t('nav_how')], ['upload', t('nav_upload')], ['inspiration', t('nav_inspiration')],
        ['about', t('nav_about')], ['contact', t('nav_contact')]];
 
   const LangSwitch = ({ block }) => <div className={'lang-switch' + (block ? ' block' : '')}>
@@ -1594,10 +1595,24 @@ function CookieBanner() {
 
 /* ═══════════ FELTÖLTÉS ═══════════ */
 
+function readRingDraft() {
+  if (window.brightalRingDraft) return window.brightalRingDraft;
+  try {
+    const d = JSON.parse(sessionStorage.getItem('brightal-quote-v1') || 'null');
+    if (d && typeof d.preview === 'string' && d.preview.startsWith('data:image/png;base64,') && d.preview.length < 8000000 && d.design && typeof d.note === 'string') {
+      d.file = new File([Uint8Array.from(atob(d.preview.split(',')[1]), c => c.charCodeAt(0))], 'brightal-ring-design.png', { type: 'image/png' });
+      window.brightalRingDraft = d;
+      return d;
+    }
+  } catch (e) {}
+  return null;
+}
+
 function UploadPage() {
+  readRingDraft();
   const { t, te, user, setAuthModal, config, toast, navigate, lang, isAdmin } = useA();
-  const [files, setFiles] = useState([]);
-  const [previews, setPreviews] = useState([]);
+  const [files, setFiles] = useState(() => window.brightalRingDraft ? [window.brightalRingDraft.file] : []);
+  const [previews, setPreviews] = useState(() => window.brightalRingDraft ? [URL.createObjectURL(window.brightalRingDraft.file)] : []);
   const [drag, setDrag] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(null);
@@ -1606,7 +1621,7 @@ function UploadPage() {
 
   const [f, setF] = useState({
     name: '', email: '', phone: '',
-    metal: '', ringSize: '', budget: '', deadline: '', engraving: '', note: '',
+    metal: window.brightalRingDraft?.metal || '', ringSize: window.brightalRingDraft?.design.size || '', budget: '', deadline: '', engraving: window.brightalRingDraft?.design.engraving || '', note: window.brightalRingDraft?.note || '',
     acceptTerms: false
   });
 
@@ -1664,6 +1679,8 @@ function UploadPage() {
       fd.append('lang', lang);
       const d = await api('/requests', { method: 'POST', body: fd });
       setDone(d.request);
+      window.brightalRingDraft = null;
+      try { sessionStorage.removeItem('brightal-quote-v1'); } catch (e) {}
       setFiles([]); setPreviews([]);
       window.scrollTo(0, 0);
     } catch (e) { toast(te(e.code), 'err'); }
@@ -1714,6 +1731,10 @@ function UploadPage() {
     </div>
     <div className="wrap-s" style={{ paddingBottom: 80 }}>
       <div className="panel" style={{ padding: '40px 32px', textAlign: 'center' }}>
+        {window.brightalRingDraft && <div style={{ marginBottom: 24 }}>
+          <img src={previews[0]} alt={lang === 'en' ? 'Your custom ring design' : 'A saját gyűrűterved'} style={{ width: '100%', maxWidth: 260, maxHeight: 220, objectFit: 'contain' }}/>
+          <p className="lead-sm">{lang === 'en' ? 'Your design and specifications are ready. Sign in to request your personal quote.' : 'A terved és a specifikáció elkészült. Lépj be a személyes árajánlat kéréséhez.'}</p>
+        </div>}
         <span className="lock-ring"><Ico.lock s={20} /></span>
         <p className="lead-sm" style={{ margin: '18px 0 22px' }}>{t('up_login_needed')}</p>
         <button className="btn btn-gold btn-lg" onClick={() => setAuthModal('login')}>{t('up_login_btn')}</button>
@@ -2351,7 +2372,35 @@ function AdminPage() {
 
 /* ═══════════ GYÖKÉR ═══════════ */
 
+let builderLoad;
+function BuilderPage() {
+  const { lang, navigate } = useA();
+  const [loaded, setLoaded] = useState(!!window.BrightalBuilder);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    let live = true;
+    if (!builderLoad) builderLoad = new Promise((resolve, reject) => {
+      if (window.BrightalBuilder) return resolve();
+      const script = document.createElement('script');
+      script.src = '/builder/bundle.js'; script.onload = resolve;
+      script.onerror = () => { builderLoad = null; script.remove(); reject(new Error('Builder load failed')); };
+      document.head.appendChild(script);
+    });
+    builderLoad.then(() => { if (live) setLoaded(true); }).catch(() => { if (live) setFailed(true); });
+    return () => { live = false; };
+  }, []);
+  if (failed) return <div className="center-screen"><p>{lang === 'en' ? 'The designer could not load. Please reload.' : 'A tervező nem töltődött be. Kérjük, töltsd újra az oldalt.'}</p><button className="btn btn-dark" onClick={() => location.reload()}>{lang === 'en' ? 'Reload' : 'Újratöltés'}</button></div>;
+  if (!loaded) return <div className="center-screen"><Spinner dark size={28}/></div>;
+  const Builder = window.BrightalBuilder.RingBuilder;
+  return <Builder lang={lang} onQuote={draft => {
+    window.brightalRingDraft = draft;
+    try { const { file, ...saved } = draft; sessionStorage.setItem('brightal-quote-v1', JSON.stringify(saved)); } catch (e) {}
+    navigate('upload');
+  }}/>;
+}
+
 const PAGES = {
+  builder: BuilderPage,
   home: HomePage, how: HowPage, upload: UploadPage, inspiration: InspirationPage,
   orders: OrdersPage, account: AccountPage, about: AboutPage, contact: ContactPage,
   admin: AdminPage, 'payment-return': PaymentReturnPage,

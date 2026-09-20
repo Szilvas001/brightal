@@ -598,7 +598,7 @@ function useReveal() {
 
 /* ═══════════ ÚTVONALAK ═══════════ */
 
-const ROUTES = [['home', /^\/$/, () => '/'], ['how', /^\/(hogyan|how)\/?$/, () => LANG === 'en' ? '/how' : '/hogyan'], ['upload', /^\/(feltoltes|upload)\/?$/, () => LANG === 'en' ? '/upload' : '/feltoltes'], ['inspiration', /^\/(inspiracio|inspiration)\/?$/, () => LANG === 'en' ? '/inspiration' : '/inspiracio'], ['orders', /^\/(rendeleseim|orders)\/?$/, () => LANG === 'en' ? '/orders' : '/rendeleseim'], ['account', /^\/(fiok|account)\/?$/, () => LANG === 'en' ? '/account' : '/fiok'], ['about', /^\/(rolunk|about)\/?$/, () => LANG === 'en' ? '/about' : '/rolunk'], ['contact', /^\/(kapcsolat|contact)\/?$/, () => LANG === 'en' ? '/contact' : '/kapcsolat'], ['admin', /^\/admin\/?$/, () => '/admin'], ['payment-return', /^\/payment-return\/?$/, () => '/payment-return'], /* jogi oldalak */
+const ROUTES = [['builder', /^\/ring-builder\/?$/, () => '/ring-builder'], ['home', /^\/$/, () => '/'], ['how', /^\/(hogyan|how)\/?$/, () => LANG === 'en' ? '/how' : '/hogyan'], ['upload', /^\/(feltoltes|upload)\/?$/, () => LANG === 'en' ? '/upload' : '/feltoltes'], ['inspiration', /^\/(inspiracio|inspiration)\/?$/, () => LANG === 'en' ? '/inspiration' : '/inspiracio'], ['orders', /^\/(rendeleseim|orders)\/?$/, () => LANG === 'en' ? '/orders' : '/rendeleseim'], ['account', /^\/(fiok|account)\/?$/, () => LANG === 'en' ? '/account' : '/fiok'], ['about', /^\/(rolunk|about)\/?$/, () => LANG === 'en' ? '/about' : '/rolunk'], ['contact', /^\/(kapcsolat|contact)\/?$/, () => LANG === 'en' ? '/contact' : '/kapcsolat'], ['admin', /^\/admin\/?$/, () => '/admin'], ['payment-return', /^\/payment-return\/?$/, () => '/payment-return'], /* jogi oldalak */
 ['terms', /^\/(aszf|terms)\/?$/, () => LANG === 'en' ? '/terms' : '/aszf'], ['privacy', /^\/(adatkezeles|privacy)\/?$/, () => LANG === 'en' ? '/privacy' : '/adatkezeles'], ['impressum', /^\/(impresszum|impressum)\/?$/, () => LANG === 'en' ? '/impressum' : '/impresszum'], ['refund', /^\/(elallas|refund)\/?$/, () => LANG === 'en' ? '/refund' : '/elallas'], ['cookies', /^\/(cookie|cookies)\/?$/, () => LANG === 'en' ? '/cookies' : '/cookie'], ['notfound', /^\/404\/?$/, () => '/404']];
 function parseLocation() {
   for (const [page, re] of ROUTES) if (location.pathname.match(re)) return page;
@@ -1265,7 +1265,7 @@ function Nav() {
   useEffect(() => {
     document.body.style.overflow = mob ? 'hidden' : '';
   }, [mob]);
-  const items = isAdmin ? [['admin', t('nav_admin')], ['about', t('nav_about')], ['contact', t('nav_contact')]] : [['how', t('nav_how')], ['upload', t('nav_upload')], ['inspiration', t('nav_inspiration')], ['about', t('nav_about')], ['contact', t('nav_contact')]];
+  const items = isAdmin ? [['admin', t('nav_admin')], ['builder', lang === 'en' ? 'Ring designer' : 'Gyűrűtervező'], ['about', t('nav_about')], ['contact', t('nav_contact')]] : [['builder', lang === 'en' ? 'Ring designer' : 'Gyűrűtervező'], ['how', t('nav_how')], ['upload', t('nav_upload')], ['inspiration', t('nav_inspiration')], ['about', t('nav_about')], ['contact', t('nav_contact')]];
   const LangSwitch = ({
     block
   }) => /*#__PURE__*/React.createElement("div", {
@@ -2326,7 +2326,22 @@ function CookieBanner() {
 
 /* ═══════════ FELTÖLTÉS ═══════════ */
 
+function readRingDraft() {
+  if (window.brightalRingDraft) return window.brightalRingDraft;
+  try {
+    const d = JSON.parse(sessionStorage.getItem('brightal-quote-v1') || 'null');
+    if (d && typeof d.preview === 'string' && d.preview.startsWith('data:image/png;base64,') && d.preview.length < 8000000 && d.design && typeof d.note === 'string') {
+      d.file = new File([Uint8Array.from(atob(d.preview.split(',')[1]), c => c.charCodeAt(0))], 'brightal-ring-design.png', {
+        type: 'image/png'
+      });
+      window.brightalRingDraft = d;
+      return d;
+    }
+  } catch (e) {}
+  return null;
+}
 function UploadPage() {
+  readRingDraft();
   const {
     t,
     te,
@@ -2338,8 +2353,8 @@ function UploadPage() {
     lang,
     isAdmin
   } = useA();
-  const [files, setFiles] = useState([]);
-  const [previews, setPreviews] = useState([]);
+  const [files, setFiles] = useState(() => window.brightalRingDraft ? [window.brightalRingDraft.file] : []);
+  const [previews, setPreviews] = useState(() => window.brightalRingDraft ? [URL.createObjectURL(window.brightalRingDraft.file)] : []);
   const [drag, setDrag] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(null);
@@ -2349,12 +2364,12 @@ function UploadPage() {
     name: '',
     email: '',
     phone: '',
-    metal: '',
-    ringSize: '',
+    metal: window.brightalRingDraft?.metal || '',
+    ringSize: window.brightalRingDraft?.design.size || '',
     budget: '',
     deadline: '',
-    engraving: '',
-    note: '',
+    engraving: window.brightalRingDraft?.design.engraving || '',
+    note: window.brightalRingDraft?.note || '',
     acceptTerms: false
   });
   const up = config && config.upload || {
@@ -2435,6 +2450,10 @@ function UploadPage() {
         body: fd
       });
       setDone(d.request);
+      window.brightalRingDraft = null;
+      try {
+        sessionStorage.removeItem('brightal-quote-v1');
+      } catch (e) {}
       setFiles([]);
       setPreviews([]);
       window.scrollTo(0, 0);
@@ -2531,7 +2550,22 @@ function UploadPage() {
       padding: '40px 32px',
       textAlign: 'center'
     }
-  }, /*#__PURE__*/React.createElement("span", {
+  }, window.brightalRingDraft && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 24
+    }
+  }, /*#__PURE__*/React.createElement("img", {
+    src: previews[0],
+    alt: lang === 'en' ? 'Your custom ring design' : 'A saját gyűrűterved',
+    style: {
+      width: '100%',
+      maxWidth: 260,
+      maxHeight: 220,
+      objectFit: 'contain'
+    }
+  }), /*#__PURE__*/React.createElement("p", {
+    className: "lead-sm"
+  }, lang === 'en' ? 'Your design and specifications are ready. Sign in to request your personal quote.' : 'A terved és a specifikáció elkészült. Lépj be a személyes árajánlat kéréséhez.')), /*#__PURE__*/React.createElement("span", {
     className: "lock-ring"
   }, /*#__PURE__*/React.createElement(Ico.lock, {
     s: 20
@@ -3602,7 +3636,67 @@ function AdminPage() {
 
 /* ═══════════ GYÖKÉR ═══════════ */
 
+let builderLoad;
+function BuilderPage() {
+  const {
+    lang,
+    navigate
+  } = useA();
+  const [loaded, setLoaded] = useState(!!window.BrightalBuilder);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    let live = true;
+    if (!builderLoad) builderLoad = new Promise((resolve, reject) => {
+      if (window.BrightalBuilder) return resolve();
+      const script = document.createElement('script');
+      script.src = '/builder/bundle.js';
+      script.onload = resolve;
+      script.onerror = () => {
+        builderLoad = null;
+        script.remove();
+        reject(new Error('Builder load failed'));
+      };
+      document.head.appendChild(script);
+    });
+    builderLoad.then(() => {
+      if (live) setLoaded(true);
+    }).catch(() => {
+      if (live) setFailed(true);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+  if (failed) return /*#__PURE__*/React.createElement("div", {
+    className: "center-screen"
+  }, /*#__PURE__*/React.createElement("p", null, lang === 'en' ? 'The designer could not load. Please reload.' : 'A tervező nem töltődött be. Kérjük, töltsd újra az oldalt.'), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-dark",
+    onClick: () => location.reload()
+  }, lang === 'en' ? 'Reload' : 'Újratöltés'));
+  if (!loaded) return /*#__PURE__*/React.createElement("div", {
+    className: "center-screen"
+  }, /*#__PURE__*/React.createElement(Spinner, {
+    dark: true,
+    size: 28
+  }));
+  const Builder = window.BrightalBuilder.RingBuilder;
+  return /*#__PURE__*/React.createElement(Builder, {
+    lang: lang,
+    onQuote: draft => {
+      window.brightalRingDraft = draft;
+      try {
+        const {
+          file,
+          ...saved
+        } = draft;
+        sessionStorage.setItem('brightal-quote-v1', JSON.stringify(saved));
+      } catch (e) {}
+      navigate('upload');
+    }
+  });
+}
 const PAGES = {
+  builder: BuilderPage,
   home: HomePage,
   how: HowPage,
   upload: UploadPage,

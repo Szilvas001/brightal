@@ -166,6 +166,7 @@ app.use(express.static(PUBLIC, { maxAge: cfg.isProd ? '1h' : 0, index: false }))
 /* nyilvános, indexelhető útvonalak — a védett oldalak (fiók, admin,
    rendeléseim) szándékosan nincsenek benne */
 const SITEMAP_PATHS = [
+  { hu: '/ring-builder', en: '/ring-builder', priority: '0.9', freq: 'monthly' },
   { hu: '/', en: '/', priority: '1.0', freq: 'weekly' },
   { hu: '/hogyan', en: '/how', priority: '0.8', freq: 'monthly' },
   { hu: '/feltoltes', en: '/upload', priority: '0.9', freq: 'monthly' },
@@ -243,7 +244,7 @@ app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();
   /* Ismeretlen útvonalon is az SPA-t szolgáljuk ki (ott jelenik meg a
      404 oldal), de a keresőknek helyes státuszkódot küldünk. */
-  const known = /^\/($|hogyan|how|feltoltes|upload|inspiracio|inspiration|rendeleseim|orders|fiok|account|rolunk|about|kapcsolat|contact|admin|payment-return|aszf|terms|adatkezeles|privacy|impresszum|impressum|elallas|refund|cookie|cookies)\/?$/;
+  const known = /^\/($|ring-builder|hogyan|how|feltoltes|upload|inspiracio|inspiration|rendeleseim|orders|fiok|account|rolunk|about|kapcsolat|contact|admin|payment-return|aszf|terms|adatkezeles|privacy|impresszum|impressum|elallas|refund|cookie|cookies)\/?$/;
   if (!known.test(req.path)) res.status(404);
   res.type('html').send(renderIndex());
 });
