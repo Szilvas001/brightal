@@ -7,6 +7,13 @@ export const FASHION_STYLES = [
   "stack",
 ];
 export const isFashion = (s) => FASHION_STYLES.includes(s.style);
+export const DAILY_STYLES = ['bezelrow','scatter','chevron'];
+export const isDaily = s => DAILY_STYLES.includes(s.style);
+export function maxDailyStones(s) {
+  const scale=2.4*Math.cbrt(s.dailyCarat),r=s.size/(2*Math.PI)*.8+.62+scale*.7+s.height*.18;
+  const step=2*Math.asin(Math.min(.9,(scale*1.7+.18+s.dailySpacing)/r));
+  return Math.max(3,Math.min(9,Math.floor(3/step)+1));
+}
 export const OPTIONS = {
   style: [
     "solitaire",
@@ -19,6 +26,7 @@ export const OPTIONS = {
     "cathedral",
     "split",
     "eternity",
+    ...DAILY_STYLES,
     ...FASHION_STYLES,
   ],
   shape: [
@@ -131,6 +139,10 @@ export const DEFAULT = Object.freeze({
   inlay: "metal",
   secondaryMetal: "platinum",
   mixedMetal: false,
+  dailyCount: 5,
+  dailyCarat: .1,
+  dailySpacing: .15,
+  alternateGems: false,
 });
 export function normalize(input = {}) {
   if (!input || typeof input !== "object" || Array.isArray(input)) input = {};
@@ -151,6 +163,9 @@ export function normalize(input = {}) {
     ["layers", 2, 4, 1],
     ["gap", 0.3, 1.5, 0.1],
     ["faceSize", 5, 11, 0.5],
+    ['dailyCount',3,9,1],
+    ['dailyCarat',.05,.3,.01],
+    ['dailySpacing',0,.5,.05],
   ]) {
     const n = Number(input[key]);
     if (Number.isFinite(n) && input[key] !== undefined)
@@ -162,8 +177,9 @@ export function normalize(input = {}) {
     ? Number(input.prongs)
     : 4;
   s.accentRows = Number(input.accentRows) === 2 ? 2 : 1;
+  if(s.style==='split') s.accentRows=1;
   s.accentSize =
-    Math.floor(Math.min(s.accentSize, s.width / (s.accentRows + 0.4)) * 10) /
+    Math.floor(Math.min(s.accentSize, s.width * (s.style==='split'?.55:1) / (s.accentRows + 0.4)) * 10) /
     10;
   s.hiddenHalo =
     (input.hiddenHalo === true || input.accents === "hidden") && !isBand(s);
@@ -173,6 +189,9 @@ export function normalize(input = {}) {
       : "";
   s.rotate = input.rotate === true;
   s.mixedMetal = input.mixedMetal === true;
+  s.alternateGems = input.alternateGems === true;
+  s.dailyCount=Math.min(s.dailyCount,maxDailyStones(s));
+  if(isDaily(s)) {s.accents='none';s.sideMode='none';s.hiddenHalo=false;}
   if (["wave", "dome"].includes(s.style)) s.mixedMetal = false;
   if (isFashion(s)) {
     s.accents = "none";
@@ -189,7 +208,7 @@ export function normalize(input = {}) {
   return s;
 }
 export const isBand = (s) =>
-  ["band", "eternity", ...FASHION_STYLES].includes(s.style);
+  ["band", "eternity", ...FASHION_STYLES, ...DAILY_STYLES].includes(s.style);
 export function readDesign() {
   try {
     const shared = new URLSearchParams(location.hash.slice(1)).get("design");
@@ -202,15 +221,23 @@ export function readDesign() {
   }
 }
 export function description(s) {
+  s=normalize(s);
+  const fashionKeys=['sculpt','rhythm','layers','gap','faceSize','face','inlay','secondaryMetal','mixedMetal'];
+  const dailyKeys=['dailyCount','dailyCarat','dailySpacing','alternateGems'];
   return (
     "BRIGHTAL Atelier / v2\n" +
     Object.entries(normalize(s))
       .filter(([k]) => !["rotate", "light"].includes(k))
+      .filter(([k]) => (isFashion(s)||k==='sculpt'&&s.style==='chevron'||!fashionKeys.includes(k)) && (isDaily(s)||!dailyKeys.includes(k)))
       .map(([k, v]) => `${k}: ${v}`)
       .join("\n")
   );
 }
 export const PRESETS = [
+  { name: ["Örök klasszikus", "Timeless oval"], config: { ...DEFAULT } },
+  {name:['Mindennapi ragyogás','Everyday light'],config:{...DEFAULT,style:'bezelrow',setting:'bezel',dailyCount:5,dailyCarat:.1,metal:'yellow18'}},
+  {name:['Csillagtérkép','Star map'],config:{...DEFAULT,style:'scatter',dailyCount:5,shape:'round',dailyCarat:.08,alternateGems:true,sideTone:'sapphire',width:3.2}},
+  {name:['Diamond V','Diamond V'],config:{...DEFAULT,style:'chevron',dailyCount:5,dailyCarat:.07,sculpt:1.6,metal:'platinum'}},
   {
     name: ["Liquid Wave", "Liquid Wave"],
     config: {
@@ -279,7 +306,6 @@ export const PRESETS = [
       mixedMetal: true,
     },
   },
-  { name: ["Örök klasszikus", "Timeless oval"], config: { ...DEFAULT } },
   {
     name: ["Párizsi fények", "Parisian halo"],
     config: {

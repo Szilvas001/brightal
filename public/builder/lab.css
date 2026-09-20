@@ -1,4 +1,7 @@
 /* Spacious, quiet-tech creative studio. Motion is opt-in, never attention bait. */
+.rb-save-final {padding:18px;border:1px solid #a8caba;background:#eaf4ed;border-radius:12px;margin-bottom:22px;}
+.rb-save-final input {display:block;box-sizing:border-box;width:100%;margin:8px 0 12px;padding:12px;border:1px solid #a9c2b5;border-radius:7px;background:white;color:#234a38;font:inherit;}
+.rb-save-final .rb-primary {width:100%;padding:14px;font-size:12px;}
 .rb-lab {
   background: #10191e;
   background-image: radial-gradient(

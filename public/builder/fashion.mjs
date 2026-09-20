@@ -107,8 +107,8 @@ export function buildFashion(s, metal, secondary) {
             Math.sin(a * s.rhythm + phase) * width * 0.31,
             radius + Math.cos(a * s.rhythm + phase) * width * 0.31,
           ),
-        () => width * 0.27,
-        () => width * 0.27,
+        () => width * 0.32,
+        () => width * 0.32,
         phase === 0 ? metal : accent,
       );
   } else if (s.style === "dome") {

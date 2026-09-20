@@ -29,6 +29,7 @@ export function buildRing(s, environment) {
   const group = new T.Group(),
     gems = [],
     materials = new Map();
+  const mountings = [], contacts = [], bands = [];
   const metalFor = (key) => {
     if (!materials.has(key))
       materials.set(
@@ -79,7 +80,8 @@ export function buildRing(s, environment) {
   const radius = (s.size / (2 * Math.PI)) * 0.8,
     width = s.width * 0.8,
     thick = 0.62,
-    isBand = ["band", "eternity"].includes(s.style);
+    isBand = ["band", "eternity", 'bezelrow','scatter','chevron'].includes(s.style);
+  const bandShift = a => s.style==='chevron'?Math.pow(Math.max(0,Math.cos(a)),4)*s.sculpt:0;
   const band = (splitSign = 0) => {
     const vertices = [],
       indices = [],
@@ -108,7 +110,7 @@ export function buildRing(s, environment) {
               (s.profile === "knife"
                 ? si * (0.62 + (0.38 * (1 - co)) / 2)
                 : si) +
-            separation;
+            separation + bandShift(a);
         vertices.push(Math.sin(a) * r, Math.cos(a) * r, z);
         if (i < uN && j < vN) {
           const k = i * (vN + 1) + j;
@@ -124,7 +126,9 @@ export function buildRing(s, environment) {
     const smooth = mergeVertices(geo, 0.00001);
     smooth.computeVertexNormals();
     geo.dispose();
-    mesh(smooth, metal);
+    const body = mesh(smooth, metal);
+    body.userData.role = 'shank';
+    bands.push(body);
   };
   if (s.style === "split") {
     band(-1);
@@ -176,6 +180,10 @@ export function buildRing(s, environment) {
     if (s.setting === "bezel") {
       seat(shape, scale * 1.02, assembly, scale * 0.05, 0.16 * fitting);
       seat(shape, scale * 0.94, assembly, -scale * 0.13, 0.13 * fitting);
+      for(let i=0;i<8;i++) {
+        const [x,z]=outline(shape,i*Math.PI/4);
+        tube([[x*scale*.72,-scale*.32,z*scale*.72],[x*scale*.94,-scale*.13,z*scale*.94],[x*scale*1.02,scale*.05,z*scale*1.02]],.09*fitting,assembly,head);
+      }
     } else
       for (let i = 0; i < s.prongs; i++) {
         const a = (2 * Math.PI * (i + 0.5)) / s.prongs;
@@ -187,7 +195,7 @@ export function buildRing(s, environment) {
           tube(
             [
               [x * scale * 0.36, -scale * 0.66, z * scale * 0.36],
-              [x * scale * 0.8, -scale * 0.25, z * scale * 0.8],
+              [x * scale * 0.72, -scale * 0.32, z * scale * 0.72],
               tip,
             ],
             (s.setting === "doubleclaw" ? 0.07 : 0.11) * fitting,
@@ -202,28 +210,30 @@ export function buildRing(s, environment) {
           claw.scale.y *= 0.65;
         }
       }
-    seat(shape, scale * 0.72, assembly, -scale * 0.32, 0.115 * fitting);
+    const gallery=seat(shape, scale * 0.72, assembly, -scale * 0.32, 0.115 * fitting);
+    gallery.userData.role='gallery';
+    mountings.push({assembly,shape,scale,gallery});
     return assembly;
   };
   const size = 2.4 * Math.cbrt(s.carat),
     top = radius + size * 0.7 + s.height * 0.45;
   const rotation = s.orientation === "east" ? Math.PI / 2 : 0;
+  if(['bezelrow','scatter','chevron'].includes(s.style)) {
+    const scale=2.4*Math.cbrt(s.dailyCarat),r=radius+thick+scale*.7+s.height*.18;
+    const step=2*Math.asin(Math.min(.9,(scale*1.7+.18+s.dailySpacing)/r));
+    for(let i=0;i<s.dailyCount;i++) {
+      const a=(i-(s.dailyCount-1)/2)*step;
+      const z=bandShift(a)+(s.style==='scatter'?(i%2?1:-1)*width*.48:0);
+      const assembly=setting(s.shape,scale,[Math.sin(a)*r,Math.cos(a)*r,z],s.alternateGems&&i%2?s.sideTone:s.gemTone,rotation);
+      assembly.rotation.z=-a;
+    }
+  }
   if (!isBand) {
     if (s.style === "duet") {
       const other = 2.4 * Math.cbrt(s.sideCarat),
         gap = (size + other) * 0.54;
       setting(s.shape, size, [-gap, top, 0.65], s.gemTone, rotation - 0.23);
       setting(s.sideShape, other, [gap, top - 0.35, -0.65], s.sideTone, 0.3);
-      tube(
-        [
-          [-radius * 0.7, radius * 0.6, 0],
-          [-size, top - 1, 0],
-          [0, top - 1.5, 0],
-          [other, top - 1.2, 0],
-          [radius * 0.7, radius * 0.6, 0],
-        ],
-        0.22,
-      );
     } else {
       const main = setting(s.shape, size, [0, top, 0], s.gemTone, rotation);
       if (["halo", "vintage"].includes(s.style)) {
@@ -238,6 +248,10 @@ export function buildRing(s, environment) {
             ),
           );
           seat(s.shape, perimeter, main, -0.22, 0.12);
+          for(let i=0;i<4;i++) {
+            const [x,z]=outline(s.shape,i*Math.PI/2);
+            tube([[x*size*.72,-size*.32,z*size*.72],[x*perimeter,-.22,z*perimeter]],.105,main,head);
+          }
           for (let i = 0; i < n; i++) {
             const [x, z] = outline(s.shape, (2 * Math.PI * i) / n);
             gem(
@@ -253,11 +267,16 @@ export function buildRing(s, environment) {
               [x * (perimeter + haloR), -0.06, z * (perimeter + haloR)],
               main,
             );
+            tube([[x*perimeter,-.22,z*perimeter],[x*(perimeter+haloR),-.06,z*(perimeter+haloR)]],.065,main,head);
           }
         }
       }
       if (s.hiddenHalo) {
         seat(s.shape, size * 0.78, main, -size * 0.36, 0.11);
+        for(let i=0;i<4;i++) {
+          const [x,z]=outline(s.shape,i*Math.PI/2);
+          tube([[x*size*.72,-size*.32,z*size*.72],[x*size*.78,-size*.36,z*size*.78]],.085,main,head);
+        }
         for (let i = 0; i < 24; i++) {
           const a = (i / 24) * Math.PI * 2,
             [x, z] = outline(s.shape, a);
@@ -296,14 +315,6 @@ export function buildRing(s, environment) {
             true,
           );
           side.rotation.z = sign * -0.14;
-          tube(
-            [
-              [sign * radius * 0.72, radius * 0.65, 0],
-              [sign * offset, y - scale * 0.75, 0],
-              [sign * size * 0.7, top - size * 0.7, 0],
-            ],
-            0.19,
-          );
           if (s.sideMode === "cluster")
             for (const z of [-1, 1]) {
               const satellite = setting(
@@ -313,19 +324,6 @@ export function buildRing(s, environment) {
                 s.sideTone,
               );
               satellite.rotation.z = sign * -0.14;
-              tube(
-                [
-                  [sign * offset, y - scale * 0.65, 0],
-                  [
-                    sign * (offset + 0.3),
-                    y - 0.5 - scale * 0.32,
-                    z * scale * 1.2,
-                  ],
-                ],
-                0.1,
-                group,
-                head,
-              );
             }
           if (s.sideMode === "five") {
             const o = setting(
@@ -337,29 +335,10 @@ export function buildRing(s, environment) {
               false,
             );
             o.rotation.z = sign * -0.4;
-            tube(
-              [
-                [sign * radius * 0.85, radius * 0.4, 0],
-                [sign * (offset + scale * 1.8), y - scale * 1.45, 0],
-                [sign * offset, y - scale * 0.75, 0],
-              ],
-              0.14,
-            );
           }
         }
       }
     }
-    if (s.style === "cathedral")
-      for (const sign of [-1, 1])
-        for (const z of [-width * 0.32, width * 0.32])
-          tube(
-            [
-              [sign * radius * 0.91, radius * 0.25, z],
-              [sign * radius * 0.75, radius * 0.9, z],
-              [sign * size * 0.55, top - size * 0.45, z],
-            ],
-            0.23,
-          );
   }
   const hasPave = ["pave", "channel"].includes(s.accents);
   if (hasPave) {
@@ -383,8 +362,10 @@ export function buildRing(s, environment) {
     for (let i = -n; i <= n; i++) {
       const a = i * spacing;
       if (!isBand && Math.abs(a) < opening) continue;
-      for (let row = 0; row < s.accentRows; row++) {
-        const z = s.accentRows === 1 ? 0 : (row - 0.5) * width * 0.48;
+      const tracks=s.style==='split'?[-1,1].map(sign=>sign*(width*.65+.55)*Math.pow(Math.max(0,Math.cos(a)),2)):[0];
+      for(const track of tracks) for (let row = 0; row < s.accentRows; row++) {
+        const w=s.style==='split'?width*.55:width;
+        const z = track + (s.accentRows === 1 ? 0 : (row - 0.5) * w * 0.48);
         const o = gem(
           s.accents === "channel" ? "princess" : "round",
           gemR,
@@ -393,7 +374,7 @@ export function buildRing(s, environment) {
         );
         o.rotation.z = -a;
         if (s.accents !== "channel")
-          for (const shift of [-1, 1])
+          for (const shift of [-1, 1]) {
             bead(
               0.075,
               [
@@ -404,9 +385,11 @@ export function buildRing(s, environment) {
               group,
               metal,
             );
+            tube([[Math.sin(a+spacing*.46)*radius,Math.cos(a+spacing*.46)*radius,track],[Math.sin(a+spacing*.46)*(radius+.65),Math.cos(a+spacing*.46)*(radius+.65),z+shift*gemR*.7]],.05,group,metal);
+          }
       }
     }
-    if (s.accents === "channel")
+    if (s.accents === "channel" && s.style!=='split')
       for (const z of [-width * 0.44, width * 0.44]) {
         const rail = mesh(
           new T.TorusGeometry(radius + 0.55, 0.1, 8, 160),
@@ -414,6 +397,8 @@ export function buildRing(s, environment) {
         );
         rail.position.z = z;
       }
+    if(s.accents==='channel'&&s.style==='split') for(const sign of [-1,1]) for(const edge of [-1,1])
+      tube(Array.from({length:128},(_,i)=>{const a=i/128*Math.PI*2;return [Math.sin(a)*(radius+.4),Math.cos(a)*(radius+.4),sign*(width*.65+.55)*Math.pow(Math.max(0,Math.cos(a)),2)+edge*width*.55*.44];}),.1,group,metal,true);
   }
   if (s.style === "vintage")
     for (let i = 0; i < 100; i++) {
@@ -426,6 +411,24 @@ export function buildRing(s, environment) {
           metal,
         );
     }
+  // Resolve supports only after every assembly rotation is final. Endpoints
+  // are on the actual gallery and shank, not guessed in global coordinates.
+  group.updateMatrixWorld(true);
+  for(const {assembly,shape,scale,gallery} of mountings) {
+    for(const a of [0,Math.PI/2,Math.PI,Math.PI*1.5]) {
+      const [x,z]=outline(shape,a);
+      const end=assembly.localToWorld(new T.Vector3(x*scale*.72,-scale*.32,z*scale*.72));
+      const angle=Math.atan2(end.x,end.y);
+      const splitSign=end.z<0?-1:1;
+      const track=s.style==='split'?splitSign*(width*.65+.55)*Math.pow(Math.max(0,Math.cos(angle)),2):bandShift(angle);
+      const start=new T.Vector3(Math.sin(angle)*radius,Math.cos(angle)*radius,track);
+      const mid=start.clone().lerp(end,.5);
+      if(s.style==='cathedral') mid.y+=.3;
+      const support=tube([start.toArray(),mid.toArray(),end.toArray()],Math.min(.22,Math.max(.10,scale*.075)),group,head);
+      support.userData.role='structural-support';
+      contacts.push({support,start,end,gallery,band:bands[s.style==='split'?(splitSign<0?0:1):0]});
+    }
+  }
   // Geometry/materials created but unused in a particular permutation are released too.
   if (!group.getObjectByProperty("geometry", beadGeo)) beadGeo.dispose();
   for (const mat of materials.values()) {
@@ -436,5 +439,5 @@ export function buildRing(s, environment) {
     if (!used) mat.dispose();
   }
   group.updateMatrixWorld(true);
-  return { group, gems, radius, width, metal };
+  return { group, gems, radius, width, metal, contacts, mountings };
 }

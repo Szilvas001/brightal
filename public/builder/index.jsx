@@ -8,11 +8,13 @@ import {
   isBand,
   isFashion,
   FASHION_STYLES,
+  DAILY_STYLES, isDaily, maxDailyStones,
 } from "./state.js";
 import { RingRenderer } from "./renderer.js";
 import { GEM_TONES } from "./optics.mjs";
 const { useState, useEffect, useRef } = React;
 const names = {
+  bezelrow: ['Gyémántsor','Diamond row'], scatter: ['Csillagmező','Constellation'], chevron: ['Gyémánt V','Diamond V'],
   wave: ["Hullám", "Wave"],
   rope: ["Sodrott", "Rope"],
   dome: ["Domború", "Dome"],
@@ -240,13 +242,15 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
     [busy, setBusy] = useState(false),
     [saved, setSaved] = useState(false);
   const [thumbs, setThumbs] = useState([]);
-  const [family, setFamily] = useState("all");
+  const [family, setFamily] = useState("classic");
+  const [designName,setDesignName]=useState('');
+  useEffect(()=>setSaved(false),[s]);
   const [focus, setFocus] = useState(false);
   const [library, setLibrary] = useState(() => {
     try {
       const v = JSON.parse(localStorage.getItem("brightal-library-v2") || "[]");
       return Array.isArray(v)
-        ? v.slice(0, 8).map((x) => ({ ...x, design: normalize(x.design) }))
+        ? v.filter(x=>x&&x.design).slice(0, 24).map((x) => ({ ...x, design: normalize(x.design) }))
         : [];
     } catch {
       return [];
@@ -376,7 +380,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
           (value) =>
             key !== "style" ||
             family === "all" ||
-            (family === "fashion") === FASHION_STYLES.includes(value),
+            (family==='fashion'?FASHION_STYLES.includes(value):family==='daily'?DAILY_STYLES.includes(value):!FASHION_STYLES.includes(value)&&!DAILY_STYLES.includes(value)),
         )
         .map((value) => (
           <button
@@ -389,7 +393,8 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                 key === "style"
                   ? {
                       ...{ [key]: value },
-                      sideMode: value === "trilogy" ? "pair" : "none",
+                    sideMode: value === "trilogy" ? "pair" : "none",
+                    setting: value==='bezelrow'?'bezel':s.setting,
                       accents:
                         value === "eternity" || value === "pave"
                           ? "pave"
@@ -472,8 +477,9 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
   );
   const save = () => {
     try {
+      if(library.length>=24) {notify(L('A gyűjtemény megtelt (24 terv). Töltsd le ezt a tervet fájlba.','Collection full (24 designs). Download this design as a file.'));return;}
       localStorage.setItem("brightal-design-v1", JSON.stringify(s));
-      const next = [{ id: Date.now(), design: s }, ...library].slice(0, 8);
+      const next = [{ id: Date.now(), name:designName.trim().slice(0,60)||label(s.style), design: s }, ...library];
       localStorage.setItem("brightal-library-v2", JSON.stringify(next));
       setLibrary(next);
       setSaved(true);
@@ -674,8 +680,8 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
           </h1>
           <p>
             {L(
-              "16 forma. Végtelen önkifejezés. A következő kedvenc gyűrűdet te tervezed.",
-              "16 forms. Endless expression. Design your next favorite ring.",
+              "Eljegyzésre. Minden napra. 19 forma, számtalan személyes részlet.",
+              "For a proposal. For every day. 19 forms, countless personal details.",
             )}
           </p>
         </div>
@@ -940,9 +946,10 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                 <h3>{L("Gyűrű stílusa", "Ring style")}</h3>
                 <div className="rb-family">
                   {[
-                    ["all", L("Mind a 16", "All 16")],
+                    ["classic", L("Eljegyzés & klasszikus", "Bridal & classic")],
+                    ["daily", L("Mindennapi gyémánt", "Everyday diamonds")],
                     ["fashion", L("Önkifejezés", "Self-expression")],
-                    ["classic", L("Klasszikus", "Classic")],
+                    ["all", L("Mind a 19", "All 19")],
                   ].map(([key, title]) => (
                     <button
                       key={key}
@@ -955,7 +962,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                 </div>
                 {choices("style", true)}
                 {isFashion(s) && fashionControls()}
-                {!isBand(s) && (
+                {(!isBand(s)||isDaily(s)) && (
                   <>
                     <h3>{L("A kő foglalata", "Stone setting")}</h3>
                     {choices("setting")}
@@ -993,7 +1000,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
             {step === 1 && isFashion(s) && fashionControls()}
             {step === 1 &&
               !isFashion(s) &&
-              (isBand(s) ? (
+              (isBand(s)&&!isDaily(s) ? (
                 <div className="rb-editorial">
                   <Icon />
                   <p>
@@ -1009,7 +1016,13 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                   {choices("shape", true)}
                   <h3>{L("Kő és színvilág", "Gemstone palette")}</h3>
                   {tones("gemTone")}
-                  {slider(
+                  {isDaily(s)?<>
+                    {slider('dailyCarat',L('Egy gyémánt súlya','Weight per diamond'),.05,.3,.01,'ct')}
+                    {slider('dailyCount',L('Gyémántok száma','Diamond count'),3,maxDailyStones(s),1,'')}
+                    {slider('dailySpacing',L('Kövek közötti ráhagyás','Stone spacing'),0,.5,.05,'')}
+                    {s.style==='chevron'&&slider('sculpt',L('V-ív mélysége','V depth'),.4,2.5,.1,'')}
+                    <p className="rb-fine">{L('A maximális kőszám a mérethez és a távolsághoz igazodik, hogy ne érjenek össze a kövek.','Maximum count adapts to stone size and spacing to keep stones separated.')}</p>
+                  </>:slider(
                     "carat",
                     L("Karátsúly", "Carat weight"),
                     0.3,
@@ -1108,7 +1121,14 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                 </p>
               </>
             )}
-            {step === 3 && !isFashion(s) && (
+            {step===3&&isDaily(s)&&<>
+              <h3>{L('Ritmus és szín','Rhythm and color')}</h3>
+              <label className="rb-toggle"><input type="checkbox" checked={s.alternateGems} onChange={e=>change({alternateGems:e.target.checked})}/>{L('Váltakozó kőszínek','Alternating gemstones')}</label>
+              {s.alternateGems&&tones('sideTone')}
+              {select('headMetal',L('Foglalatok nemesféme','Setting metal'))}
+              <p>{L('Minden kő önálló, a sínhez csatlakozó foglalatot kap.','Each stone has its own setting connected to the shank.')}</p>
+            </>}
+            {step === 3 && !isFashion(s) && !isDaily(s) && (
               <>
                 {!isBand(s) && (
                   <>
@@ -1228,7 +1248,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                           }
                         >
                           <option value="1">1</option>
-                          <option value="2">2</option>
+                          {s.style!=='split'&&<option value="2">2</option>}
                         </select>
                       </label>
                     </div>
@@ -1277,7 +1297,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                 <div className="rb-select-row">
                   {!isFashion(s) &&
                     select("profile", L("Sín profilja", "Band profile"))}
-                  {!isBand(s) && s.setting !== "bezel" && (
+                  {(!isBand(s)||isDaily(s)) && s.setting !== "bezel" && (
                     <label className="rb-select">
                       {L("Karmok", "Prongs")}
                       <select
@@ -1293,7 +1313,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                     </label>
                   )}
                 </div>
-                {!isBand(s) &&
+                {(!isBand(s)||isDaily(s)) &&
                   slider(
                     "height",
                     L("Foglalat emelése", "Setting lift"),
@@ -1333,7 +1353,13 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
             )}
             {step === 5 && (
               <>
+                <div className="rb-save-final">
+                  <label className="rb-select">{L('Adj nevet a tervednek','Name your design')}<input maxLength={60} value={designName} onChange={e=>setDesignName(e.target.value)} placeholder={label(s.style)}/></label>
+                  <button className="rb-primary" onClick={save}>{saved?L('Elmentve a saját terveid közé','Saved to your collection'):L('Terv mentése a gyűjteménybe','Save design to collection')}</button>
+                  <p className="rb-fine">{L('Mentés ezen a böngészőn. Másik eszközhöz töltsd le a tervfájlt.','Saved in this browser. Download the design file to use another device.')}</p>
+                </div>
                 <dl className="rb-summary">
+                  {isDaily(s)&&<div><dt>{L('Gyémántkompozíció','Diamond composition')}</dt><dd>{s.dailyCount} × {s.dailyCarat.toFixed(2)} ct · {label(s.shape)} · {label(s.setting)} · {label(s.gemTone)}{s.alternateGems?` / ${label(s.sideTone)}`:''}</dd></div>}
                   {isFashion(s) && (
                     <>
                       <div>
@@ -1446,7 +1472,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                     {L("Terv importálása", "Import design")} ↑
                   </button>
                   <button onClick={exportDesign}>
-                    {L("Specifikáció exportálása", "Export specification")} ↓
+                    {L("Tervfájl letöltése (JSON)", "Download design (JSON)")} ↓
                   </button>
                   <button onClick={share}>
                     {L("Terv megosztása", "Share design")} ↗
@@ -1556,8 +1582,8 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
         </div>
         <p>
           {L(
-            "Legfeljebb nyolc terv, ezen az eszközön. Egy kattintás, és folytathatod az alkotást.",
-            "Up to eight designs, saved on this device. Pick one and keep creating.",
+            "Legfeljebb 24 terv, ezen a böngészőn. Egy kattintás, és folytathatod az alkotást.",
+            "Up to 24 designs, saved in this browser. Pick one and keep creating.",
           )}
         </p>
         <div className="rb-library-grid">
@@ -1566,12 +1592,13 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
               key={item.id}
               onClick={() => {
                 change(item.design);
+                setDesignName(item.name||'');
                 libraryDialog.current.close();
                 notify(L("Mentett terv betöltve.", "Saved design loaded."));
               }}
             >
               <Shape style={item.design.style} />
-              <strong>{label(item.design.style)}</strong>
+              <strong>{item.name||label(item.design.style)}</strong>
               <span>
                 {label(item.design.metal)} ·{" "}
                 {isBand(item.design)
