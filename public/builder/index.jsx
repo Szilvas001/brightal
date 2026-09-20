@@ -8,7 +8,7 @@ import {
   isBand,
 } from "./state.js";
 import { RingRenderer } from "./renderer.js";
-import { GEM_TONES } from './optics.mjs';
+import { GEM_TONES } from "./optics.mjs";
 const { useState, useEffect, useRef } = React;
 const names = {
   solitaire: ["Szoliter", "Solitaire"],
@@ -17,12 +17,35 @@ const names = {
   vintage: ["Vintage", "Vintage"],
   pave: ["Pavé", "Pavé"],
   band: ["Karikagyűrű", "Wedding band"],
-  duet: ['Toi & Moi','Toi & Moi'], cathedral:['Katedrális','Cathedral'], split:['Osztott sín','Split shank'], eternity:['Örökkévalóság','Eternity'],
-  asscher:['Asscher','Asscher'],
-  ice:['Fehér gyémánt','White diamond'],champagne:['Pezsgő gyémánt','Champagne diamond'],blush:['Rózsaszín gyémánt','Pink diamond'],canary:['Sárga gyémánt','Yellow diamond'],sapphire:['Zafír','Sapphire'],emeraldGreen:['Smaragd','Emerald gem'],ruby:['Rubin','Ruby'],
-  pair:['Szimmetrikus pár','Symmetric pair'],cluster:['Virágfürt','Floral cluster'],five:['Ötköves','Five stone'],
-  claw:['Karmos','Claw'],bezel:['Zárt keret','Bezel'],doubleclaw:['Dupla karom','Double claw'],north:['Hosszában','North–south'],east:['Keresztben','East–west'],match:['Sínnel azonos','Match band'],
-  shoulders:['Vállakon','Shoulders'],half:['Félkörben','Half band'],full:['Teljes körben','Full band'],single:['Egysoros halo','Single halo'],double:['Kétsoros halo','Double halo'],serif:['Klasszikus','Classic'],script:['Kézírás','Script'],modern:['Modern','Modern'],
+  duet: ["Toi & Moi", "Toi & Moi"],
+  cathedral: ["Katedrális", "Cathedral"],
+  split: ["Osztott sín", "Split shank"],
+  eternity: ["Örökkévalóság", "Eternity"],
+  asscher: ["Asscher", "Asscher"],
+  ice: ["Fehér gyémánt", "White diamond"],
+  champagne: ["Pezsgő gyémánt", "Champagne diamond"],
+  blush: ["Rózsaszín gyémánt", "Pink diamond"],
+  canary: ["Sárga gyémánt", "Yellow diamond"],
+  sapphire: ["Zafír", "Sapphire"],
+  emeraldGreen: ["Smaragd", "Emerald gem"],
+  ruby: ["Rubin", "Ruby"],
+  pair: ["Szimmetrikus pár", "Symmetric pair"],
+  cluster: ["Virágfürt", "Floral cluster"],
+  five: ["Ötköves", "Five stone"],
+  claw: ["Karmos", "Claw"],
+  bezel: ["Zárt keret", "Bezel"],
+  doubleclaw: ["Dupla karom", "Double claw"],
+  north: ["Hosszában", "North–south"],
+  east: ["Keresztben", "East–west"],
+  match: ["Sínnel azonos", "Match band"],
+  shoulders: ["Vállakon", "Shoulders"],
+  half: ["Félkörben", "Half band"],
+  full: ["Teljes körben", "Full band"],
+  single: ["Egysoros halo", "Single halo"],
+  double: ["Kétsoros halo", "Double halo"],
+  serif: ["Klasszikus", "Classic"],
+  script: ["Kézírás", "Script"],
+  modern: ["Modern", "Modern"],
   round: ["Kerek", "Round"],
   oval: ["Ovális", "Oval"],
   cushion: ["Párna", "Cushion"],
@@ -92,7 +115,7 @@ function Shape({ shape, style }) {
       {style ? (
         <>
           <ellipse cx="32" cy="32" rx="17" ry="15" />
-          {!['band','eternity'].includes(style) && (
+          {!["band", "eternity"].includes(style) && (
             <>
               <path d="m22 16 5-7h10l5 7-10 12-10-12Zm0 0h20M27 9l5 19 5-19" />
               {style === "trilogy" && (
@@ -101,9 +124,9 @@ function Shape({ shape, style }) {
                   <circle cx="50" cy="21" r="5" />
                 </>
               )}
-              {style==='duet'&&<path d="m40 10 8 1 5 8-9 10-8-10Z"/>}
-              {style==='cathedral'&&<path d="M15 31 24 20M49 31 40 20"/>}
-              {style==='split'&&<path d="M16 30 23 15M48 30 41 15"/>}
+              {style === "duet" && <path d="m40 10 8 1 5 8-9 10-8-10Z" />}
+              {style === "cathedral" && <path d="M15 31 24 20M49 31 40 20" />}
+              {style === "split" && <path d="M16 30 23 15M48 30 41 15" />}
               {["halo", "vintage"].includes(style) && (
                 <ellipse
                   cx="32"
@@ -189,9 +212,19 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
     [ready, setReady] = useState(false),
     [busy, setBusy] = useState(false),
     [saved, setSaved] = useState(false);
-  const [thumbs,setThumbs]=useState([]);
-  const [library,setLibrary]=useState(()=>{try{const v=JSON.parse(localStorage.getItem('brightal-library-v2')||'[]');return Array.isArray(v)?v.slice(0,8).map(x=>({...x,design:normalize(x.design)})):[];}catch{return [];}});
-  const libraryDialog=useRef(null),importInput=useRef(null);
+  const [thumbs, setThumbs] = useState([]);
+  const [library, setLibrary] = useState(() => {
+    try {
+      const v = JSON.parse(localStorage.getItem("brightal-library-v2") || "[]");
+      return Array.isArray(v)
+        ? v.slice(0, 8).map((x) => ({ ...x, design: normalize(x.design) }))
+        : [];
+    } catch {
+      return [];
+    }
+  });
+  const libraryDialog = useRef(null),
+    importInput = useRef(null);
   const host = useRef(null),
     engine = useRef(null),
     timer = useRef(null),
@@ -253,21 +286,53 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
       setError(true);
     }
   }, [s]);
-  useEffect(()=>{
-    let canceled=false,preview=null,node=null;
-    const build=async()=>{
-      try{
-        node=document.createElement('div');node.style.cssText='position:fixed;left:-10000px;top:0;width:256px;height:224px;';document.body.appendChild(node);
-        preview=new RingRenderer(node,()=>{});preview.renderer.setPixelRatio(1);preview.renderer.setSize(256,224);preview.camera.aspect=256/224;preview.camera.updateProjectionMatrix();
-        for(let i=0;i<PRESETS.length&&!canceled;i++){
-          preview.update(normalize(PRESETS[i].config));preview.camera.position.set(22,19,31);preview.controls.target.set(0,1.5,0);preview.controls.update();
-          const image=preview.capture();setThumbs(v=>{const a=[...v];a[i]=image;return a;});await new Promise(requestAnimationFrame);
+  useEffect(() => {
+    let canceled = false,
+      preview = null,
+      node = null;
+    const build = async () => {
+      try {
+        node = document.createElement("div");
+        node.style.cssText =
+          "position:fixed;left:-10000px;top:0;width:256px;height:224px;";
+        document.body.appendChild(node);
+        preview = new RingRenderer(node, () => {});
+        preview.renderer.setPixelRatio(1);
+        preview.renderer.setSize(256, 224);
+        preview.camera.aspect = 256 / 224;
+        preview.camera.updateProjectionMatrix();
+        for (let i = 0; i < PRESETS.length && !canceled; i++) {
+          preview.update(normalize(PRESETS[i].config));
+          preview.camera.position.set(22, 19, 31);
+          preview.controls.target.set(0, 1.5, 0);
+          preview.controls.update();
+          const image = preview.capture();
+          setThumbs((v) => {
+            const a = [...v];
+            a[i] = image;
+            return a;
+          });
+          await new Promise(requestAnimationFrame);
         }
-      }catch(e){console.warn('Preset previews unavailable',e);}finally{preview?.dispose();preview=null;node?.remove();node=null;}
+      } catch (e) {
+        console.warn("Preset previews unavailable", e);
+      } finally {
+        preview?.dispose();
+        preview = null;
+        node?.remove();
+        node = null;
+      }
     };
-    const id=setTimeout(build,700);
-    return()=>{canceled=true;clearTimeout(id);preview?.dispose();preview=null;node?.remove();node=null;};
-  },[]);
+    const id = setTimeout(build, 700);
+    return () => {
+      canceled = true;
+      clearTimeout(id);
+      preview?.dispose();
+      preview = null;
+      node?.remove();
+      node = null;
+    };
+  }, []);
   useEffect(() => {
     const listener = () => {
       if (location.hash.includes("design=")) change(readDesign());
@@ -283,7 +348,20 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
           type="button"
           className={"rb-choice " + (s[key] === value ? "selected" : "")}
           aria-pressed={s[key] === value}
-          onClick={() => change(key === 'style' ? {...{[key]:value},sideMode:value==='trilogy'?'pair':'none',accents:value==='eternity'||value==='pave'?'pave':s.accents} : { [key]: value })}
+          onClick={() =>
+            change(
+              key === "style"
+                ? {
+                    ...{ [key]: value },
+                    sideMode: value === "trilogy" ? "pair" : "none",
+                    accents:
+                      value === "eternity" || value === "pave"
+                        ? "pave"
+                        : s.accents,
+                  }
+                : { [key]: value },
+            )
+          }
         >
           {visual && (
             <Shape
@@ -296,7 +374,24 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
       ))}
     </div>
   );
-  const tones = key => <div className="rb-tones">{OPTIONS[key].map(tone=><button key={tone} className={s[key]===tone?'selected':''} aria-pressed={s[key]===tone} onClick={()=>change({[key]:tone})}><span className="rb-tone" style={{'--tone':GEM_TONES[tone].color}}/><span>{label(tone)}</span></button>)}</div>;
+  const tones = (key) => (
+    <div className="rb-tones">
+      {OPTIONS[key].map((tone) => (
+        <button
+          key={tone}
+          className={s[key] === tone ? "selected" : ""}
+          aria-pressed={s[key] === tone}
+          onClick={() => change({ [key]: tone })}
+        >
+          <span
+            className="rb-tone"
+            style={{ "--tone": GEM_TONES[tone].color }}
+          />
+          <span>{label(tone)}</span>
+        </button>
+      ))}
+    </div>
+  );
   const select = (key, title) => (
     <label className="rb-select">
       {title}
@@ -317,7 +412,8 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
       <span>
         {title}
         <strong>
-          {Number(s[key]).toFixed(increment < 1 ? 1 : 0)} {unit}
+          {Number(s[key]).toFixed(increment < 0.1 ? 2 : increment < 1 ? 1 : 0)}{" "}
+          {unit}
         </strong>
       </span>
       <input
@@ -341,8 +437,9 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
   const save = () => {
     try {
       localStorage.setItem("brightal-design-v1", JSON.stringify(s));
-      const next=[{id:Date.now(),design:s},...library].slice(0,8);
-      localStorage.setItem('brightal-library-v2',JSON.stringify(next));setLibrary(next);
+      const next = [{ id: Date.now(), design: s }, ...library].slice(0, 8);
+      localStorage.setItem("brightal-library-v2", JSON.stringify(next));
+      setLibrary(next);
       setSaved(true);
       notify(
         L(
@@ -418,9 +515,29 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
     download(url, "brightal-design.json");
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
-  const importDesign=async event=>{
-    const file=event.target.files?.[0];event.target.value='';if(!file)return;
-    try{if(file.size>20000)throw new Error('size');const parsed=JSON.parse(await file.text());if(!parsed.design||Array.isArray(parsed.design)||typeof parsed.design!=='object')throw new Error('format');change(normalize(parsed.design));notify(L('A terv betöltve.','Design imported.'));}catch{notify(L('Nem sikerült beolvasni. Válassz egy BRIGHTAL JSON tervfájlt.','Could not import. Choose a BRIGHTAL JSON design file.'));}
+  const importDesign = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    try {
+      if (file.size > 20000) throw new Error("size");
+      const parsed = JSON.parse(await file.text());
+      if (
+        !parsed.design ||
+        Array.isArray(parsed.design) ||
+        typeof parsed.design !== "object"
+      )
+        throw new Error("format");
+      change(normalize(parsed.design));
+      notify(L("A terv betöltve.", "Design imported."));
+    } catch {
+      notify(
+        L(
+          "Nem sikerült beolvasni. Válassz egy BRIGHTAL JSON tervfájlt.",
+          "Could not import. Choose a BRIGHTAL JSON design file.",
+        ),
+      );
+    }
   };
   const steps = [
     L("Stílus", "Style"),
@@ -432,15 +549,24 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
   ];
   return (
     <main className="rb-page">
-      <div className="rb-path-switch"><button className="active" aria-current="page"><Icon type="gem" size={16}/>{L('Megtervezem 3D-ben','Design in 3D')}</button><button onClick={onUpload}><Icon type="camera" size={16}/>{L('Van egy képem','I have a photo')}<span>↗</span></button></div>
+      <div className="rb-path-switch">
+        <button className="active" aria-current="page">
+          <Icon type="gem" size={16} />
+          {L("Megtervezem 3D-ben", "Design in 3D")}
+        </button>
+        <button onClick={onUpload}>
+          <Icon type="camera" size={16} />
+          {L("Van egy képem", "I have a photo")}
+          <span>↗</span>
+        </button>
+      </div>
       <header className="rb-heading">
         <div>
           <div className="rb-eyebrow">
             <span /> BRIGHTAL / ATELIER <span className="rb-tag">VOL. 02</span>
           </div>
           <h1>
-            {L("Forma. Fény.", "Form. Light.")}{" "}
-            <em>{L("Te.", "You.")}</em>
+            {L("Forma. Fény.", "Form. Light.")} <em>{L("Te.", "You.")}</em>
           </h1>
           <p>
             {L(
@@ -449,10 +575,18 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
             )}
           </p>
         </div>
-        <div className="rb-heading-actions"><button className="rb-library-button" onClick={()=>libraryDialog.current.showModal()}>{L('Saját terveim','My collection')} <span>{library.length.toString().padStart(2,'0')}</span></button><button className="rb-save" onClick={save}>
-          <Icon type="save" />
-          {saved ? L("Elmentve", "Saved") : L("Terv mentése", "Save design")}
-        </button>
+        <div className="rb-heading-actions">
+          <button
+            className="rb-library-button"
+            onClick={() => libraryDialog.current.showModal()}
+          >
+            {L("Saját terveim", "My collection")}{" "}
+            <span>{library.length.toString().padStart(2, "0")}</span>
+          </button>
+          <button className="rb-save" onClick={save}>
+            <Icon type="save" />
+            {saved ? L("Elmentve", "Saved") : L("Terv mentése", "Save design")}
+          </button>
         </div>
       </header>
       <div className="rb-workspace">
@@ -462,7 +596,8 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
         >
           <div className="rb-stage-heading">
             <span>
-              <i /> {L("A TE ALKOTÁSOD", "YOUR CREATION")} <span className="rb-live-pill">LIVE</span>
+              <i /> {L("A TE ALKOTÁSOD", "YOUR CREATION")}{" "}
+              <span className="rb-live-pill">LIVE</span>
             </span>
             <div>
               <button
@@ -490,7 +625,10 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
           <div className="rb-watermark" aria-hidden="true">
             atelier.
           </div>
-          <span className="rb-stage-edition" aria-hidden="true">BRIGHTAL OBJECTS / N° {String(OPTIONS.style.indexOf(s.style)+1).padStart(2,'0')}</span>
+          <span className="rb-stage-edition" aria-hidden="true">
+            BRIGHTAL OBJECTS / N°{" "}
+            {String(OPTIONS.style.indexOf(s.style) + 1).padStart(2, "0")}
+          </span>
           <div ref={host} className="rb-canvas" />
           {!ready && !error && (
             <div className="rb-loading">
@@ -642,7 +780,10 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                       "Meleg arany, finom rozé vagy hűvös platina.",
                       "Warm gold, soft rose or cool platinum.",
                     ),
-                    L('Állítsd külön az oldalkövek formáját, méretét és színét. Rajzold körbe fénnyel a gyűrűd.', 'Choose the shape, size and color of your side stones. Trace your ring in light.'),
+                    L(
+                      "Állítsd külön az oldalkövek formáját, méretét és színét. Rajzold körbe fénnyel a gyűrűd.",
+                      "Choose the shape, size and color of your side stones. Trace your ring in light.",
+                    ),
                     L(
                       "Egy titkos üzenet. Egy váratlan csillanás. Egy személyes döntés.",
                       "A secret message. An unexpected sparkle. A personal touch.",
@@ -659,7 +800,22 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
               <>
                 <h3>{L("Gyűrű stílusa", "Ring style")}</h3>
                 {choices("style", true)}
-                {!isBand(s)&&<><h3>{L('A kő foglalata','Stone setting')}</h3>{choices('setting')}<div className="rb-select-row">{select('orientation',L('Kő tájolása','Stone orientation'))}{select('headMetal',L('Foglalat nemesféme','Head metal'))}</div></>}
+                {!isBand(s) && (
+                  <>
+                    <h3>{L("A kő foglalata", "Stone setting")}</h3>
+                    {choices("setting")}
+                    <div className="rb-select-row">
+                      {select(
+                        "orientation",
+                        L("Kő tájolása", "Stone orientation"),
+                      )}
+                      {select(
+                        "headMetal",
+                        L("Foglalat nemesféme", "Head metal"),
+                      )}
+                    </div>
+                  </>
+                )}
                 <div className="rb-editorial">
                   <Icon type="spark" />
                   <div>
@@ -685,8 +841,8 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                   <Icon />
                   <p>
                     {L(
-                      "A karikagyűrűnek nincs központi köve. A Részletek lépésben pavé vagy sínbe foglalt gyémántsort adhatsz hozzá.",
-                      "Wedding bands have no center stone. Add pavé or channel-set diamonds in Details.",
+                      "A karikagyűrűnek nincs központi köve. Az Oldalkövek lépésben pavé vagy sínbe foglalt gyémántsort adhatsz hozzá.",
+                      "Wedding bands have no center stone. Add pavé or channel-set diamonds in Side stones.",
                     )}
                   </p>
                 </div>
@@ -694,7 +850,8 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                 <>
                   <h3>{L("Gyémántforma", "Diamond shape")}</h3>
                   {choices("shape", true)}
-                  <h3>{L('Kő és színvilág','Gemstone palette')}</h3>{tones('gemTone')}
+                  <h3>{L("Kő és színvilág", "Gemstone palette")}</h3>
+                  {tones("gemTone")}
                   {slider(
                     "carat",
                     L("Karátsúly", "Carat weight"),
@@ -703,10 +860,12 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                     0.1,
                     "ct",
                   )}
-                  <div className="rb-select-row">
-                    {select("color", L("Szín", "Color"))}
-                    {select("clarity", L("Tisztaság", "Clarity"))}
-                  </div>
+                  {s.gemTone === "ice" && (
+                    <div className="rb-select-row">
+                      {select("color", L("Szín", "Color"))}
+                      {select("clarity", L("Tisztaság", "Clarity"))}
+                    </div>
+                  )}
                   <div className="rb-select-row">
                     {select("origin", L("Eredet", "Origin"))}
                     {select(
@@ -745,27 +904,162 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                   {L("Próbáld más fényben", "See it in a different light")}
                 </h3>
                 {choices("light")}
-                <p className="rb-fine">{L('A fényváltás az előnézet hangulatát változtatja. A fém és a kövek a választott fényforrásokat tükrözik.', 'Lighting changes the preview mood. Metals and stones reflect the selected light rig.')}</p>
+                <p className="rb-fine">
+                  {L(
+                    "A fényváltás az előnézet hangulatát változtatja. A fém és a kövek a választott fényforrásokat tükrözik.",
+                    "Lighting changes the preview mood. Metals and stones reflect the selected light rig.",
+                  )}
+                </p>
               </>
             )}
-            {step === 3 && <>
-              {!isBand(s)&&<>
-                {s.style!=='duet'&&<><h3>{L('Oldalkövek elrendezése','Side stone arrangement')}</h3><div className="rb-choices">{OPTIONS.sideMode.filter(v=>s.style!=='trilogy'||v!=='none').map(v=><button key={v} className={'rb-choice '+(s.sideMode===v?'selected':'')} aria-pressed={s.sideMode===v} onClick={()=>change({sideMode:v})}>{label(v)}</button>)}</div></>}
-                {(s.sideMode!=='none'||s.style==='duet')&&<>
-                  <h3>{s.style==='duet'?L('Második főköved','Your second center stone'):L('Oldalkő formája','Side stone shape')}</h3>{choices('sideShape',true)}
-                  {slider('sideCarat',L('Egy oldalkő súlya','Each side stone weight'),.1,1.5,.05,'ct')}
-                </>}
-              </>}
-              <h3>{L('Oldalkövek és berakások színe','Side stone & accent palette')}</h3>{tones('sideTone')}
-              <h3>{L('Sín berakása','Band accents')}</h3><div className="rb-choices">{OPTIONS.accents.filter(a=>!isBand(s)||a!=='hidden').map(a=><button className={'rb-choice '+(s.accents===a?'selected':'')} key={a} aria-pressed={s.accents===a} onClick={()=>change({accents:a})}>{label(a)}</button>)}</div>
-              {!isBand(s)&&<label className="rb-toggle"><input type="checkbox" checked={s.hiddenHalo} onChange={e=>change({hiddenHalo:e.target.checked})}/><span>{L('Rejtett halo a főkő alatt','Hidden halo below the center stone')}</span></label>}
-              {(['pave','channel'].includes(s.accents)||['pave','vintage','eternity'].includes(s.style))&&<>
-                {slider('accentSize',L('Berakott kövek átmérője','Accent stone diameter'),.6,Number(Math.min(2,s.width/(s.accentRows+.4)).toFixed(2)),.1,'mm')}
-                <div className="rb-select-row">{s.style!=='eternity'&&select('coverage',L('Berakás hossza','Accent coverage'))}<label className="rb-select">{L('Kősorok száma','Stone rows')}<select value={s.accentRows} onChange={e=>change({accentRows:Number(e.target.value)})}><option value="1">1</option><option value="2">2</option></select></label></div>
-                <p className="rb-fine">{L('A maximális kőméret igazodik a sín szélességéhez és a sorok számához.','Maximum stone diameter adapts to band width and row count.')}</p>
-              </>}
-              {['halo','vintage'].includes(s.style)&&<><h3>{L('Halo kialakítása','Halo design')}</h3>{choices('halo')}{slider('haloSize',L('Halo kövek átmérője','Halo stone diameter'),.6,1.6,.1,'mm')}</>}
-            </>}
+            {step === 3 && (
+              <>
+                {!isBand(s) && (
+                  <>
+                    {s.style !== "duet" && (
+                      <>
+                        <h3>
+                          {L(
+                            "Oldalkövek elrendezése",
+                            "Side stone arrangement",
+                          )}
+                        </h3>
+                        <div className="rb-choices">
+                          {OPTIONS.sideMode
+                            .filter(
+                              (v) => s.style !== "trilogy" || v !== "none",
+                            )
+                            .map((v) => (
+                              <button
+                                key={v}
+                                className={
+                                  "rb-choice " +
+                                  (s.sideMode === v ? "selected" : "")
+                                }
+                                aria-pressed={s.sideMode === v}
+                                onClick={() => change({ sideMode: v })}
+                              >
+                                {label(v)}
+                              </button>
+                            ))}
+                        </div>
+                      </>
+                    )}
+                    {(s.sideMode !== "none" || s.style === "duet") && (
+                      <>
+                        <h3>
+                          {s.style === "duet"
+                            ? L("Második főköved", "Your second center stone")
+                            : L("Oldalkő formája", "Side stone shape")}
+                        </h3>
+                        {choices("sideShape", true)}
+                        {slider(
+                          "sideCarat",
+                          L("Egy oldalkő súlya", "Each side stone weight"),
+                          0.1,
+                          1.5,
+                          0.05,
+                          "ct",
+                        )}
+                      </>
+                    )}
+                  </>
+                )}
+                <h3>
+                  {L(
+                    "Oldalkövek és berakások színe",
+                    "Side stone & accent palette",
+                  )}
+                </h3>
+                {tones("sideTone")}
+                <h3>{L("Sín berakása", "Band accents")}</h3>
+                <div className="rb-choices">
+                  {OPTIONS.accents
+                    .filter((a) => s.style !== "eternity" || a !== "none")
+                    .map((a) => (
+                      <button
+                        className={
+                          "rb-choice " + (s.accents === a ? "selected" : "")
+                        }
+                        key={a}
+                        aria-pressed={s.accents === a}
+                        onClick={() => change({ accents: a })}
+                      >
+                        {label(a)}
+                      </button>
+                    ))}
+                </div>
+                {!isBand(s) && (
+                  <label className="rb-toggle">
+                    <input
+                      type="checkbox"
+                      checked={s.hiddenHalo}
+                      onChange={(e) => change({ hiddenHalo: e.target.checked })}
+                    />
+                    <span>
+                      {L(
+                        "Rejtett halo a főkő alatt",
+                        "Hidden halo below the center stone",
+                      )}
+                    </span>
+                  </label>
+                )}
+                {(["pave", "channel"].includes(s.accents) ||
+                  ["pave", "vintage", "eternity"].includes(s.style)) && (
+                  <>
+                    {slider(
+                      "accentSize",
+                      L("Berakott kövek átmérője", "Accent stone diameter"),
+                      0.6,
+                      Number(
+                        Math.min(2, s.width / (s.accentRows + 0.4)).toFixed(2),
+                      ),
+                      0.1,
+                      "mm",
+                    )}
+                    <div className="rb-select-row">
+                      {s.style !== "eternity" &&
+                        select(
+                          "coverage",
+                          L("Berakás hossza", "Accent coverage"),
+                        )}
+                      <label className="rb-select">
+                        {L("Kősorok száma", "Stone rows")}
+                        <select
+                          value={s.accentRows}
+                          onChange={(e) =>
+                            change({ accentRows: Number(e.target.value) })
+                          }
+                        >
+                          <option value="1">1</option>
+                          <option value="2">2</option>
+                        </select>
+                      </label>
+                    </div>
+                    <p className="rb-fine">
+                      {L(
+                        "A maximális kőméret igazodik a sín szélességéhez és a sorok számához.",
+                        "Maximum stone diameter adapts to band width and row count.",
+                      )}
+                    </p>
+                  </>
+                )}
+                {["halo", "vintage"].includes(s.style) && (
+                  <>
+                    <h3>{L("Halo kialakítása", "Halo design")}</h3>
+                    {choices("halo")}
+                    {slider(
+                      "haloSize",
+                      L("Halo kövek átmérője", "Halo stone diameter"),
+                      0.6,
+                      1.6,
+                      0.1,
+                      "mm",
+                    )}
+                  </>
+                )}
+              </>
+            )}
             {step === 4 && (
               <>
                 {slider(
@@ -786,7 +1080,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                 )}
                 <div className="rb-select-row">
                   {select("profile", L("Sín profilja", "Band profile"))}
-                  {!isBand(s) && s.setting !== 'bezel' && (
+                  {!isBand(s) && s.setting !== "bezel" && (
                     <label className="rb-select">
                       {L("Karmok", "Prongs")}
                       <select
@@ -802,24 +1096,15 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                     </label>
                   )}
                 </div>
-                {!isBand(s)&&slider('height',L('Foglalat emelése','Setting lift'),.5,2.5,.1,'mm')}
-                <h3>{L("Kísérő gyémántok", "Accent diamonds")}</h3>
-                <div className="rb-choices">
-                  {OPTIONS.accents
-                    .filter((a) => !isBand(s) || a !== "hidden")
-                    .map((a) => (
-                      <button
-                        className={
-                          "rb-choice " + (s.accents === a ? "selected" : "")
-                        }
-                        key={a}
-                        aria-pressed={s.accents === a}
-                        onClick={() => change({ accents: a })}
-                      >
-                        {label(a)}
-                      </button>
-                    ))}
-                </div>
+                {!isBand(s) &&
+                  slider(
+                    "height",
+                    L("Foglalat emelése", "Setting lift"),
+                    0.5,
+                    2.5,
+                    0.1,
+                    "mm",
+                  )}
                 <label className="rb-select rb-engraving">
                   {L("A ti titkos üzenetetek", "Your secret message")}
                   <input
@@ -839,7 +1124,10 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                     )}
                   </small>
                 </label>
-                {select('engravingFont',L('Gravírozás betűje','Engraving lettering'))}
+                {select(
+                  "engravingFont",
+                  L("Gravírozás betűje", "Engraving lettering"),
+                )}
               </>
             )}
             {step === 5 && (
@@ -860,20 +1148,50 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                     ["metal", L("Nemesfém", "Metal")],
                     ["finish", L("Felület", "Finish")],
                     ["accents", L("Kísérőkövek", "Accents")],
-                    ...(!isBand(s)?[['gemTone',L('Főkő','Center gem')],['setting',L('Foglalat','Setting')],['headMetal',L('Foglalat féme','Head metal')],['orientation',L('Tájolás','Orientation')]]:[]),
-                    ['sideTone',L('Oldalkövek színe','Accent color')],
+                    ...(!isBand(s)
+                      ? [
+                          ["gemTone", L("Főkő", "Center gem")],
+                          ["setting", L("Foglalat", "Setting")],
+                          ["headMetal", L("Foglalat féme", "Head metal")],
+                          ["orientation", L("Tájolás", "Orientation")],
+                        ]
+                      : []),
+                    ["sideTone", L("Oldalkövek színe", "Accent color")],
                   ].map(([key, title]) => (
                     <div key={key}>
                       <dt>{title}</dt>
                       <dd>
                         {key === "shape"
-                          ? `${label(s.shape)} · ${s.carat.toFixed(1)} ct · ${s.color} / ${s.clarity}`
+                          ? `${label(s.shape)} · ${s.carat.toFixed(1)} ct${s.gemTone === "ice" ? ` · ${s.color} / ${s.clarity}` : ""}`
                           : label(s[key])}
                       </dd>
                     </div>
                   ))}
-                  {(!isBand(s)&&(s.sideMode!=='none'||s.style==='duet'))&&<div><dt>{L('Oldalkő','Side stone')}</dt><dd>{label(s.sideShape)} · {s.sideCarat.toFixed(2)} ct · {s.style==='duet'?'Toi & Moi':label(s.sideMode)}</dd></div>}
-                  {s.accents!=='none'&&<div><dt>{L('Berakás','Accents')}</dt><dd>{s.accentSize} mm · {s.accentRows} {L('sor','rows')} · {label(s.coverage)}</dd></div>}
+                  {!isBand(s) &&
+                    (s.sideMode !== "none" || s.style === "duet") && (
+                      <div>
+                        <dt>{L("Oldalkő", "Side stone")}</dt>
+                        <dd>
+                          {label(s.sideShape)} · {s.sideCarat.toFixed(2)} ct ·{" "}
+                          {s.style === "duet" ? "Toi & Moi" : label(s.sideMode)}
+                        </dd>
+                      </div>
+                    )}
+                  {s.accents !== "none" && (
+                    <div>
+                      <dt>{L("Berakás", "Accents")}</dt>
+                      <dd>
+                        {s.accentSize} mm · {s.accentRows} {L("sor", "rows")} ·{" "}
+                        {label(s.coverage)}
+                      </dd>
+                    </div>
+                  )}
+                  {s.hiddenHalo && (
+                    <div>
+                      <dt>{L("Rejtett halo", "Hidden halo")}</dt>
+                      <dd>{L("Igen", "Yes")}</dd>
+                    </div>
+                  )}
                   <div>
                     <dt>{L("Szélesség / méret", "Width / size")}</dt>
                     <dd>
@@ -894,7 +1212,9 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                   )}
                 </p>
                 <div className="rb-export">
-                  <button onClick={()=>importInput.current.click()}>{L('Terv importálása','Import design')} ↑</button>
+                  <button onClick={() => importInput.current.click()}>
+                    {L("Terv importálása", "Import design")} ↑
+                  </button>
                   <button onClick={exportDesign}>
                     {L("Specifikáció exportálása", "Export specification")} ↓
                   </button>
@@ -955,7 +1275,15 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
               }}
             >
               <div className={"rb-preset-art preset-" + i}>
-                {thumbs[i]?<img src={thumbs[i]} alt={p.name[en?1:0]} loading="lazy"/>:<Shape style={p.config.style} />}
+                {thumbs[i] ? (
+                  <img
+                    src={thumbs[i]}
+                    alt={p.name[en ? 1 : 0]}
+                    loading="lazy"
+                  />
+                ) : (
+                  <Shape style={p.config.style} />
+                )}
               </div>
               <span>
                 {p.name[en ? 1 : 0]} <i>↗</i>
@@ -974,8 +1302,70 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
       <div className="rb-notice" role="status" aria-live="polite">
         {notice}
       </div>
-      <input ref={importInput} type="file" accept=".json,application/json" onChange={importDesign} hidden/>
-      <dialog ref={libraryDialog} className="rb-library-dialog"><div className="rb-library-head"><div><span className="rb-eyebrow">BRIGHTAL / COLLECTION</span><h2>{L('A képzeleted gyűjteménye.','Your imagination, collected.')}</h2></div><button onClick={()=>libraryDialog.current.close()} aria-label={L('Bezárás','Close')}>×</button></div><p>{L('Legfeljebb nyolc terv, ezen az eszközön. Egy kattintás, és folytathatod az alkotást.','Up to eight designs, saved on this device. Pick one and keep creating.')}</p><div className="rb-library-grid">{library.map(item=><button key={item.id} onClick={()=>{change(item.design);libraryDialog.current.close();notify(L('Mentett terv betöltve.','Saved design loaded.'));}}><Shape style={item.design.style}/><strong>{label(item.design.style)}</strong><span>{label(item.design.metal)} · {item.design.carat} ct</span></button>)}</div>{!library.length&&<p>{L('Még nincs mentett terved. Kezdd egy ötlettel.','No saved designs yet. Start with an idea.')}</p>}<button className="rb-primary" onClick={()=>{libraryDialog.current.close();importInput.current.click();}}>{L('Terv importálása','Import design')} ↑</button></dialog>
+      <input
+        ref={importInput}
+        type="file"
+        accept=".json,application/json"
+        onChange={importDesign}
+        hidden
+      />
+      <dialog ref={libraryDialog} className="rb-library-dialog">
+        <div className="rb-library-head">
+          <div>
+            <span className="rb-eyebrow">BRIGHTAL / COLLECTION</span>
+            <h2>
+              {L("A képzeleted gyűjteménye.", "Your imagination, collected.")}
+            </h2>
+          </div>
+          <button
+            onClick={() => libraryDialog.current.close()}
+            aria-label={L("Bezárás", "Close")}
+          >
+            ×
+          </button>
+        </div>
+        <p>
+          {L(
+            "Legfeljebb nyolc terv, ezen az eszközön. Egy kattintás, és folytathatod az alkotást.",
+            "Up to eight designs, saved on this device. Pick one and keep creating.",
+          )}
+        </p>
+        <div className="rb-library-grid">
+          {library.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => {
+                change(item.design);
+                libraryDialog.current.close();
+                notify(L("Mentett terv betöltve.", "Saved design loaded."));
+              }}
+            >
+              <Shape style={item.design.style} />
+              <strong>{label(item.design.style)}</strong>
+              <span>
+                {label(item.design.metal)} · {item.design.carat} ct
+              </span>
+            </button>
+          ))}
+        </div>
+        {!library.length && (
+          <p>
+            {L(
+              "Még nincs mentett terved. Kezdd egy ötlettel.",
+              "No saved designs yet. Start with an idea.",
+            )}
+          </p>
+        )}
+        <button
+          className="rb-primary"
+          onClick={() => {
+            libraryDialog.current.close();
+            importInput.current.click();
+          }}
+        >
+          {L("Terv importálása", "Import design")} ↑
+        </button>
+      </dialog>
     </main>
   );
 }

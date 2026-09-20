@@ -1,13 +1,893 @@
 /* Original BRIGHTAL atelier identity: warm paper, merlot and editorial typography. */
-.rb-toggle{display:flex;align-items:center;gap:9px;margin:19px 0;color:#916a7d;font-size:10px;line-height:1.7}.rb-toggle input{accent-color:#80506a;width:15px;height:15px}
-.rb-page{--rb-ink:#3d2633;--rb-muted:#85747b;--rb-accent:#754454;--rb-line:#e5dce0;background:#f9f6f3;padding:90px 4vw 0;color:var(--rb-ink)}
-.rb-path-switch{display:flex;justify-content:center;gap:0;width:max-content;max-width:100%;margin:0 auto 30px;background:#efe9e7;border:1px solid #e7dfdd;border-radius:40px;padding:4px}.rb-path-switch button{display:flex;align-items:center;gap:9px;border:0;border-radius:30px;background:none;color:#8a737b;padding:11px 24px;font-size:10px;letter-spacing:.25px}.rb-path-switch .active{background:#fffdfb;color:#5a3445;box-shadow:0 2px 8px #48232e0a}.rb-path-switch span{margin-left:12px}
-.rb-heading{margin-bottom:30px;align-items:flex-end}.rb-eyebrow{color:#987282;font-size:9px;letter-spacing:2.3px}.rb-eyebrow>span:first-child:not(.rb-tag){background:#784052}.rb-tag{border-radius:12px;color:#9b7583;border-color:#dfcdd4;padding:5px 9px;background:#f6eff1;font-size:7px}.rb-heading h1{font:400 clamp(48px,5.3vw,78px)/.95 var(--serif);letter-spacing:-2.8px;color:#422736;margin:18px 0}.rb-heading h1 em{color:#9e6177;font-weight:300}.rb-heading p{font-size:11px;letter-spacing:.1px;color:#9a848b}.rb-heading-actions{display:flex;align-items:center;gap:16px;padding-bottom:8px}.rb-save{border:1px solid #d9bdc9;border-radius:30px;background:#f6ecef;color:#693c4e;font-size:10px!important;padding:13px 19px}.rb-save:hover{background:#eedde4}.rb-library-button{border:0;background:none;color:#8c6b7b;font-size:10px!important}.rb-library-button span{font-size:8px;border:1px solid #dfcdd4;padding:3px 5px;border-radius:50%;margin-left:5px}
-.rb-workspace{grid-template-columns:minmax(0,1.42fr) minmax(400px,1fr);border:0;border-radius:0;overflow:visible;box-shadow:none;gap:18px;min-height:0;align-items:start}.rb-stage{height:740px;min-height:0;border-radius:12px 12px 80px 12px;background:radial-gradient(ellipse at 45% 34%,#fffcf5 0,#eee6e0 65%,#dcd1ce 100%);border:1px solid #e9dfd8;isolation:isolate}.rb-stage:after{content:'';position:absolute;width:620px;height:620px;border:1px solid #a58a7210;border-radius:50%;left:50%;top:35%;transform:translate(-50%,-50%);pointer-events:none;z-index:0}.rb-light-daylight{background:radial-gradient(ellipse at 40% 30%,#fff,#e4e8e8 70%,#d5dddd)}.rb-light-evening{background:radial-gradient(ellipse at 45% 36%,#51424b,#221923 80%);border-color:#352434;color:#e8d6dc}.rb-stage-heading{top:24px;left:27px;right:23px}.rb-stage-heading>span{letter-spacing:1.6px;font-size:8px;opacity:.85}.rb-stage-heading i{background:#a58a65}.rb-live-pill{border:1px solid #a28e7c55;padding:3px 5px;border-radius:4px;font-size:6px;letter-spacing:1px;opacity:.55}.rb-stage-edition{position:absolute;top:105px;left:18px;writing-mode:vertical-rl;font-size:7px;letter-spacing:2px;color:#967b7866;z-index:2}.rb-watermark{top:59%;left:48%;font-size:160px;font-style:italic;letter-spacing:-10px;opacity:.028}.rb-canvas{inset:35px 8px 136px}.rb-preview-caption{bottom:103px;left:31px}.rb-preview-caption h2{font-size:35px;color:inherit}.rb-preview-caption>span{font-size:8px;letter-spacing:2.4px}.rb-preview-caption p{font-size:9px}.rb-orbit-tools{right:19px;border-radius:10px;background:#fffaf3a0;box-shadow:0 3px 20px #58483909;gap:3px}.rb-orbit-tools button{font-size:18px}.rb-orbit-tools button[aria-pressed=true]{background:#e1cfd4;border-radius:6px}.rb-stage-bottom{padding:20px 27px;border-top:1px solid #947b6819;right:48px}.rb-views{gap:6px}.rb-views button{background:#ffffff40;border-radius:15px;font-size:8px;padding:8px 13px;color:inherit}.rb-stage-bottom p{font-size:8px;max-width:170px}
-.rb-panel{border:1px solid #e7dde1;border-radius:12px;background:#fffdfb;height:740px;overflow:hidden;box-shadow:0 14px 35px #532c3c04}.rb-steps{padding:12px 12px 0;gap:2px;background:#f9f4f5;border-bottom:1px solid #e6dce0;flex-shrink:0}.rb-steps button{font-size:8px;gap:6px;padding:9px 0 16px;color:#a38d96}.rb-steps b{font:400 12px var(--serif);opacity:.55}.rb-steps .active{color:#6c3b4e}.rb-steps .active:after{background:#814b62;height:2px;left:7px;right:7px}.rb-controls{padding:25px 27px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#e5d6dc transparent;scroll-behavior:smooth;min-height:0}.rb-section-title>span{font-size:7px;color:#a38090;letter-spacing:1.8px}.rb-section-title h2{font-size:30px;line-height:1.1;letter-spacing:-.5px;color:#573647;margin:12px 0}.rb-section-title p{color:#9b8590;font-size:10px;line-height:1.85;margin-bottom:24px}.rb-controls h3{text-transform:uppercase;letter-spacing:1.3px;color:#916c7e;font-size:8px;margin:24px 0 12px}.rb-choice{border:1px solid #e9dfe3;border-radius:6px;background:#fffdfc;color:#937b86;font-size:9px!important;padding:11px 6px}.rb-choice:hover{background:#faf4f6;border-color:#bc96a5}.rb-choice.selected{background:#f4e9ee;border-color:#ac7b90;color:#67364b;box-shadow:none}.rb-visual .rb-choice{padding:11px 3px;gap:6px}.rb-visual svg{height:41px;width:49px}.rb-editorial{background:#f5eef0;border:0;border-radius:7px;color:#aa7c91;gap:10px;margin-top:24px;padding:17px}.rb-editorial strong{font-size:17px;color:#88566d}.rb-editorial p{color:#a28b96;font-size:9px}.rb-panel-footer{padding:19px 23px;border-color:#e7dce0;background:#fcf8f9;flex-shrink:0}.rb-panel-footer>div>span{font-size:6px;letter-spacing:1.5px;color:#b0909f}.rb-panel-footer p{font-size:15px;color:#855a70}.rb-primary{background:#663c50;border-radius:25px;padding:14px 20px;font-size:10px!important;gap:15px}.rb-primary:hover{background:#87556c}.rb-page button:focus-visible,.rb-page select:focus-visible,.rb-page input:focus-visible{outline-color:#8d5a71}.rb-select{color:#9a7e8c;font-size:9px}.rb-select select,.rb-select input{border-color:#e3d3db;background:#fffcfd;color:#704658;font-size:10px;border-radius:5px;padding:11px}.rb-select-row{gap:10px;margin:18px 0}.rb-slider>span{font-size:10px;color:#8d6e7e}.rb-slider strong{color:#78465d;font-size:12px}.rb-slider input{accent-color:#88536c}.rb-slider small{color:#b399a5}.rb-metals button{border-color:#e7dbe0;color:#8d7280;background:#fffdfc;font-size:9px}.rb-metals button.selected{background:#f6ebf0;border-color:#ad7e93}.rb-fine{font-size:9px!important;color:#ad939f;line-height:1.8}.rb-engraving input{font:italic 19px var(--serif)}
-.rb-tones{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.rb-tones button{border:1px solid #ece3e7;background:#fffdfc;color:#9c8190;border-radius:6px;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 3px;font-size:8px;line-height:1.35;min-height:77px}.rb-tones button.selected{background:#f6ebf0;border-color:#ac7b90;color:#703c53}.rb-tone{width:23px;height:25px;clip-path:polygon(30% 0,70% 0,100% 30%,80% 85%,50% 100%,20% 85%,0 30%);background:conic-gradient(from 25deg,#ffffff,var(--tone),#fff 19%,var(--tone) 31%,#53435e 43%,var(--tone) 54%,#fff 69%,var(--tone) 78%,#ffffff);box-shadow:inset 0 0 4px #0004}
-.rb-inspiration{display:block;margin:40px auto 0}.rb-inspiration>div:first-child{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.rb-inspiration h2{font-size:31px;color:#70475c;margin:0}.rb-presets{grid-template-columns:repeat(8,minmax(110px,1fr));gap:12px;overflow:auto;padding-bottom:8px}.rb-presets button{color:#866c79}.rb-preset-art{height:145px;border-radius:8px;background:radial-gradient(ellipse at 50% 38%,#fcfaf5,#e9e2dd);transition:transform .3s}.rb-preset-art img{width:100%;height:100%;object-fit:contain;transform:rotate(-10deg) scale(1.08);transition:transform .35s;mix-blend-mode:multiply}.rb-presets button:hover img{transform:rotate(0) scale(1.16)}.rb-presets button>span{font-size:9px;padding-top:12px}.preset-5{background:radial-gradient(ellipse at 50% 38%,#eef0f6,#d8dce7)}.preset-6{background:radial-gradient(ellipse at 50% 38%,#fbf1f1,#e9d7df)}.rb-assurance{color:#ab929e;border-color:#e7dce0;font-size:8px;padding:25px}.rb-notice{background:#60374b;font-size:11px;border-radius:20px}
-.rb-library-dialog{border:1px solid #decbd4;border-radius:15px;padding:30px;max-width:650px;width:90vw;max-height:85vh;overflow:auto;margin:auto;background:#fffafc;color:#693f55}.rb-library-dialog::backdrop{background:#35223166;backdrop-filter:blur(6px)}.rb-library-head{display:flex;justify-content:space-between;gap:15px}.rb-library-head h2{font:32px var(--serif);margin:10px 0}.rb-library-head>button{border:0;background:none;color:#936479;font-size:27px;align-self:flex-start}.rb-library-dialog>p{font-size:11px;line-height:1.8;color:#a27e90;margin:12px 0 20px}.rb-library-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}.rb-library-grid button{padding:17px;border:1px solid #e6d7df;border-radius:8px;background:#f8eff3;color:#8a5670;display:flex;align-items:center;flex-direction:column;gap:10px}.rb-library-grid svg{height:55px;width:70px}.rb-library-grid strong{font:20px var(--serif)}.rb-library-grid span{font-size:9px}
-@media(min-width:1600px){.rb-workspace{grid-template-columns:minmax(0,1.6fr) minmax(440px,1fr)}.rb-stage,.rb-panel{height:800px}.rb-controls{padding:30px 35px}.rb-canvas{bottom:140px}}
-@media(max-width:1100px){.rb-page{padding:88px 22px 0}.rb-workspace{grid-template-columns:1fr}.rb-stage{height:560px;border-radius:12px 12px 50px 12px}.rb-panel{height:auto;max-height:none}.rb-controls{overflow:visible;padding:27px}.rb-canvas{inset:20px 6px 110px}.rb-heading h1{font-size:64px}.rb-heading-actions{gap:12px}.rb-stage-bottom p{display:block}.rb-stage-bottom{right:25px}.rb-preview-caption{bottom:83px}.rb-controls>.rb-visual{grid-template-columns:repeat(5,1fr)}.rb-section-title p{max-width:550px}.rb-steps{position:sticky;top:66px;z-index:5}.rb-steps button{font-size:10px}.rb-panel-footer{position:static}.rb-presets{grid-template-columns:repeat(8,145px)}.rb-path-switch{margin-bottom:27px}}
-@media(max-width:600px){.rb-page{padding:84px 13px 0}.rb-path-switch{margin-bottom:24px}.rb-path-switch button{padding:10px 15px;font-size:9px;gap:7px}.rb-path-switch span{margin-left:0}.rb-heading{align-items:flex-start;gap:12px;margin-bottom:23px;position:relative}.rb-heading h1{font-size:53px;letter-spacing:-2px;margin:16px 0 13px}.rb-heading h1 em{display:inline}.rb-heading p{font-size:10px;max-width:240px;line-height:1.8}.rb-heading-actions{flex-direction:column-reverse;align-items:flex-end;gap:12px;padding:0;position:absolute;right:0;top:0}.rb-save{font-size:0!important;width:35px;height:35px;padding:8px;border-radius:50%;margin:0}.rb-library-button{font-size:8px!important}.rb-library-button span{display:none}.rb-eyebrow{font-size:7px;letter-spacing:1.5px}.rb-tag{display:none}.rb-stage{height:450px;border-radius:10px 10px 42px 10px}.rb-stage-heading{top:17px;left:16px;right:13px}.rb-stage-heading>span{font-size:7px;letter-spacing:1.25px}.rb-stage-edition{top:82px;left:11px;font-size:5px;letter-spacing:1.5px}.rb-canvas{inset:28px 0 107px}.rb-watermark{font-size:92px;letter-spacing:-7px;top:55%}.rb-preview-caption{left:19px;bottom:76px}.rb-preview-caption h2{font-size:25px}.rb-preview-caption p{font-size:8px}.rb-preview-caption>span{font-size:7px}.rb-orbit-tools{right:12px;padding:4px;gap:1px;top:48%}.rb-orbit-tools button{height:28px;width:27px}.rb-orbit-tools svg{width:16px}.rb-stage-bottom{padding:13px 17px;right:24px}.rb-stage-bottom p{display:none}.rb-views button{font-size:8px;padding:8px 12px}.rb-workspace{gap:15px}.rb-panel{border-radius:10px}.rb-controls{padding:23px 19px}.rb-controls>.rb-visual{grid-template-columns:repeat(3,1fr)}.rb-steps{padding:8px 6px 0;gap:2px}.rb-steps button{font-size:7px;padding:9px 0 13px}.rb-steps b{font-size:11px}.rb-visual .rb-choice{padding:10px 3px;gap:5px}.rb-panel-footer{position:sticky;bottom:0;padding:16px 18px;z-index:6}.rb-tones{grid-template-columns:repeat(4,1fr)}.rb-tones button{font-size:7px}.rb-section-title h2{font-size:30px}.rb-section-title p{font-size:10px}.rb-inspiration{margin-top:30px}.rb-inspiration>div:first-child{display:block}.rb-inspiration h2{font-size:29px;margin-top:10px}.rb-presets{grid-template-columns:repeat(8,140px)}.rb-preset-art{height:130px}.rb-assurance{padding:18px 0;gap:12px;font-size:7px}.rb-library-dialog{padding:20px}.rb-library-grid{grid-template-columns:repeat(2,1fr)}.rb-library-head h2{font-size:27px}}
+.rb-toggle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 19px 0;
+  color: #916a7d;
+  font-size: 10px;
+  line-height: 1.7;
+}
+.rb-toggle input {
+  accent-color: #80506a;
+  width: 15px;
+  height: 15px;
+}
+.rb-page {
+  --rb-ink: #3d2633;
+  --rb-muted: #85747b;
+  --rb-accent: #754454;
+  --rb-line: #e5dce0;
+  background: #f9f6f3;
+  padding: 90px 4vw 0;
+  color: var(--rb-ink);
+}
+.rb-path-switch {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  width: max-content;
+  max-width: 100%;
+  margin: 0 auto 30px;
+  background: #efe9e7;
+  border: 1px solid #e7dfdd;
+  border-radius: 40px;
+  padding: 4px;
+}
+.rb-path-switch button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 0;
+  border-radius: 30px;
+  background: none;
+  color: #8a737b;
+  padding: 11px 24px;
+  font-size: 10px;
+  letter-spacing: 0.25px;
+}
+.rb-path-switch .active {
+  background: #fffdfb;
+  color: #5a3445;
+  box-shadow: 0 2px 8px #48232e0a;
+}
+.rb-path-switch span {
+  margin-left: 12px;
+}
+.rb-heading {
+  margin-bottom: 30px;
+  align-items: flex-end;
+}
+.rb-eyebrow {
+  color: #987282;
+  font-size: 9px;
+  letter-spacing: 2.3px;
+}
+.rb-eyebrow > span:first-child:not(.rb-tag) {
+  background: #784052;
+}
+.rb-tag {
+  border-radius: 12px;
+  color: #9b7583;
+  border-color: #dfcdd4;
+  padding: 5px 9px;
+  background: #f6eff1;
+  font-size: 7px;
+}
+.rb-heading h1 {
+  font: 400 clamp(48px, 5.3vw, 78px)/0.95 var(--serif);
+  letter-spacing: -2.8px;
+  color: #422736;
+  margin: 18px 0;
+}
+.rb-heading h1 em {
+  color: #9e6177;
+  font-weight: 300;
+}
+.rb-heading p {
+  font-size: 11px;
+  letter-spacing: 0.1px;
+  color: #9a848b;
+}
+.rb-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 8px;
+}
+.rb-save {
+  border: 1px solid #d9bdc9;
+  border-radius: 30px;
+  background: #f6ecef;
+  color: #693c4e;
+  font-size: 10px !important;
+  padding: 13px 19px;
+}
+.rb-save:hover {
+  background: #eedde4;
+}
+.rb-library-button {
+  border: 0;
+  background: none;
+  color: #8c6b7b;
+  font-size: 10px !important;
+}
+.rb-library-button span {
+  font-size: 8px;
+  border: 1px solid #dfcdd4;
+  padding: 3px 5px;
+  border-radius: 50%;
+  margin-left: 5px;
+}
+.rb-workspace {
+  grid-template-columns: minmax(0, 1.42fr) minmax(400px, 1fr);
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+  box-shadow: none;
+  gap: 18px;
+  min-height: 0;
+  align-items: start;
+}
+.rb-stage {
+  height: 740px;
+  min-height: 0;
+  border-radius: 12px 12px 80px 12px;
+  background: radial-gradient(
+    ellipse at 45% 34%,
+    #fffcf5 0,
+    #eee6e0 65%,
+    #dcd1ce 100%
+  );
+  border: 1px solid #e9dfd8;
+  isolation: isolate;
+}
+.rb-stage:after {
+  content: "";
+  position: absolute;
+  width: 620px;
+  height: 620px;
+  border: 1px solid #a58a7210;
+  border-radius: 50%;
+  left: 50%;
+  top: 35%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 0;
+}
+.rb-light-daylight {
+  background: radial-gradient(ellipse at 40% 30%, #fff, #e4e8e8 70%, #d5dddd);
+}
+.rb-light-evening {
+  background: radial-gradient(ellipse at 45% 36%, #51424b, #221923 80%);
+  border-color: #352434;
+  color: #e8d6dc;
+}
+.rb-stage-heading {
+  top: 24px;
+  left: 27px;
+  right: 23px;
+}
+.rb-stage-heading > span {
+  letter-spacing: 1.6px;
+  font-size: 8px;
+  opacity: 0.85;
+}
+.rb-stage-heading i {
+  background: #a58a65;
+}
+.rb-live-pill {
+  border: 1px solid #a28e7c55;
+  padding: 3px 5px;
+  border-radius: 4px;
+  font-size: 6px;
+  letter-spacing: 1px;
+  opacity: 0.55;
+}
+.rb-stage-edition {
+  position: absolute;
+  top: 105px;
+  left: 18px;
+  writing-mode: vertical-rl;
+  font-size: 7px;
+  letter-spacing: 2px;
+  color: #967b7866;
+  z-index: 2;
+}
+.rb-watermark {
+  top: 59%;
+  left: 48%;
+  font-size: 160px;
+  font-style: italic;
+  letter-spacing: -10px;
+  opacity: 0.028;
+}
+.rb-canvas {
+  inset: 35px 8px 136px;
+}
+.rb-preview-caption {
+  bottom: 103px;
+  left: 31px;
+}
+.rb-preview-caption h2 {
+  font-size: 35px;
+  color: inherit;
+}
+.rb-preview-caption > span {
+  font-size: 8px;
+  letter-spacing: 2.4px;
+}
+.rb-preview-caption p {
+  font-size: 9px;
+}
+.rb-orbit-tools {
+  right: 19px;
+  border-radius: 10px;
+  background: #fffaf3a0;
+  box-shadow: 0 3px 20px #58483909;
+  gap: 3px;
+}
+.rb-orbit-tools button {
+  font-size: 18px;
+}
+.rb-orbit-tools button[aria-pressed="true"] {
+  background: #e1cfd4;
+  border-radius: 6px;
+}
+.rb-stage-bottom {
+  padding: 20px 27px;
+  border-top: 1px solid #947b6819;
+  right: 48px;
+}
+.rb-views {
+  gap: 6px;
+}
+.rb-views button {
+  background: #ffffff40;
+  border-radius: 15px;
+  font-size: 8px;
+  padding: 8px 13px;
+  color: inherit;
+}
+.rb-stage-bottom p {
+  font-size: 8px;
+  max-width: 170px;
+}
+.rb-panel {
+  border: 1px solid #e7dde1;
+  border-radius: 12px;
+  background: #fffdfb;
+  height: 740px;
+  overflow: hidden;
+  box-shadow: 0 14px 35px #532c3c04;
+}
+.rb-steps {
+  padding: 12px 12px 0;
+  gap: 2px;
+  background: #f9f4f5;
+  border-bottom: 1px solid #e6dce0;
+  flex-shrink: 0;
+}
+.rb-steps button {
+  font-size: 8px;
+  gap: 6px;
+  padding: 9px 0 16px;
+  color: #a38d96;
+}
+.rb-steps b {
+  font: 400 12px var(--serif);
+  opacity: 0.55;
+}
+.rb-steps .active {
+  color: #6c3b4e;
+}
+.rb-steps .active:after {
+  background: #814b62;
+  height: 2px;
+  left: 7px;
+  right: 7px;
+}
+.rb-controls {
+  padding: 25px 27px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #e5d6dc transparent;
+  scroll-behavior: smooth;
+  min-height: 0;
+}
+.rb-section-title > span {
+  font-size: 7px;
+  color: #a38090;
+  letter-spacing: 1.8px;
+}
+.rb-section-title h2 {
+  font-size: 30px;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+  color: #573647;
+  margin: 12px 0;
+}
+.rb-section-title p {
+  color: #9b8590;
+  font-size: 10px;
+  line-height: 1.85;
+  margin-bottom: 24px;
+}
+.rb-controls h3 {
+  text-transform: uppercase;
+  letter-spacing: 1.3px;
+  color: #916c7e;
+  font-size: 8px;
+  margin: 24px 0 12px;
+}
+.rb-choice {
+  border: 1px solid #e9dfe3;
+  border-radius: 6px;
+  background: #fffdfc;
+  color: #937b86;
+  font-size: 9px !important;
+  padding: 11px 6px;
+}
+.rb-choice:hover {
+  background: #faf4f6;
+  border-color: #bc96a5;
+}
+.rb-choice.selected {
+  background: #f4e9ee;
+  border-color: #ac7b90;
+  color: #67364b;
+  box-shadow: none;
+}
+.rb-visual .rb-choice {
+  padding: 11px 3px;
+  gap: 6px;
+}
+.rb-visual svg {
+  height: 41px;
+  width: 49px;
+}
+.rb-editorial {
+  background: #f5eef0;
+  border: 0;
+  border-radius: 7px;
+  color: #aa7c91;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 17px;
+}
+.rb-editorial strong {
+  font-size: 17px;
+  color: #88566d;
+}
+.rb-editorial p {
+  color: #a28b96;
+  font-size: 9px;
+}
+.rb-panel-footer {
+  padding: 19px 23px;
+  border-color: #e7dce0;
+  background: #fcf8f9;
+  flex-shrink: 0;
+}
+.rb-panel-footer > div > span {
+  font-size: 6px;
+  letter-spacing: 1.5px;
+  color: #b0909f;
+}
+.rb-panel-footer p {
+  font-size: 15px;
+  color: #855a70;
+}
+.rb-primary {
+  background: #663c50;
+  border-radius: 25px;
+  padding: 14px 20px;
+  font-size: 10px !important;
+  gap: 15px;
+}
+.rb-primary:hover {
+  background: #87556c;
+}
+.rb-page button:focus-visible,
+.rb-page select:focus-visible,
+.rb-page input:focus-visible {
+  outline-color: #8d5a71;
+}
+.rb-select {
+  color: #9a7e8c;
+  font-size: 9px;
+}
+.rb-select select,
+.rb-select input {
+  border-color: #e3d3db;
+  background: #fffcfd;
+  color: #704658;
+  font-size: 10px;
+  border-radius: 5px;
+  padding: 11px;
+}
+.rb-select-row {
+  gap: 10px;
+  margin: 18px 0;
+}
+.rb-slider > span {
+  font-size: 10px;
+  color: #8d6e7e;
+}
+.rb-slider strong {
+  color: #78465d;
+  font-size: 12px;
+}
+.rb-slider input {
+  accent-color: #88536c;
+}
+.rb-slider small {
+  color: #b399a5;
+}
+.rb-metals button {
+  border-color: #e7dbe0;
+  color: #8d7280;
+  background: #fffdfc;
+  font-size: 9px;
+}
+.rb-metals button.selected {
+  background: #f6ebf0;
+  border-color: #ad7e93;
+}
+.rb-fine {
+  font-size: 9px !important;
+  color: #ad939f;
+  line-height: 1.8;
+}
+.rb-engraving input {
+  font: italic 19px var(--serif);
+}
+.rb-tones {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+}
+.rb-tones button {
+  border: 1px solid #ece3e7;
+  background: #fffdfc;
+  color: #9c8190;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 3px;
+  font-size: 8px;
+  line-height: 1.35;
+  min-height: 77px;
+}
+.rb-tones button.selected {
+  background: #f6ebf0;
+  border-color: #ac7b90;
+  color: #703c53;
+}
+.rb-tone {
+  width: 23px;
+  height: 25px;
+  clip-path: polygon(30% 0, 70% 0, 100% 30%, 80% 85%, 50% 100%, 20% 85%, 0 30%);
+  background: conic-gradient(
+    from 25deg,
+    #ffffff,
+    var(--tone),
+    #fff 19%,
+    var(--tone) 31%,
+    #53435e 43%,
+    var(--tone) 54%,
+    #fff 69%,
+    var(--tone) 78%,
+    #ffffff
+  );
+  box-shadow: inset 0 0 4px #0004;
+}
+.rb-inspiration {
+  display: block;
+  margin: 40px auto 0;
+}
+.rb-inspiration > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.rb-inspiration h2 {
+  font-size: 31px;
+  color: #70475c;
+  margin: 0;
+}
+.rb-presets {
+  grid-template-columns: repeat(8, minmax(110px, 1fr));
+  gap: 12px;
+  overflow: auto;
+  padding-bottom: 8px;
+}
+.rb-presets button {
+  color: #866c79;
+}
+.rb-preset-art {
+  height: 145px;
+  border-radius: 8px;
+  background: radial-gradient(ellipse at 50% 38%, #fcfaf5, #e9e2dd);
+  transition: transform 0.3s;
+}
+.rb-preset-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform: rotate(-10deg) scale(1.08);
+  transition: transform 0.35s;
+  mix-blend-mode: multiply;
+}
+.rb-presets button:hover img {
+  transform: rotate(0) scale(1.16);
+}
+.rb-presets button > span {
+  font-size: 9px;
+  padding-top: 12px;
+}
+.preset-5 {
+  background: radial-gradient(ellipse at 50% 38%, #eef0f6, #d8dce7);
+}
+.preset-6 {
+  background: radial-gradient(ellipse at 50% 38%, #fbf1f1, #e9d7df);
+}
+.rb-assurance {
+  color: #ab929e;
+  border-color: #e7dce0;
+  font-size: 8px;
+  padding: 25px;
+}
+.rb-notice {
+  background: #60374b;
+  font-size: 11px;
+  border-radius: 20px;
+}
+.rb-library-dialog {
+  border: 1px solid #decbd4;
+  border-radius: 15px;
+  padding: 30px;
+  max-width: 650px;
+  width: 90vw;
+  max-height: 85vh;
+  overflow: auto;
+  margin: auto;
+  background: #fffafc;
+  color: #693f55;
+}
+.rb-library-dialog::backdrop {
+  background: #35223166;
+  backdrop-filter: blur(6px);
+}
+.rb-library-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+}
+.rb-library-head h2 {
+  font: 32px var(--serif);
+  margin: 10px 0;
+}
+.rb-library-head > button {
+  border: 0;
+  background: none;
+  color: #936479;
+  font-size: 27px;
+  align-self: flex-start;
+}
+.rb-library-dialog > p {
+  font-size: 11px;
+  line-height: 1.8;
+  color: #a27e90;
+  margin: 12px 0 20px;
+}
+.rb-library-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.rb-library-grid button {
+  padding: 17px;
+  border: 1px solid #e6d7df;
+  border-radius: 8px;
+  background: #f8eff3;
+  color: #8a5670;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 10px;
+}
+.rb-library-grid svg {
+  height: 55px;
+  width: 70px;
+}
+.rb-library-grid strong {
+  font: 20px var(--serif);
+}
+.rb-library-grid span {
+  font-size: 9px;
+}
+@media (min-width: 1600px) {
+  .rb-workspace {
+    grid-template-columns: minmax(0, 1.6fr) minmax(440px, 1fr);
+  }
+  .rb-stage,
+  .rb-panel {
+    height: 800px;
+  }
+  .rb-controls {
+    padding: 30px 35px;
+  }
+  .rb-canvas {
+    bottom: 140px;
+  }
+}
+@media (max-width: 1100px) {
+  .rb-page {
+    padding: 88px 22px 0;
+  }
+  .rb-workspace {
+    grid-template-columns: 1fr;
+  }
+  .rb-stage {
+    height: 560px;
+    border-radius: 12px 12px 50px 12px;
+  }
+  .rb-panel {
+    height: auto;
+    max-height: none;
+  }
+  .rb-controls {
+    overflow: visible;
+    padding: 27px;
+  }
+  .rb-canvas {
+    inset: 20px 6px 110px;
+  }
+  .rb-heading h1 {
+    font-size: 64px;
+  }
+  .rb-heading-actions {
+    gap: 12px;
+  }
+  .rb-stage-bottom p {
+    display: block;
+  }
+  .rb-stage-bottom {
+    right: 25px;
+  }
+  .rb-preview-caption {
+    bottom: 83px;
+  }
+  .rb-controls > .rb-visual {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  .rb-section-title p {
+    max-width: 550px;
+  }
+  .rb-steps {
+    position: sticky;
+    top: 66px;
+    z-index: 5;
+  }
+  .rb-steps button {
+    font-size: 10px;
+  }
+  .rb-panel-footer {
+    position: static;
+  }
+  .rb-presets {
+    grid-template-columns: repeat(8, 145px);
+  }
+  .rb-path-switch {
+    margin-bottom: 27px;
+  }
+}
+@media (max-width: 600px) {
+  .rb-page {
+    padding: 84px 13px 0;
+  }
+  .rb-path-switch {
+    margin-bottom: 24px;
+  }
+  .rb-path-switch button {
+    padding: 10px 15px;
+    font-size: 9px;
+    gap: 7px;
+  }
+  .rb-path-switch span {
+    margin-left: 0;
+  }
+  .rb-heading {
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 23px;
+    position: relative;
+  }
+  .rb-heading h1 {
+    font-size: 53px;
+    letter-spacing: -2px;
+    margin: 16px 0 13px;
+  }
+  .rb-heading h1 em {
+    display: inline;
+  }
+  .rb-heading p {
+    font-size: 10px;
+    max-width: 240px;
+    line-height: 1.8;
+  }
+  .rb-heading-actions {
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    gap: 12px;
+    padding: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+  }
+  .rb-save {
+    font-size: 0 !important;
+    width: 35px;
+    height: 35px;
+    padding: 8px;
+    border-radius: 50%;
+    margin: 0;
+  }
+  .rb-library-button {
+    font-size: 8px !important;
+  }
+  .rb-library-button span {
+    display: none;
+  }
+  .rb-eyebrow {
+    font-size: 7px;
+    letter-spacing: 1.5px;
+  }
+  .rb-tag {
+    display: none;
+  }
+  .rb-stage {
+    height: 450px;
+    border-radius: 10px 10px 42px 10px;
+  }
+  .rb-stage-heading {
+    top: 17px;
+    left: 16px;
+    right: 13px;
+  }
+  .rb-stage-heading > span {
+    font-size: 7px;
+    letter-spacing: 1.25px;
+  }
+  .rb-stage-edition {
+    top: 82px;
+    left: 11px;
+    font-size: 5px;
+    letter-spacing: 1.5px;
+  }
+  .rb-canvas {
+    inset: 28px 0 107px;
+  }
+  .rb-watermark {
+    font-size: 92px;
+    letter-spacing: -7px;
+    top: 55%;
+  }
+  .rb-preview-caption {
+    left: 19px;
+    bottom: 76px;
+  }
+  .rb-preview-caption h2 {
+    font-size: 25px;
+  }
+  .rb-preview-caption p {
+    font-size: 8px;
+  }
+  .rb-preview-caption > span {
+    font-size: 7px;
+  }
+  .rb-orbit-tools {
+    right: 12px;
+    padding: 4px;
+    gap: 1px;
+    top: 48%;
+  }
+  .rb-orbit-tools button {
+    height: 28px;
+    width: 27px;
+  }
+  .rb-orbit-tools svg {
+    width: 16px;
+  }
+  .rb-stage-bottom {
+    padding: 13px 17px;
+    right: 24px;
+  }
+  .rb-stage-bottom p {
+    display: none;
+  }
+  .rb-views button {
+    font-size: 8px;
+    padding: 8px 12px;
+  }
+  .rb-workspace {
+    gap: 15px;
+  }
+  .rb-panel {
+    border-radius: 10px;
+  }
+  .rb-controls {
+    padding: 23px 19px;
+  }
+  .rb-controls > .rb-visual {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .rb-steps {
+    padding: 8px 6px 0;
+    gap: 2px;
+  }
+  .rb-steps button {
+    font-size: 7px;
+    padding: 9px 0 13px;
+  }
+  .rb-steps b {
+    font-size: 11px;
+  }
+  .rb-visual .rb-choice {
+    padding: 10px 3px;
+    gap: 5px;
+  }
+  .rb-panel-footer {
+    position: sticky;
+    bottom: 0;
+    padding: 16px 18px;
+    z-index: 6;
+  }
+  .rb-tones {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .rb-tones button {
+    font-size: 7px;
+  }
+  .rb-section-title h2 {
+    font-size: 30px;
+  }
+  .rb-section-title p {
+    font-size: 10px;
+  }
+  .rb-inspiration {
+    margin-top: 30px;
+  }
+  .rb-inspiration > div:first-child {
+    display: block;
+  }
+  .rb-inspiration h2 {
+    font-size: 29px;
+    margin-top: 10px;
+  }
+  .rb-presets {
+    grid-template-columns: repeat(8, 140px);
+  }
+  .rb-preset-art {
+    height: 130px;
+  }
+  .rb-assurance {
+    padding: 18px 0;
+    gap: 12px;
+    font-size: 7px;
+  }
+  .rb-library-dialog {
+    padding: 20px;
+  }
+  .rb-library-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .rb-library-head h2 {
+    font-size: 27px;
+  }
+}

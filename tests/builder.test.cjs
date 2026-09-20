@@ -1,6 +1,56 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
+test("advanced compatibility constraints and legacy hidden halos", async () => {
+  const { normalize } = await state();
+  assert.equal(normalize({ accents: "hidden" }).hiddenHalo, true);
+  assert.equal(
+    normalize({ style: "eternity", hiddenHalo: true }).hiddenHalo,
+    false,
+  );
+  assert.equal(normalize({ style: "eternity" }).coverage, "full");
+  assert.equal(normalize({ style: "trilogy" }).sideMode, "pair");
+  assert.equal(normalize({ sideCarat: 0.35 }).sideCarat, 0.35);
+  assert.equal(normalize({ sideCarat: 999 }).sideCarat, 1.5);
+  const narrow = normalize({ width: 1.6, accentRows: 2, accentSize: 2 });
+  assert.ok(narrow.accentSize * (narrow.accentRows + 0.4) <= narrow.width);
+});
+test("all styles and side layouts build finite renderable models", async () => {
+  const { buildRing } = await import("../public/builder/model.mjs");
+  const { OPTIONS, normalize } = await state();
+  for (const style of OPTIONS.style)
+    for (const sideMode of OPTIONS.sideMode) {
+      const { group } = buildRing(
+        normalize({
+          style,
+          sideMode,
+          hiddenHalo: true,
+          accents: "pave",
+          accentRows: 2,
+        }),
+        null,
+      );
+      let meshes = 0;
+      const geometries = new Set(),
+        materials = new Set();
+      group.traverse((o) => {
+        if (!o.isMesh) return;
+        meshes++;
+        assert.ok(
+          Array.from(o.geometry.attributes.position.array).every(
+            Number.isFinite,
+          ),
+          style,
+        );
+        assert.ok(o.scale.toArray().every(Number.isFinite), style);
+        geometries.add(o.geometry);
+        materials.add(o.material);
+      });
+      assert.ok(meshes > 1, style);
+      geometries.forEach((g) => g.dispose());
+      materials.forEach((m) => m.dispose());
+    }
+});
 // Load browser ESM in the CommonJS server project without altering its package type.
 async function state() {
   return import(
@@ -47,7 +97,8 @@ test("wedding band does not retain an invisible hidden halo", async () => {
   assert.equal(normalize({ style: "band", accents: "hidden" }).accents, "none");
 });
 test("all cuts produce finite closed outward-facing geometry within shader plane budget", async () => {
-  const { gemGeometry: geometry } = await import('../public/builder/optics.mjs');
+  const { gemGeometry: geometry } =
+    await import("../public/builder/optics.mjs");
   const { OPTIONS } = await state();
   for (const shape of OPTIONS.shape) {
     const { geometry: g, planes } = geometry(shape);

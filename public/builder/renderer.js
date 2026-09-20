@@ -143,16 +143,23 @@ export class RingRenderer {
     const model = buildRing(s, this.studioTexture);
     this.group.add(model.group);
     this.gems = model.gems;
-    const {radius, width} = model;
+    const { radius, width } = model;
     const mesh = (geometry, material) => {
-      const o = new T.Mesh(geometry, material); this.group.add(o); return o;
+      const o = new T.Mesh(geometry, material);
+      this.group.add(o);
+      return o;
     };
     if (s.engraving) {
       const c = document.createElement("canvas");
       c.width = 1024;
       c.height = 128;
       const ctx = c.getContext("2d");
-      ctx.font = s.engravingFont === 'script' ? 'italic 52px cursive' : s.engravingFont === 'modern' ? '48px sans-serif' : '52px Georgia';
+      ctx.font =
+        s.engravingFont === "script"
+          ? "italic 52px cursive"
+          : s.engravingFont === "modern"
+            ? "48px sans-serif"
+            : "52px Georgia";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillStyle = "#503b29";
@@ -183,7 +190,11 @@ export class RingRenderer {
     }
     this.scene.environmentIntensity =
       s.light === "evening" ? 0.7 : s.light === "daylight" ? 1.1 : 0.85;
-    this.scene.environmentRotation.y = -(s.light === 'evening' ? .7 : s.light === 'daylight' ? -.5 : 0);
+    this.scene.environmentRotation.y = -(s.light === "evening"
+      ? 0.7
+      : s.light === "daylight"
+        ? -0.5
+        : 0);
     this.key.color.set(s.light === "evening" ? 0xffd7ae : 0xffffff);
     this.renderer.toneMappingExposure = s.light === "evening" ? 0.95 : 1.15;
     this.shadow.position.y = -radius - 0.75;

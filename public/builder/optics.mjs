@@ -1,83 +1,217 @@
-import * as T from 'three';
-import { ConvexGeometry } from 'three/addons/geometries/ConvexGeometry.js';
+import * as T from "three";
+import { ConvexGeometry } from "three/addons/geometries/ConvexGeometry.js";
 
 export const GEM_TONES = {
-  ice: { color: '#ffffff', ior: 2.417, dispersion: .044, absorption: [0.008, .006, .003] },
-  champagne: { color: '#e9bb78', ior: 2.417, dispersion: .044, absorption: [.02, .17, .48] },
-  blush: { color: '#f8a9c5', ior: 2.417, dispersion: .044, absorption: [.015, .34, .14] },
-  canary: { color: '#f8df73', ior: 2.417, dispersion: .044, absorption: [.01, .04, .8] },
-  sapphire: { color: '#396ebf', ior: 1.77, dispersion: .018, absorption: [1.2, .55, .035] },
-  emeraldGreen: { color: '#299872', ior: 1.58, dispersion: .014, absorption: [.95, .025, .5] },
-  ruby: { color: '#b52a55', ior: 1.77, dispersion: .018, absorption: [.02, 1.35, .8] },
+  ice: {
+    color: "#ffffff",
+    ior: 2.417,
+    dispersion: 0.044,
+    absorption: [0.008, 0.006, 0.003],
+  },
+  champagne: {
+    color: "#e9bb78",
+    ior: 2.417,
+    dispersion: 0.044,
+    absorption: [0.02, 0.17, 0.48],
+  },
+  blush: {
+    color: "#f8a9c5",
+    ior: 2.417,
+    dispersion: 0.044,
+    absorption: [0.015, 0.34, 0.14],
+  },
+  canary: {
+    color: "#f8df73",
+    ior: 2.417,
+    dispersion: 0.044,
+    absorption: [0.01, 0.04, 0.8],
+  },
+  sapphire: {
+    color: "#396ebf",
+    ior: 1.77,
+    dispersion: 0.018,
+    absorption: [1.2, 0.55, 0.035],
+  },
+  emeraldGreen: {
+    color: "#299872",
+    ior: 1.58,
+    dispersion: 0.014,
+    absorption: [0.95, 0.025, 0.5],
+  },
+  ruby: {
+    color: "#b52a55",
+    ior: 1.77,
+    dispersion: 0.018,
+    absorption: [0.02, 1.35, 0.8],
+  },
 };
 
 // Outline is also used to place prongs and metal seats around the actual cut.
 export function outline(shape, a) {
-  let x=Math.cos(a), z=Math.sin(a);
-  if(shape==='oval')z*=1.35;
-  if(shape==='marquise'){x*=.78*(.68+.32*Math.abs(x));z*=1.65;}
-  if(shape==='pear'){x*=.82*(1-.3*z);z*=1.42;}
-  if(['princess','cushion','radiant'].includes(shape)){
-    const power=shape==='cushion'?.5:.24;
-    x=Math.sign(x)*Math.pow(Math.abs(x),power)*.9;
-    z=Math.sign(z)*Math.pow(Math.abs(z),power)*(shape==='radiant'?1.25:.9);
+  let x = Math.cos(a),
+    z = Math.sin(a);
+  if (shape === "oval") z *= 1.35;
+  if (shape === "marquise") {
+    x *= 0.78 * (0.68 + 0.32 * Math.abs(x));
+    z *= 1.65;
   }
-  if(shape==='emerald'||shape==='asscher'){
+  if (shape === "pear") {
+    x *= 0.82 * (1 - 0.3 * z);
+    z *= 1.42;
+  }
+  if (["princess", "cushion", "radiant"].includes(shape)) {
+    const power = shape === "cushion" ? 0.5 : 0.24;
+    x = Math.sign(x) * Math.pow(Math.abs(x), power) * 0.9;
+    z =
+      Math.sign(z) *
+      Math.pow(Math.abs(z), power) *
+      (shape === "radiant" ? 1.25 : 0.9);
+  }
+  if (shape === "emerald" || shape === "asscher") {
     // Intersect the radial ray with a clipped rectangle (a true octagon).
-    const height=shape==='emerald'?1.32:1;
-    const t=Math.min(1/Math.max(Math.abs(x),.0001),height/Math.max(Math.abs(z),.0001),(1+height-.28)/Math.max(Math.abs(x)+Math.abs(z),.0001));
-    x*=t;z*=t;
+    const height = shape === "emerald" ? 1.32 : 1;
+    const t = Math.min(
+      1 / Math.max(Math.abs(x), 0.0001),
+      height / Math.max(Math.abs(z), 0.0001),
+      (1 + height - 0.28) / Math.max(Math.abs(x) + Math.abs(z), 0.0001),
+    );
+    x *= t;
+    z *= t;
   }
-  return [x,z];
+  return [x, z];
 }
 
 export function gemGeometry(shape) {
-  const points=[];
-  const ring=(count,r,y,offset=0)=>{for(let i=0;i<count;i++){const [x,z]=outline(shape,2*Math.PI*(i+offset)/count);points.push(new T.Vector3(x*r,y,z*r));}};
-  if(shape==='emerald'||shape==='asscher'){
-    const h=shape==='emerald'?1.32:1;
-    const oct=[[-.72,-h],[.72,-h],[1,-h+.28],[1,h-.28],[.72,h],[-.72,h],[-1,h-.28],[-1,-h+.28]];
+  const points = [];
+  const ring = (count, r, y, offset = 0) => {
+    for (let i = 0; i < count; i++) {
+      const [x, z] = outline(shape, (2 * Math.PI * (i + offset)) / count);
+      points.push(new T.Vector3(x * r, y, z * r));
+    }
+  };
+  if (shape === "emerald" || shape === "asscher") {
+    const h = shape === "emerald" ? 1.32 : 1;
+    const oct = [
+      [-0.72, -h],
+      [0.72, -h],
+      [1, -h + 0.28],
+      [1, h - 0.28],
+      [0.72, h],
+      [-0.72, h],
+      [-1, h - 0.28],
+      [-1, -h + 0.28],
+    ];
     // Separate step-crown and pavilion planes, rather than a brilliant cut stretched into a rectangle.
-    for(const [r,y] of [[.52,.35],[.8,.21],[1,.025],[1,-.025],[.72,-.31],[.35,-.56],[.03,-.7]])
-      for(const [x,z] of oct)points.push(new T.Vector3(x*r,y,z*r));
-  }else{
-    ring(8,.53,.35);ring(8,.77,.235,.5);
-    ring(16,1,.018);ring(16,1,-.018);
-    ring(8,.53,-.4,.5);ring(8,.015,-.7);
+    for (const [r, y] of [
+      [0.52, 0.35],
+      [0.8, 0.21],
+      [1, 0.025],
+      [1, -0.025],
+      [0.72, -0.31],
+      [0.35, -0.56],
+      [0.03, -0.7],
+    ])
+      for (const [x, z] of oct) points.push(new T.Vector3(x * r, y, z * r));
+  } else {
+    ring(8, 0.53, 0.35);
+    ring(8, 0.77, 0.235, 0.5);
+    ring(16, 1, 0.018);
+    ring(16, 1, -0.018);
+    ring(8, 0.53, -0.4, 0.5);
+    ring(8, 0.015, -0.7);
   }
-  const geometry=new ConvexGeometry(points);
-  const pos=geometry.attributes.position,normal=geometry.attributes.normal,planes=[];
-  for(let i=0;i<pos.count;i+=3){
-    const n=new T.Vector3().fromBufferAttribute(normal,i),p=new T.Vector3().fromBufferAttribute(pos,i);
-    const plane=new T.Vector4(n.x,n.y,n.z,n.dot(p));
-    if(!planes.some(q=>Math.abs(q.x-plane.x)+Math.abs(q.y-plane.y)+Math.abs(q.z-plane.z)+Math.abs(q.w-plane.w)<.0001))planes.push(plane);
+  const geometry = new ConvexGeometry(points);
+  const pos = geometry.attributes.position,
+    normal = geometry.attributes.normal,
+    planes = [];
+  for (let i = 0; i < pos.count; i += 3) {
+    const n = new T.Vector3().fromBufferAttribute(normal, i),
+      p = new T.Vector3().fromBufferAttribute(pos, i);
+    const plane = new T.Vector4(n.x, n.y, n.z, n.dot(p));
+    if (
+      !planes.some(
+        (q) =>
+          Math.abs(q.x - plane.x) +
+            Math.abs(q.y - plane.y) +
+            Math.abs(q.z - plane.z) +
+            Math.abs(q.w - plane.w) <
+          0.0001,
+      )
+    )
+      planes.push(plane);
   }
-  if(planes.length>128)throw new Error('Cut exceeds the optical shader plane budget');
-  return {geometry,planes};
+  if (planes.length > 128)
+    throw new Error("Cut exceeds the optical shader plane budget");
+  return { geometry, planes };
 }
 
 // Original HDR light rig: photographic softboxes plus small high-intensity sources.
 // The same linear HDR texture illuminates metals and is traced inside gemstones.
 export function createStudioEnvironment() {
-  const width=1024,height=512,pixels=new Float32Array(width*height*4);
-  const boxes=[[-2.2,.78,.30,.30,12],[-.4,.42,.065,.38,18],[1.45,.62,.24,.2,9],[2.5,-.2,.025,.38,6],[-1.1,-.45,.18,.1,4]];
-  const stars=[[-2.65,.28],[-1.75,1.1],[-.8,.9],[.4,.3],[1.95,.15],[2.75,.82]];
-  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
-    const az=x/width*Math.PI*2-Math.PI,el=y/height*Math.PI-Math.PI/2;
-    const base=.065+Math.max(0,Math.sin(el))*.25;
-    let r=base,g=base*1.025,b=base*1.06;
-    for(const [a,e,w,h,power] of boxes){const dx=Math.min(Math.abs(az-a),2*Math.PI-Math.abs(az-a));const fall=Math.exp(-Math.pow(dx/w,8)-Math.pow((el-e)/h,8));r+=fall*power;g+=fall*power*.985;b+=fall*power*.96;}
-    for(const [a,e] of stars){const dx=Math.min(Math.abs(az-a),2*Math.PI-Math.abs(az-a));const fall=Math.exp(-(dx*dx+(el-e)*(el-e))/.00055)*38;r+=fall;g+=fall;b+=fall;}
-    const i=(y*width+x)*4;pixels[i]=r;pixels[i+1]=g;pixels[i+2]=b;pixels[i+3]=1;
-  }
-  const texture=new T.DataTexture(pixels,width,height,T.RGBAFormat,T.FloatType);
-  texture.mapping=T.EquirectangularReflectionMapping;texture.minFilter=T.LinearFilter;texture.magFilter=T.LinearFilter;texture.wrapS=T.RepeatWrapping;texture.needsUpdate=true;
+  const width = 1024,
+    height = 512,
+    pixels = new Float32Array(width * height * 4);
+  const boxes = [
+    [-2.2, 0.78, 0.3, 0.3, 12],
+    [-0.4, 0.42, 0.065, 0.38, 18],
+    [1.45, 0.62, 0.24, 0.2, 9],
+    [2.5, -0.2, 0.025, 0.38, 6],
+    [-1.1, -0.45, 0.18, 0.1, 4],
+  ];
+  const stars = [
+    [-2.65, 0.28],
+    [-1.75, 1.1],
+    [-0.8, 0.9],
+    [0.4, 0.3],
+    [1.95, 0.15],
+    [2.75, 0.82],
+  ];
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      const az = (x / width) * Math.PI * 2 - Math.PI,
+        el = (y / height) * Math.PI - Math.PI / 2;
+      const base = 0.065 + Math.max(0, Math.sin(el)) * 0.25;
+      let r = base,
+        g = base * 1.025,
+        b = base * 1.06;
+      for (const [a, e, w, h, power] of boxes) {
+        const dx = Math.min(Math.abs(az - a), 2 * Math.PI - Math.abs(az - a));
+        const fall = Math.exp(-Math.pow(dx / w, 8) - Math.pow((el - e) / h, 8));
+        r += fall * power;
+        g += fall * power * 0.985;
+        b += fall * power * 0.96;
+      }
+      for (const [a, e] of stars) {
+        const dx = Math.min(Math.abs(az - a), 2 * Math.PI - Math.abs(az - a));
+        const fall = Math.exp(-(dx * dx + (el - e) * (el - e)) / 0.00055) * 38;
+        r += fall;
+        g += fall;
+        b += fall;
+      }
+      const i = (y * width + x) * 4;
+      pixels[i] = r;
+      pixels[i + 1] = g;
+      pixels[i + 2] = b;
+      pixels[i + 3] = 1;
+    }
+  const texture = new T.DataTexture(
+    pixels,
+    width,
+    height,
+    T.RGBAFormat,
+    T.FloatType,
+  );
+  texture.mapping = T.EquirectangularReflectionMapping;
+  texture.minFilter = T.LinearFilter;
+  texture.magFilter = T.LinearFilter;
+  texture.wrapS = T.RepeatWrapping;
+  texture.needsUpdate = true;
   return texture;
 }
 
-const vertex=`varying vec3 localPosition; varying vec3 localNormal; uniform vec3 localEye;
+const vertex = `varying vec3 localPosition; varying vec3 localNormal; uniform vec3 localEye;
 void main(){localPosition=position;localNormal=normal;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`;
-const fragment=`precision highp float;
+const fragment = `precision highp float;
 varying vec3 localPosition; varying vec3 localNormal;
 uniform vec4 planes[128];uniform int count;uniform vec3 localEye;uniform mat3 worldRotation;
 uniform sampler2D environment;uniform vec3 absorption;uniform float ior;uniform float dispersion;uniform float lightAngle;uniform float lightPower;
@@ -114,9 +248,42 @@ void main(){
  #include <colorspace_fragment>
 }`;
 
-export function gemstoneMaterial(planes,environment,tone='ice',color='F',light='studio',fire=1) {
-  const data=GEM_TONES[tone]||GEM_TONES.ice,list=planes.slice();while(list.length<128)list.push(new T.Vector4());
-  const absorption=new T.Vector3(...data.absorption);
-  if(tone==='ice')absorption.add(new T.Vector3(0,(color.charCodeAt(0)-68)*.003,(color.charCodeAt(0)-68)*.012));
-  return new T.ShaderMaterial({vertexShader:vertex,fragmentShader:fragment,uniforms:{planes:{value:list},count:{value:planes.length},localEye:{value:new T.Vector3()},worldRotation:{value:new T.Matrix3()},environment:{value:environment},absorption:{value:absorption},ior:{value:data.ior},dispersion:{value:data.dispersion*fire},lightAngle:{value:light==='evening'?.7:light==='daylight'?-.5:0},lightPower:{value:light==='evening'?1.2:1}}});
+export function gemstoneMaterial(
+  planes,
+  environment,
+  tone = "ice",
+  color = "F",
+  light = "studio",
+  fire = 1,
+) {
+  const data = GEM_TONES[tone] || GEM_TONES.ice,
+    list = planes.slice();
+  while (list.length < 128) list.push(new T.Vector4());
+  const absorption = new T.Vector3(...data.absorption);
+  if (tone === "ice")
+    absorption.add(
+      new T.Vector3(
+        0,
+        (color.charCodeAt(0) - 68) * 0.003,
+        (color.charCodeAt(0) - 68) * 0.012,
+      ),
+    );
+  return new T.ShaderMaterial({
+    vertexShader: vertex,
+    fragmentShader: fragment,
+    uniforms: {
+      planes: { value: list },
+      count: { value: planes.length },
+      localEye: { value: new T.Vector3() },
+      worldRotation: { value: new T.Matrix3() },
+      environment: { value: environment },
+      absorption: { value: absorption },
+      ior: { value: data.ior },
+      dispersion: { value: data.dispersion * fire },
+      lightAngle: {
+        value: light === "evening" ? 0.7 : light === "daylight" ? -0.5 : 0,
+      },
+      lightPower: { value: light === "evening" ? 1.2 : 1 },
+    },
+  });
 }
