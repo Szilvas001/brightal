@@ -305,3 +305,4 @@
 }
 .ring-builder .rb-style-photo{width:100%;aspect-ratio:1.2;object-fit:cover;border-radius:12px;display:block}
 .ring-builder .rb-style-story{display:block;font-size:10px;line-height:1.5;opacity:.7;font-weight:400;margin-top:6px}
+.rb-progress{position:absolute;bottom:72px;left:20px;background:#fcfaf7e8;color:#28594a;border:1px solid #c9d7ce;padding:8px 12px;border-radius:20px;font-size:12px;pointer-events:none}.rb-canvas canvas{touch-action:none}.rb-style-photo{background:#faf7f2}.rb-visual .rb-choice{min-width:0}

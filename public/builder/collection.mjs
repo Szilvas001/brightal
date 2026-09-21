@@ -1,5 +1,12 @@
 // Original BRIGHTAL proportions informed by the linked research, not replicas.
 export const COLLECTION = [
+  {style:'curvedoval',name:['Arc Oval','Arc Oval'],story:['Ívelt, szoborszerű ovális foglalat.','A sculpted oval bezel on a curved band.'],config:{width:4,shape:'oval',stoneLength:5,stoneWidth:3.5,stoneDepth:2.3,sculpt:1.8,dailyCount:1}},
+  {style:'contour',name:['Nesting Arc','Nesting Arc'],story:['Mély ív, finom gyémántölelés.','A deep contour embracing a line of diamonds.'],config:{width:2.2,shape:'round',stoneLength:1.6,stoneWidth:1.6,stoneDepth:1.1,sculpt:2.3,dailyCount:5}},
+  {style:'asymmetric',name:['Offset Constellation','Offset Constellation'],story:['Eltolt kövek, organikus vállak.','Offset stones on organic shoulders.'],config:{width:6,shape:'oval',stoneLength:2.8,stoneWidth:2,stoneDepth:1.4,dailyCount:3,sculpt:2}},
+  {style:'fullcircle',name:['Full Eternity','Full Eternity'],story:['Gyémántok a teljes kerületen.','Diamonds around the entire circumference.'],config:{width:2.8,shape:'round',stoneLength:1.8,stoneWidth:1.8,stoneDepth:1.2}},
+  {style:'hiddenhalo',name:['Secret Halo','Secret Halo'],story:['Rejtett ragyogás a főkő alatt.','A secret halo beneath the centre stone.'],config:{hiddenHalo:true}},
+  {style:'bezel',name:['Modern Bezel','Modern Bezel'],story:['Sima keret, nyugodt arányok.','A smooth frame with balanced proportions.'],config:{setting:'bezel',shape:'emerald',width:3}},
+  {style:'tension',name:['Suspended Bridge','Suspended Bridge'],story:['Nyitott vállak, alul megtámasztott foglalat.','Open shoulders with a supported setting.'],config:{setting:'bezel',width:3,shape:'round'}},
   {style:'dome',name:['Bombé','Bombé'],story:['Puha, telt aranyforma.','A soft, generous gold silhouette.'],config:{width:6,sculpt:2,thickness:1.7,metal:'yellow18'}},
   {style:'rope',name:['Croissant','Croissant'],story:['Finom bordák, telt vállak.','Fine fluting and sculpted shoulders.'],config:{width:5.5,sculpt:1.5,rhythm:4,metal:'yellow18'}},
   {style:'wave',name:['Liquid','Liquid'],story:['Lágyan hullámzó szalag.','A flowing ribbon of polished gold.'],config:{width:4.5,sculpt:1.4,metal:'yellow18'}},

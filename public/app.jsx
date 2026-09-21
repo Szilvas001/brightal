@@ -591,6 +591,7 @@ function useReveal() {
 /* ═══════════ ÚTVONALAK ═══════════ */
 
 const ROUTES = [
+  ['diamonds', /^\/diamonds\/?$/, () => '/diamonds'],
   ['builder', /^\/ring-builder\/?$/, () => '/ring-builder'],
   ['home', /^\/$/, () => '/'],
   ['how', /^\/(hogyan|how)\/?$/, () => (LANG === 'en' ? '/how' : '/hogyan')],
@@ -881,10 +882,7 @@ function Nav() {
   useEffect(() => { setMob(false); }, [page]);
   useEffect(() => { document.body.style.overflow = mob ? 'hidden' : ''; }, [mob]);
 
-  const items = isAdmin
-    ? [['admin', t('nav_admin')], ['builder', lang === 'en' ? 'Ring designer' : 'Gyűrűtervező'], ['about', t('nav_about')], ['contact', t('nav_contact')]]
-    : [['builder', lang === 'en' ? 'Ring designer' : 'Gyűrűtervező'], ['how', t('nav_how')], ['upload', t('nav_upload')], ['inspiration', t('nav_inspiration')],
-       ['about', t('nav_about')], ['contact', t('nav_contact')]];
+  const items = [...(isAdmin ? [['admin',t('nav_admin')]] : []), ['builder',lang==='en'?'Ring designer':'Gyűrűtervező'], ['upload',lang==='en'?'Upload a photo':'Képfeltöltés'], ['diamonds',lang==='en'?'Lab-grown diamonds':'Laboratóriumi gyémántok']];
 
   const LangSwitch = ({ block }) => <div className={'lang-switch' + (block ? ' block' : '')}>
     <Ico.globe s={13} />
@@ -2132,6 +2130,7 @@ function AdminRow({ req, onChanged, defaultOpen }) {
     </div>
 
     {open && <div className="admin-body">
+      {req.diamond && <div className="note-box"><h4>Laboratóriumi gyémánt · {req.diamond.id}</h4><p>{req.diamond.shape} · {req.diamond.carat} ct · {req.diamond.color}/{req.diamond.clarity}</p><a href={req.diamond.certificate.url} target="_blank" rel="noopener noreferrer">IGI {req.diamond.certificate.number}</a></div>}
       {req.design && <div className="note-box" style={{marginBottom:20}}>
         <h4>{req.design.name || req.design.config.style} · {lang === 'en' ? 'Saved ring design' : 'Mentett gyűrűterv'}</h4>
         <p>{lang === 'en' ? 'The ZIP contains the submitted configuration, 3D concept (OBJ), reference images and a printable workshop brief. Production CAD preparation and goldsmith review are required.' : 'A ZIP tartalmazza a beküldött konfigurációt, a 3D látványtervet (OBJ), a referenciaképeket és a nyomtatható műhelylapot. Gyártási CAD-előkészítést és ötvösi ellenőrzést igényel.'}</p>
@@ -2277,7 +2276,7 @@ function AdminPage() {
     const params = new URLSearchParams();
     if (filter !== 'all') params.set('status', filter);
     if (q) params.set('q', q);
-    if (source === 'designer') params.set('source', source);
+    if (source !== 'all') params.set('source', source);
     api('/admin/requests?' + params.toString()).then(setData).catch(() => setData({ requests: [], counts: {}, revenue: 0 }));
   }, [filter, q, source]);
 
@@ -2309,7 +2308,7 @@ function AdminPage() {
     const p = new URLSearchParams();
     if (filter !== 'all') p.set('status', filter);
     if (q) p.set('q', q);
-    if (source === 'designer') p.set('source', source);
+    if (source !== 'all') p.set('source', source);
     const qs = p.toString();
     return qs ? '?' + qs : '';
   })();
@@ -2353,6 +2352,7 @@ function AdminPage() {
       <div className="admin-toolbar">
         <label>{lang === 'en' ? 'Order source' : 'Rendelés forrása'} <select className="input" value={source} onChange={e=>setSource(e.target.value)}>
           <option value="all">{lang === 'en' ? 'All orders' : 'Minden rendelés'}</option>
+          <option value="diamond">Laboratóriumi gyémánt</option>
           <option value="designer">{lang === 'en' ? 'Ring designer' : 'Gyűrűtervező'}</option>
         </select></label>
         <input className="input" value={q} onChange={e => setQ(e.target.value)} placeholder={t('ad_search')} />
@@ -2372,6 +2372,7 @@ function AdminPage() {
         </a>
       </div>
 
+      <DiamondImport/>
       {!data && <div style={{ textAlign: 'center', padding: 40 }}><Spinner dark size={26} /></div>}
       {data && !list.length && <div className="empty-state"><p>{t('ad_empty')}</p></div>}
 
@@ -2389,6 +2390,11 @@ function AdminPage() {
 /* ═══════════ GYÖKÉR ═══════════ */
 
 let builderLoad;
+function loadRingRuntime(){
+ if(window.BrightalBuilder)return Promise.resolve();
+ if(!builderLoad)builderLoad=new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='/builder/bundle.js';script.onload=resolve;script.onerror=()=>{builderLoad=null;script.remove();reject(new Error('3D load failed'));};document.head.appendChild(script);});
+ return builderLoad;
+}
 function BuilderPage() {
   const { lang, navigate } = useA();
   const [loaded, setLoaded] = useState(!!window.BrightalBuilder);
@@ -2416,7 +2422,45 @@ function BuilderPage() {
   }}/>;
 }
 
+function DiamondArtwork({shape}) {
+  const outlines={round:'M50 9 A41 41 0 1 1 49.99 9',oval:'M50 5 C89 5 90 95 50 95 C10 95 11 5 50 5',pear:'M50 3 C60 20 91 48 81 72 C69 103 26 99 18 73 C8 49 38 21 50 3',marquise:'M50 2 Q103 50 50 98 Q-3 50 50 2',heart:'M50 26 C25 -8 -5 25 16 51 L50 91 L84 51 C105 25 75 -8 50 26',emerald:'M30 6 H70 L85 21 V79 L70 94 H30 L15 79 V21 Z',radiant:'M25 8 H75 L88 22 V78 L75 92 H25 L12 78 V22 Z',asscher:'M25 9 H75 L91 25 V75 L75 91 H25 L9 75 V25 Z',princess:'M10 10 H90 V90 H10 Z',cushion:'M25 9 Q50 2 75 9 Q98 20 91 75 Q80 98 25 91 Q2 80 9 25 Q11 12 25 9'};
+  return <svg viewBox="0 0 100 100" aria-hidden="true" className="diamond-art"><path d={outlines[shape]||outlines.round} fill="#e3edf0" stroke="#759398" strokeWidth="1"/><path d="M50 16 78 30 84 61 62 84 30 78 16 48 29 22Z M50 16 62 84M78 30 30 78M84 61 29 22M16 48 78 30" fill="none" stroke="#fff" strokeWidth="2"/><path d="M32 35 67 31 73 64 39 74 25 53Z" fill="#fff" fillOpacity=".6" stroke="#afc8ce"/></svg>;
+}
+function DiamondScene({stone}) {
+ const host=useRef(null),engine=useRef(null);const [error,setError]=useState(false),[loaded,setLoaded]=useState(false),[rotate,setRotate]=useState(!matchMedia('(prefers-reduced-motion: reduce)').matches);
+ useEffect(()=>{let live=true;loadRingRuntime().then(()=>{if(live){engine.current=new window.BrightalBuilder.DiamondViewer(host.current,stone,()=>setError(true));setLoaded(true);}}).catch(()=>setError(true));return()=>{live=false;engine.current?.dispose();};},[stone.id]);
+ return <div className="diamond-view"><div className="diamond-canvas" ref={host}/>{!loaded&&!error&&<div className="diamond-skeleton" role="status">3D…</div>}{error&&<p role="alert">A 3D nézet nem tölthető be.</p>}<div className="diamond-tools"><button onClick={()=>engine.current?.zoom(.8)} aria-label="Nagyítás">+</button><button onClick={()=>engine.current?.zoom(1.2)} aria-label="Kicsinyítés">−</button><button aria-pressed={rotate} onClick={()=>{setRotate(!rotate);if(engine.current)engine.current.controls.autoRotate=!rotate;}}>Forgatás</button><button onClick={()=>engine.current?.view('hero')}>Nézet visszaállítása</button><button onClick={()=>{const box=host.current.parentElement;if(document.fullscreenElement)document.exitFullscreen();else box.requestFullscreen?.().catch(()=>setError(true));}}>Teljes képernyő</button></div><small>Húzás: forgatás · görgetés: nagyítás · jobb húzás / két ujj: eltolás</small></div>;
+}
+function DiamondsPage() {
+ const {user,isAdmin,setAuthModal,navigate,lang}=useA();const [data,setData]=useState(null),[error,setError]=useState(''),[q,setQ]=useState({}),[selected,setSelected]=useState(null),[cart,setCart]=useState(()=>store.get('brightal-diamond-cart',[])),[busy,setBusy]=useState(false),[terms,setTerms]=useState(false);
+ const dialog=useRef(null),opener=useRef(null);const money=x=>new Intl.NumberFormat(lang==='en'?'en-GB':'hu-HU',{style:'currency',currency:'HUF',maximumFractionDigits:0}).format(x);
+ useEffect(()=>{let alive=true;api('/diamonds').then(x=>{if(alive){setData(x);setError('');}}).catch(()=>{if(alive)setError('A katalógus nem elérhető. Próbáld újra.');});return()=>{alive=false;};},[]);
+ useEffect(()=>{store.set('brightal-diamond-cart',cart);},[cart]);
+ const choose=(x,event)=>{opener.current=event.currentTarget;setSelected(x);setTerms(false);dialog.current.showModal();};
+ const close=()=>{dialog.current.close();setSelected(null);opener.current?.focus();};
+ const filtered=(data?.items||[]).filter(x=>{
+   for(const key of ['shape','color','clarity','cut','polish','symmetry','fluorescence'])if(q[key]&&q[key]!==x[key])return false;
+   if(q.certificate&&!x.certificate?.number.includes(q.certificate))return false;
+   for(const key of ['carat','price','ratio','depth','table']){if(q[key+'Min']!==undefined&&q[key+'Min']!==''&&x[key]<Number(q[key+'Min']))return false;if(q[key+'Max']!==undefined&&q[key+'Max']!==''&&x[key]>Number(q[key+'Max']))return false;}return true;
+ }).sort((a,b)=>q.sort==='desc'?b.price-a.price:a.price-b.price);
+ const order=async()=>{if(!user){setAuthModal('login');close();return;}setBusy(true);setError('');try{const {request}=await api('/diamonds/order',{method:'POST',body:{id:selected.id,acceptTerms:terms,lang}});setCart(cart.filter(id=>id!==selected.id));const payment=await api('/payment/start',{method:'POST',body:{requestNumber:request.requestNumber}});location.href=payment.gatewayUrl;}catch(e){setError(({STONE_RESERVED:'Ez a kő már foglalt.',STONE_NOT_PURCHASABLE:'Ez a kő nem rendelhető.'})[e.code]||'A fizetés nem indult el. A létrejött rendelést a fiókodban is megtalálod.');}finally{setBusy(false);}};
+ const labels={shape:'Forma',color:'Szín',clarity:'Tisztaság',cut:'Csiszolás',polish:'Polírozás',symmetry:'Szimmetria',fluorescence:'Fluoreszcencia',carat:'Karát',price:'Ár (Ft)',ratio:'Méretarány',depth:'Depth (%)',table:'Table (%)'};
+ return <div className="page diamond-page"><div className="wrap"><span className="eyebrow">BRIGHTAL / LOOSE DIAMONDS</span><h1 className="h-display">Laboratóriumi gyémántok</h1><p className="lead-sm">Egyetlen kő. Végtelen lehetőség.</p>{data?.items.some(x=>x.demo)&&<p className="diamond-demo" role="status">Fejlesztési mintakatalógus. A mintákhoz nem tartozik IGI-tanúsítvány, és nem vásárolhatók meg.</p>}
+ {error&&<p role="alert">{error} <button onClick={()=>location.reload()}>Újrapróbálás</button></p>}
+ {cart.length>0&&<aside className="diamond-cart"><strong>Kosár · {cart.length} kő</strong>{cart.map(id=>{const x=data?.items.find(x=>x.id===id);return <div key={id}><button onClick={e=>x&&choose(x,e)} disabled={!x}>{x?`${x.shape} · ${x.carat} ct · ${money(x.price)}`:id}</button><button onClick={()=>setCart(cart.filter(y=>y!==id))}>Eltávolítás</button></div>;})}<small>A kosár nem foglalja le a követ. A kövek egyenként fizethetők ki.</small></aside>}
+ <div className="diamond-layout"><aside className="diamond-filters" aria-label="Gyémántszűrők"><h2>Találd meg a sajátodat</h2>{['shape','color','clarity'].map(key=><label key={key}>{labels[key]}<select value={q[key]||''} onChange={e=>setQ({...q,[key]:e.target.value})}><option value="">Mind</option>{data?.facets[key].map(v=><option key={v}>{v}</option>)}</select></label>)}{['carat','price'].map(key=><fieldset key={key}><legend>{labels[key]}</legend>{['Min','Max'].map((end,i)=><input key={end} type="number" min="0" step="any" placeholder={i?'Maximum':'Minimum'} aria-label={labels[key]+(i?' maximum':' minimum')} value={q[key+end]||''} onChange={e=>setQ({...q,[key+end]:e.target.value})}/>)}</fieldset>)}
+ <details><summary>Részletes szűrők</summary>{['cut','polish','symmetry','fluorescence'].map(key=><label key={key}>{labels[key]}<select value={q[key]||''} onChange={e=>setQ({...q,[key]:e.target.value})}><option value="">Mind</option>{data?.facets[key].map(v=><option key={v}>{v}</option>)}</select></label>)}{['ratio','depth','table'].map(key=><fieldset key={key}><legend>{labels[key]}</legend>{['Min','Max'].map((end,i)=><input key={end} type="number" min="0" step="any" placeholder={i?'Maximum':'Minimum'} aria-label={labels[key]+end} value={q[key+end]||''} onChange={e=>setQ({...q,[key+end]:e.target.value})}/>)}</fieldset>)}<label>IGI-azonosító<input value={q.certificate||''} onChange={e=>setQ({...q,certificate:e.target.value})}/></label></details><button className="btn btn-ghost" onClick={()=>setQ({})}>Szűrők törlése</button></aside>
+ <section><div className="diamond-results"><span role="status">{data?`${filtered.length} gyémánt`:'Betöltés…'}</span><label>Rendezés <select value={q.sort||'asc'} onChange={e=>setQ({...q,sort:e.target.value})}><option value="asc">Ár szerint növekvő</option><option value="desc">Ár szerint csökkenő</option></select></label></div><div className="diamond-grid">{!data&&!error&&Array.from({length:6},(_,i)=><div className="diamond-skeleton" key={i}/>)}{filtered.map(x=><button className="diamond-card" key={x.id} onClick={e=>choose(x,e)}><DiamondArtwork shape={x.shape}/><span>{x.demo?'Fejlesztési minta':'IGI · '+x.certificate.number}</span><h2>{x.carat.toFixed(2)} ct · {x.shape}</h2><p>{x.color} · {x.clarity} · {x.cut}</p><strong>{money(x.price)}</strong><small>Részletek és 360° nézet ↗</small></button>)}</div>{data&&!filtered.length&&<p>Nincs a szűrésnek megfelelő kő. Módosítsd a feltételeket.</p>}</section></div>
+ <dialog ref={dialog} className="diamond-dialog" onCancel={close} aria-label="Gyémánt adatlap"><button className="diamond-close" onClick={close} aria-label="Bezárás">×</button>{selected&&<><h2>{selected.carat} ct · {selected.shape}</h2><div className="diamond-detail"><DiamondScene stone={selected}/><section><p>{selected.demo?'Fejlesztési minta · szemléltető 3D':'Parametrikus szemléltetés; a tényleges követ a tanúsítvány írja le.'}</p><dl>{['shape','carat','color','clarity','cut','polish','symmetry','fluorescence','depth','table','ratio'].map(key=><div key={key}><dt>{labels[key]}</dt><dd>{selected[key]}</dd></div>)}<div><dt>Méretek</dt><dd>{selected.length} × {selected.width} × {selected.height} mm</dd></div></dl>{selected.certificate&&<a href={selected.certificate.url} target="_blank" rel="noopener noreferrer">IGI {selected.certificate.number} ↗</a>}<h3>{money(selected.price)}</h3>{selected.purchasable&&!isAdmin?<><button className="btn btn-ghost" onClick={()=>setCart([...new Set([...cart,selected.id])])}>{cart.includes(selected.id)?'Kosárban':'Kosárba'}</button><label><input type="checkbox" checked={terms} onChange={e=>setTerms(e.target.checked)}/> Elfogadom az <a href="/aszf" target="_blank">ÁSZF-et</a>.</label><button className="btn btn-dark" disabled={!terms||busy} onClick={order}>{busy?'Fizetés indítása…':user?'Vásárlás':'Belépés és vásárlás'}</button></>:<p>Ez a kő jelenleg nem vásárolható meg.</p>}{error&&<p role="alert">{error}</p>}</section></div></>}</dialog>
+ </div><Footer/></div>;
+}
+function DiamondImport() {
+ const [message,setMessage]=useState(''),[authorized,setAuthorized]=useState(false),[busy,setBusy]=useState(false);
+ return <details className="diamond-import"><summary>Gyémántkatalógus importálása (JSON)</summary><p>A teljes katalógust cseréli. Ellenőrzött IGI-adat és engedélyezett referenciaár szükséges az eladható kövekhez.</p><label><input type="checkbox" checked={authorized} onChange={e=>setAuthorized(e.target.checked)}/> Az adatforrás használatára jogosult vagyok; a tanúsítványokat ellenőriztem.</label><input aria-label="Gyémántkatalógus JSON" type="file" accept=".json" disabled={!authorized||busy} onChange={async e=>{const file=e.target.files[0];if(!file)return;setBusy(true);try{if(file.size>240000)throw new Error('A fájl legfeljebb 240 KB lehet.');const items=JSON.parse(await file.text());const r=await api('/diamonds/import',{method:'POST',body:{items,authorized}});setMessage(`${r.imported} kő importálva.`);}catch(err){setMessage(err.message);}finally{setBusy(false);e.target.value='';}}}/><p role="status">{message}</p></details>;
+}
+
 const PAGES = {
+  diamonds: DiamondsPage,
   builder: BuilderPage,
   home: HomePage, how: HowPage, upload: UploadPage, inspiration: InspirationPage,
   orders: OrdersPage, account: AccountPage, about: AboutPage, contact: ContactPage,

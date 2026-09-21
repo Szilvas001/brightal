@@ -30,7 +30,8 @@ async function makePackage(request, files = []) {
   const { buildRing } = await import('../public/builder/model.mjs');
   const { Vector3 } = await import('three');
   const snapshot = request.design;
-  const model = buildRing(snapshot.config, null);
+  const { unifyLegacy } = await import('../public/builder/solidify.mjs');
+  const model = unifyLegacy(buildRing(snapshot.config, null));
   const lines = ['# BRIGHTAL concept mesh; not a production solid', '# Units: millimetres; renderer coordinates / 0.8. Nominal size requires workshop reconciliation.', 'o BRIGHTAL_Ring'];
   let offset = 1, part = 0;
   const meshes = [], geometries = new Set(), materials = new Set();
@@ -67,7 +68,11 @@ async function makePackage(request, files = []) {
     units: 'mm', nominalInnerCircumferenceMm: s.size, nominalInnerDiameterMm: s.size / Math.PI,
     nominalBandWidthMm: s.width, meshParts: meshes,
     engineering: model.engineering || null,
-    limitations: [
+    limitations: model.engineering?.meshValidation.valid ? [
+      "Closed, connected metal mesh validated automatically. This is not production approval.",
+      "Verify actual stone scans, local minimum walls, setting clearances, alloy shrinkage and polishing allowances before manufacture.",
+      "Engraving is a requested workshop operation, not subtracted from the solid.",
+    ] : [
       'Concept mesh only. One named ring object contains separate overlapping mesh groups, not a watertight Boolean-unioned manufacturing solid.',
       'Nominal ring size is a requested target. Existing render geometry uses the band centreline and does not certify the inner diameter.',
       'Carat is a requested weight, not a measured stone dimension. Obtain actual stone dimensions and scans.',
@@ -80,6 +85,17 @@ async function makePackage(request, files = []) {
     'ring-concept.obj': strToU8(lines.join('\n') + '\n'),
     'READ-ME.txt': strToU8('BRIGHTAL – műhely-egyeztetési csomag / workshop review package\n\nNem közvetlenül gyártható CAD vagy nyomtatási fájl. / Not production CAD or a print-ready file.\n\n' + manifest.limitations.join('\n\n')),
   };
+  if(model.engineering?.meshValidation.valid) {
+    const {buildRing: rebuild}=await import('../public/builder/model.mjs');
+    const {STLExporter}=await import('three/addons/exporters/STLExporter.js');
+    const solid=unifyLegacy(rebuild(snapshot.config,null));
+    const remove=[];solid.group.traverse(o=>{if(o.userData.gem)remove.push(o);});remove.forEach(o=>o.removeFromParent());
+    const stl=new STLExporter().parse(solid.group,{binary:true});
+    // Renderer is in 0.8 scene units per millimetre; STL must be millimetres.
+    for(let i=0;i<stl.getUint32(80,true);i++)for(let k=0;k<9;k++){const off=84+i*50+12+k*4;stl.setFloat32(off,stl.getFloat32(off,true)/.8,true);}
+    entries['ring-metal-mm.stl']=new Uint8Array(stl.buffer);
+    solid.group.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});remove.forEach(o=>{o.geometry?.dispose();o.material?.dispose();});
+  }
   const photos = [];
   for (const [i, file] of files.entries()) {
     const ext = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' }[file.mimetype];

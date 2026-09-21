@@ -4,7 +4,7 @@ import {
   normalize,
   readDesign,
   description,
-  PRESETS,
+  PRESETS as LEGACY_PRESETS,
   isBand,
   isFashion,
   isModern,
@@ -12,12 +12,14 @@ import {
   DAILY_STYLES, isDaily, maxDailyStones,
 } from "./state.mjs";
 import { RingRenderer } from "./renderer.js";
-import { initKernel } from './kernel.mjs';
+import { previewModel, unpackModel } from './progressive.js';
 import { modernLayout } from './contemporary.mjs';
 import { COLLECTION } from './collection.mjs';
 import { GEM_TONES } from "./optics.mjs";
+import { PRESETS } from './catalog.mjs';
 const { useState, useEffect, useRef } = React;
 const names = {
+  ...Object.fromEntries(COLLECTION.map(c=>[c.style,c.name])),
   ribbon: ['Hullámzó gyémántsor','Diamond ribbon'], graduated: ['Fokozatos kősor','Graduated diamonds'],
   eastwest: ['Horizont','East–west'], alternating: ['Váltakozó kőformák','Alternating cuts'], crown: ['Koronaív','Diamond crown'],
   bezelrow: ['Gyémántsor','Diamond row'], scatter: ['Csillagmező','Constellation'], chevron: ['Gyémánt V','Diamond V'],
@@ -248,7 +250,9 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
     [ready, setReady] = useState(false),
     [busy, setBusy] = useState(false),
     [saved, setSaved] = useState(false);
-  const [thumbs, setThumbs] = useState([]);
+  const thumbs = PRESETS.map((_,i)=>`/builder/thumbnails/preset-${i}.webp`);
+  const worker = useRef(null), job = useRef(0), queued = useRef(null), active = useRef(false);
+  const [refining,setRefining] = useState(true);
   const [family, setFamily] = useState("classic");
   useEffect(() => {
     setFamily(isFashion(s) ? 'fashion' : isDaily(s) || ['band','eternity'].includes(s.style) ? 'daily' : 'classic');
@@ -307,79 +311,41 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
         : h,
     );
   useEffect(() => {
-    let canceled=false;
-    initKernel().then(()=>{ if(canceled)return; try {
-      engine.current = new RingRenderer(host.current, () => setError(true));
-      engine.current.update(latest.current);
-      setReady(true);
-    } catch (e) {
-      console.error(e);
-      setError(true);
-    }}).catch(e=>{console.error(e);if(!canceled)setError(true);});
-    return () => {
-      canceled=true;
-      engine.current?.dispose();
-      engine.current = null;
-      clearTimeout(timer.current);
-    };
-  }, []);
-  useEffect(() => {
     try {
-      engine.current?.update(s);
-    } catch (e) {
-      console.error(e);
-      setError(true);
-    }
-  }, [s]);
-  useEffect(() => {
-    let canceled = false,
-      preview = null,
-      node = null;
-    const build = async () => {
-      try {
-        await initKernel();
-        if(canceled)return;
-        node = document.createElement("div");
-        node.style.cssText =
-          "position:fixed;left:-10000px;top:0;width:256px;height:224px;";
-        document.body.appendChild(node);
-        preview = new RingRenderer(node, () => {});
-        preview.renderer.setPixelRatio(1);
-        preview.renderer.setSize(256, 224);
-        preview.camera.aspect = 256 / 224;
-        preview.camera.updateProjectionMatrix();
-        for (let i = 0; i < PRESETS.length && !canceled; i++) {
-          preview.update(normalize(PRESETS[i].config));
-          preview.camera.position.set(22, 19, 31);
-          preview.controls.target.set(0, 1.5, 0);
-          preview.controls.update();
-          const image = preview.capture();
-          setThumbs((v) => {
-            const a = [...v];
-            a[i] = image;
-            return a;
-          });
-          await new Promise(requestAnimationFrame);
+      engine.current = new RingRenderer(host.current, () => setError(true));
+      worker.current = new Worker('/builder/geometry-worker.js', {type:'module'});
+      worker.current.onmessage = ({data}) => {
+        active.current=false;
+        if(data.id===job.current && engine.current) {
+          if(data.error) { console.error(data.error); setError(true); }
+          else {
+            engine.current.update(latest.current,unpackModel(data.packed,engine.current.studioTexture));
+            host.current.dataset.geometryMs=data.packed.buildMs.toFixed(1);
+            host.current.dataset.quality='detailed';
+            setRefining(false);setError(false);setReady(true);
+          }
         }
-      } catch (e) {
-        console.warn("Preset previews unavailable", e);
-      } finally {
-        preview?.dispose();
-        preview = null;
-        node?.remove();
-        node = null;
-      }
-    };
-    const id = setTimeout(build, 700);
-    return () => {
-      canceled = true;
-      clearTimeout(id);
-      preview?.dispose();
-      preview = null;
-      node?.remove();
-      node = null;
-    };
+        if(queued.current) {const next=queued.current;queued.current=null;active.current=true;worker.current.postMessage(next);}
+      };
+      worker.current.onerror = () => {setError(true);setRefining(false);};
+    } catch(e) {console.error(e);setError(true);}
+    return () => {worker.current?.terminate();engine.current?.dispose();engine.current=null;clearTimeout(timer.current);};
   }, []);
+  useEffect(() => {
+    if(!engine.current||!worker.current)return;
+    if(engine.current.config && JSON.stringify({...s,rotate:false})===JSON.stringify({...engine.current.config,rotate:false})) {
+      engine.current.controls.autoRotate=s.rotate;engine.current.config=s;return;
+    }
+    const start=performance.now();
+    try {
+      engine.current.update(s,previewModel(s,engine.current.studioTexture));
+      host.current.dataset.previewMs=(performance.now()-start).toFixed(1);
+      host.current.dataset.quality='preview';setReady(false);setRefining(true);setError(false);
+      const request={id:++job.current,config:s};
+      if(active.current)queued.current=request;
+      else {active.current=true;worker.current.postMessage(request);}
+    } catch(e){console.error(e);setError(true);}
+  }, [s]);
   useEffect(() => {
     const listener = () => {
       if (location.hash.includes("design=")) change(readDesign());
@@ -409,7 +375,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                       ...(COLLECTION.find(c=>c.style===value)?.config || {}),
                       ...{ [key]: value },
                     sideMode: value === "trilogy" ? "pair" : "none",
-                    setting: value==='bezelrow'?'bezel':s.setting,
+                    setting: COLLECTION.find(c=>c.style===value)?.config.setting || (value==='bezelrow'?'bezel':s.setting),
                       accents:
                         value === "eternity" || value === "pave"
                           ? "pave"
@@ -647,7 +613,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
       {slider('stoneWidth',L('Kő szélessége','Stone width'),1.5,5,.1,'mm')}
       {!['round','cushion','princess','asscher'].includes(s.shape)&&slider('stoneLength',L('Kő hossza','Stone length'),s.stoneWidth,6,.1,'mm')}
       {slider('stoneDepth',L('Kő teljes mélysége','Total stone depth'),1,Math.min(3.5,Math.round(s.stoneWidth*.75*10)/10),.1,'mm')}
-      {!['eastwest',...FASHION_STYLES].includes(s.style)&&slider('dailyCount',L('Kövek száma','Number of stones'),1,maxDailyStones(s),1,'')}
+      {!['eastwest','curvedoval','fullcircle',...FASHION_STYLES].includes(s.style)&&slider('dailyCount',L('Kövek száma','Number of stones'),1,maxDailyStones(s),1,'')}
       {s.style==='alternating'&&select('sideShape',L('Váltakozó csiszolás','Alternating cut'))}
       {slider('dailySpacing',L('Kősor térköze','Stone spacing'),0,.5,.05,'mm')}
       <p className="rb-fine">{L('A méreteket a kiválasztott kövekhez lehet igazítani. A végleges követ és a foglalást az ötvös ellenőrzi.','Match these dimensions to the selected stones. The goldsmith verifies the actual stones and setting.')}</p>
@@ -710,8 +676,8 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
           </h1>
           <p>
             {L(
-              "Eljegyzésre. Minden napra. 24 forma, számtalan személyes részlet.",
-              "For a proposal. For every day. 24 forms, countless personal details.",
+              "Eljegyzésre. Minden napra. számtalan forma és személyes részlet.",
+              "For a proposal. For every day. countless forms and personal details.",
             )}
           </p>
         </div>
@@ -787,8 +753,8 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
           </span>
           <div ref={host} className="rb-canvas" />
           {!ready && !error && (
-            <div className="rb-loading">
-              {L("A műhely megnyitása…", "Opening the atelier…")}
+            <div className="rb-progress">
+              {L("Részletes modell betöltése…", "Opening the atelier…")}
             </div>
           )}
           {error && (
@@ -797,7 +763,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
               <h2>{L("A 3D nézet nem elérhető", "3D preview unavailable")}</h2>
               <p>
                 {L(
-                  "Kapcsold be a böngésző hardveres gyorsítását, majd töltsd újra az oldalt. A tervet továbbra is szerkesztheted és exportálhatod.",
+                  "A részletes modell nem készült el. Válassz más paramétereket vagy töltsd újra az oldalt. A tervfájlt továbbra is mentheted.",
                   "Enable browser hardware acceleration and reload. You can still edit and export your design.",
                 )}
               </p>
@@ -869,8 +835,8 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
             </div>
             <p>
               {L(
-                "Húzd a forgatáshoz · Görgess a nagyításhoz",
-                "Drag to rotate · Scroll to zoom",
+                "Húzás: forgatás · Görgetés: nagyítás a kurzorhoz · Jobb húzás / két ujj: eltolás",
+                "Drag: orbit · Scroll: zoom to cursor · Right drag / two fingers: pan",
               )}
             </p>
           </div>
@@ -1051,7 +1017,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                     {slider('dailyCount',L('Gyémántok száma','Diamond count'),3,maxDailyStones(s),1,'')}
                     {s.style==='alternating'&&select('sideShape',L('Váltakozó kőforma','Alternating cut'))}
                     {slider('dailySpacing',L('Kövek közötti ráhagyás','Stone spacing'),0,.5,.05,'')}
-                    {['chevron','ribbon','crown'].includes(s.style)&&slider('sculpt',L('Ív mélysége','Curve depth'),.4,2.5,.1,'')}
+                    {['chevron','ribbon','crown','contour','curvedoval','asymmetric'].includes(s.style)&&slider('sculpt',L('Ív mélysége','Curve depth'),.4,2.5,.1,'')}
                     <p className="rb-fine">{L('A kőszám a látványterv arányaihoz igazodik; a tényleges kőméreteket a műhely ellenőrzi.','Maximum count adapts to the preview proportions; actual stone dimensions require workshop verification.')}</p>
                   </>:slider(
                     "carat",
@@ -1117,7 +1083,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
               <h3>{L('Arányok és foglalat','Proportions and setting')}</h3>
               {slider('thickness',L('Alap falvastagsága','Base metal thickness'),1.4,3,.1,'mm')}
               {modernLayout(s).stones.length>0&&slider('bezelWall',L('Foglalat pereme','Bezel wall'),.35,.7,.05,'mm')}
-              {['chevron','ribbon','crown'].includes(s.style)&&slider('sculpt',L('Ív mélysége','Curve depth'),.4,2.5,.1,'mm')}
+              {['chevron','ribbon','crown','contour','curvedoval','asymmetric'].includes(s.style)&&slider('sculpt',L('Ív mélysége','Curve depth'),.4,2.5,.1,'mm')}
               {modernLayout(s).stones.length>1&&<label className="rb-toggle"><input type="checkbox" checked={s.alternateGems} onChange={e=>change({alternateGems:e.target.checked})}/>{L('Váltakozó kőszínek','Alternating stone colours')}</label>}
               {s.alternateGems&&tones('sideTone')}
               <p className="rb-fine">{L('Az ívek és a foglalatok egyetlen összefüggő fémtestet alkotnak. A szükséges szélesség a kőméretekhez igazodik.','The curves and settings form one continuous metal body. The required width adapts to the stone dimensions.')}</p>
@@ -1272,6 +1238,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
             )}
             {step === 4 && (
               <>
+                {!isModern(s) && slider("thickness", L("Sín vastagsága", "Band thickness"), 1.4, 3, .1, "mm")}
                 {slider(
                   "width",
                   L("Sín szélessége", "Band width"),
@@ -1624,3 +1591,6 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
   );
 }
 window.BrightalBuilder = { RingBuilder };
+
+import { DiamondViewer } from './diamond-viewer.js';
+window.BrightalBuilder.DiamondViewer = DiamondViewer;

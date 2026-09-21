@@ -33,8 +33,13 @@ export class RingRenderer {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.target.set(0, 1, 0);
     this.controls.enableDamping = true;
-    this.controls.enablePan = false;
-    this.controls.minDistance = 17;
+    this.controls.enablePan = true;
+    this.controls.zoomToCursor = true;
+    this.controls.screenSpacePanning = true;
+    this.controls.touches.TWO = T.TOUCH.DOLLY_PAN;
+    this.controls.maxTargetRadius = 14;
+    this.controls.minTargetRadius = 0;
+    this.controls.minDistance = 3;
     this.controls.maxDistance = 55;
     this.controls.autoRotateSpeed = 0.65;
     this.controls.addEventListener("change", () => {
@@ -136,11 +141,11 @@ export class RingRenderer {
     this.group.clear();
     this.gems = [];
   }
-  update(s) {
+  update(s, prepared) {
     this.config = s;
     this.controls.autoRotate = s.rotate;
     this.disposeModel();
-    const model = buildRing(s, this.studioTexture);
+    const model = prepared || buildRing(s, this.studioTexture);
     this.group.add(model.group);
     this.gems = model.gems;
     const { radius, width } = model;
@@ -252,7 +257,7 @@ export class RingRenderer {
   }
   zoom(factor) {
     const d = this.camera.position.clone().sub(this.controls.target);
-    d.setLength(T.MathUtils.clamp(d.length() * factor, 17, 55));
+    d.setLength(T.MathUtils.clamp(d.length() * factor, 3, 55));
     this.camera.position.copy(this.controls.target).add(d);
     this.dirty = true;
   }

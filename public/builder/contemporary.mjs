@@ -2,14 +2,14 @@ import * as T from 'three';
 import { getKernel } from './kernel.mjs';
 import { gemGeometry, gemstoneMaterial } from './optics.mjs';
 
-export const MODERN_STYLES = ['bezelrow','scatter','chevron','ribbon','graduated','eastwest','alternating','crown','wave','rope','dome','signet','open','stack','band','eternity'];
+export const MODERN_STYLES = ['bezelrow','scatter','chevron','ribbon','graduated','eastwest','alternating','crown','wave','rope','dome','signet','open','stack','band','eternity','curvedoval','contour','asymmetric','fullcircle'];
 export const SCALE = .8;
 export const MODEL_REVISION = 'atelier-solid-4';
-const single = s => ['eastwest','signet'].includes(s.style) || ['wave','rope','dome','open','stack'].includes(s.style);
+const single = s => ['eastwest','signet','curvedoval'].includes(s.style) || ['wave','rope','dome','open','stack'].includes(s.style);
 export function modernLayout(s) {
   const inner = s.size / (2*Math.PI);
   const jewel = !['band','wave','rope','dome','open','stack'].includes(s.style) || s.fashionStone;
-  const count = !jewel ? 0 : single(s) ? 1 : s.dailyCount;
+  let count = !jewel ? 0 : single(s) ? 1 : s.dailyCount;
   const east = s.style === 'eastwest' || s.orientation === 'east';
   const maxDimension = Math.max(s.stoneLength,s.stoneWidth);
   const spacing = maxDimension + 2*s.bezelWall + s.dailySpacing + .35;
@@ -18,24 +18,25 @@ export function modernLayout(s) {
     s.style==='stack'?s.layers*1.25+(s.layers-1)*s.gap:0,s.style==='signet'?s.faceSize:0);
   const top = a => Math.pow(Math.max(0,Math.cos(a)),4);
   const rise = a => {
-    if(['dome','signet','rope'].includes(s.style)) return top(a)*s.sculpt*.55;
+    if(['dome','signet','rope','curvedoval','asymmetric'].includes(s.style)) return top(a)*s.sculpt*.55;
     return 0;
   };
   const shift = a => {
-    if(['chevron','crown'].includes(s.style)) return top(a)*s.sculpt*(s.style==='crown'?-1:1);
-    if(['wave','ribbon'].includes(s.style)) return Math.sin(a*2)*s.sculpt*.5;
+    if(['chevron','crown','contour'].includes(s.style)) return top(a)*s.sculpt*(s.style==='crown'?-1:1);
+    if(['wave','ribbon','curvedoval','asymmetric'].includes(s.style)) return Math.sin(a*2)*s.sculpt*.5;
     return 0;
   };
   const widthAt = a => width * (.72+.28*top(a));
   const thicknessAt = a => thickness + rise(a) + (s.style==='rope' ? .24*(1+Math.cos(a*s.rhythm*3)) : 0);
   const radius = inner+thickness;
-  const angularStep = 2*Math.asin(Math.min(.7, spacing/(2*radius)));
+  let angularStep = 2*Math.asin(Math.min(.7, spacing/(2*radius)));
+  if(s.style==='fullcircle'){count=Math.max(3,Math.floor(2*Math.PI/angularStep));angularStep=2*Math.PI/count;}
   const stones = [];
   for(let i=0;i<count;i++) {
-    const angle=(i-(count-1)/2)*angularStep;
-    const factor=s.style==='graduated'?1-.3*Math.abs(i-(count-1)/2)/Math.max(1,(count-1)/2):1;
+    const angle=(i-(count-1)/2)*angularStep+(s.style==='asymmetric'?.3:0);
+    const factor=['graduated','asymmetric'].includes(s.style)?1-.3*Math.abs(i-(count-1)/2)/Math.max(1,(count-1)/2):1;
     const shape=s.style==='alternating'&&i%2?s.sideShape:s.shape;
-    const z=shift(angle)+(s.style==='scatter'?(i%2?1:-1)*Math.max(0,(widthAt(angle)-s.stoneLength-2*s.bezelWall)/2)*.6:0);
+    const z=shift(angle)+(['scatter','asymmetric'].includes(s.style)?(i%2?1:-1)*Math.max(0,(widthAt(angle)-s.stoneLength-2*s.bezelWall)/2)*.6:0);
     const surface=inner+thicknessAt(angle);
     stones.push({ id:`S${i+1}`, shape, length:(['round','princess','asscher','cushion'].includes(shape)?s.stoneWidth:s.stoneLength)*factor,width:s.stoneWidth*factor,depth:s.stoneDepth*factor,
       angle,rotation:east?Math.PI/2:s.style==='crown'?angle*.25:0,z,

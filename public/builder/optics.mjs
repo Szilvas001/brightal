@@ -50,6 +50,7 @@ export const GEM_TONES = {
 export function outline(shape, a) {
   let x = Math.cos(a),
     z = Math.sin(a);
+  if(shape==='heart') {x=Math.sin(a)**3;z=(13*Math.cos(a)-5*Math.cos(2*a)-2*Math.cos(3*a)-Math.cos(4*a))/16;}
   if (shape === "oval") z *= 1.35;
   if (shape === "marquise") {
     x *= 0.78 * (0.68 + 0.32 * Math.abs(x));
@@ -120,7 +121,14 @@ export function gemGeometry(shape) {
     ring(8, 0.53, -0.4, 0.5);
     ring(8, 0.015, -0.7);
   }
-  const geometry = new ConvexGeometry(points);
+  let geometry = new ConvexGeometry(points);
+  if(shape==='heart') {
+    geometry.dispose();const xyz=[],idx=[],n=16;
+    for(const [r,y] of [[.5,.35],[1,.018],[1,-.018],[.01,-.7]])for(let i=0;i<n;i++){const [x,z]=outline(shape,2*Math.PI*i/n);xyz.push(x*r,y,z*r);}
+    for(let row=0;row<3;row++)for(let i=0;i<n;i++){const a=row*n+i,b=row*n+(i+1)%n,c=(row+1)*n+i,d=(row+1)*n+(i+1)%n;idx.push(a,c,b,b,c,d);}
+    xyz.push(0,.35,0,0,-.7,0);for(let i=0;i<n;i++){idx.push(64,i,(i+1)%n);idx.push(65,48+(i+1)%n,48+i);}
+    const base=new T.BufferGeometry();base.setAttribute('position',new T.Float32BufferAttribute(xyz,3));base.setIndex(idx);geometry=base.toNonIndexed();base.dispose();geometry.computeVertexNormals();
+  }
   const pos = geometry.attributes.position,
     normal = geometry.attributes.normal,
     planes = [];
@@ -148,8 +156,8 @@ export function gemGeometry(shape) {
 // Original HDR light rig: photographic softboxes plus small high-intensity sources.
 // The same linear HDR texture illuminates metals and is traced inside gemstones.
 export function createStudioEnvironment() {
-  const width = 1024,
-    height = 512,
+  const width = 512,
+    height = 256,
     pixels = new Float32Array(width * height * 4);
   const boxes = [
     // Broad neutral fill cards keep gold luminous without erasing the

@@ -32,7 +32,7 @@ app.use((req, res, next) => {
   if (cfg.isProd) res.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   res.set('Content-Security-Policy', [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdnjs.cloudflare.com https://accounts.google.com https://assets.pinterest.com https://pixel.barion.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://cdnjs.cloudflare.com https://accounts.google.com https://assets.pinterest.com https://pixel.barion.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com",
     "font-src 'self' https://fonts.gstatic.com data:",
     "img-src 'self' data: blob: https://*.googleusercontent.com https://i.pinimg.com https://*.pinimg.com https://pixel.barion.com",
@@ -89,6 +89,7 @@ app.get('/api/config', (req, res) => {
   });
 });
 
+app.use('/api/diamonds', require('./routes/diamonds'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api', require('./routes/requests'));
 app.use('/api', require('./routes/payment'));
@@ -158,6 +159,12 @@ app.get('/uploads/:file', (req, res) => {
   res.sendFile(path.join(cfg.upload.dir, file), { maxAge: '1h' });
 });
 
+app.get(['/app.js','/builder/bundle.js','/builder/geometry-worker.js'], (req,res,next)=>{
+ const file=path.join(PUBLIC,req.path+'.br');
+ res.vary('Accept-Encoding');
+ if(req.acceptsEncodings('br') && fs.existsSync(file) && fs.statSync(file).mtimeMs>=fs.statSync(path.join(PUBLIC,req.path)).mtimeMs){res.set('Content-Encoding','br');res.type('application/javascript');return res.sendFile(file,{maxAge:0});}
+ next();
+});
 app.use(express.static(PUBLIC, { maxAge: cfg.isProd ? '1h' : 0, index: false }));
 
 /* ══════════════════════════════════════════════════════════════════
@@ -247,7 +254,7 @@ app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();
   /* Ismeretlen útvonalon is az SPA-t szolgáljuk ki (ott jelenik meg a
      404 oldal), de a keresőknek helyes státuszkódot küldünk. */
-  const known = /^\/($|ring-builder|hogyan|how|feltoltes|upload|inspiracio|inspiration|rendeleseim|orders|fiok|account|rolunk|about|kapcsolat|contact|admin|payment-return|aszf|terms|adatkezeles|privacy|impresszum|impressum|elallas|refund|cookie|cookies)\/?$/;
+  const known = /^\/($|ring-builder|diamonds|hogyan|how|feltoltes|upload|inspiracio|inspiration|rendeleseim|orders|fiok|account|rolunk|about|kapcsolat|contact|admin|payment-return|aszf|terms|adatkezeles|privacy|impresszum|impressum|elallas|refund|cookie|cookies)\/?$/;
   if (!known.test(req.path)) res.status(404);
   res.type('html').send(renderIndex());
 });

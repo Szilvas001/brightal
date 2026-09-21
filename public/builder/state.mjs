@@ -7,11 +7,11 @@ export const FASHION_STYLES = [
   "stack",
 ];
 export const isFashion = (s) => FASHION_STYLES.includes(s.style);
-export const DAILY_STYLES = ['bezelrow','scatter','chevron','ribbon','graduated','eastwest','alternating','crown'];
+export const DAILY_STYLES = ['bezelrow','scatter','chevron','ribbon','graduated','eastwest','alternating','crown','curvedoval','contour','asymmetric','fullcircle'];
 export const isDaily = s => DAILY_STYLES.includes(s.style);
 export const isModern = s => isDaily(s) || isFashion(s) || ['band','eternity'].includes(s.style);
 export function maxDailyStones(s) {
-  if(s.style==='eastwest') return 1;
+  if(['eastwest','curvedoval'].includes(s.style)) return 1;
   const r=s.size/(2*Math.PI)+Math.max(s.thickness,s.stoneDepth*.72+.8);
   const step=2*Math.asin(Math.min(.7,(Math.max(s.stoneLength,s.stoneWidth)+2*s.bezelWall+s.dailySpacing+.35)/(2*r)));
   return Math.max(1,Math.min(9,Math.floor(2.2/step)+1));
@@ -19,6 +19,7 @@ export function maxDailyStones(s) {
 export const OPTIONS = {
   style: [
     "solitaire",
+    "hiddenhalo", "bezel", "tension",
     "halo",
     "trilogy",
     "vintage",
@@ -204,6 +205,9 @@ export function normalize(input = {}) {
   s.mixedMetal = input.mixedMetal === true;
   s.alternateGems = input.alternateGems === true;
   s.fashionStone = input.fashionStone === true;
+  if(s.style==='hiddenhalo') s.hiddenHalo=true;
+  if(s.style==='bezel') s.setting='bezel';
+  if(s.style==='tension') {s.setting='bezel';s.headMetal='match';}
   if(!isModern(s)) s.width=Math.min(5,s.width);
   if(isModern(s)) {
     s.setting='bezel'; s.mixedMetal=false; s.inlay='metal'; s.headMetal='match';

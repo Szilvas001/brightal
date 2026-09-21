@@ -60,7 +60,7 @@ export function buildRing(s, environment) {
   const beadGeo = new T.SphereGeometry(1, 20, 12);
   const bead = (r, pos, parent = group, mat = head) => {
     const o = mesh(beadGeo, mat, pos, parent);
-    o.scale.setScalar(r);
+    o.scale.setScalar(Math.max(.16,r));
     return o;
   };
   const tube = (points, r, parent = group, mat = metal, closed = false) =>
@@ -72,7 +72,7 @@ export function buildRing(s, environment) {
           "centripetal",
         ),
         Math.max(24, points.length * 3),
-        r,
+        Math.max(.16,r),
         12,
         closed,
       ),
@@ -80,9 +80,9 @@ export function buildRing(s, environment) {
       null,
       parent,
     );
-  const radius = (s.size / (2 * Math.PI)) * 0.8,
-    width = s.width * 0.8,
-    thick = 0.62,
+  const thick = s.thickness * .4,
+    radius = (s.size / (2 * Math.PI)) * .8 + thick,
+    width = s.width * .8,
     isBand = ["band", "eternity", ...DAILY_STYLES].includes(s.style);
   const bandShift = a => {
     const top = Math.pow(Math.max(0, Math.cos(a)), 4);
@@ -139,7 +139,7 @@ export function buildRing(s, environment) {
     body.userData.role = 'shank';
     bands.push(body);
   };
-  if (s.style === "split") {
+  if (["split","tension"].includes(s.style)) {
     band(-1);
     band(1);
   } else band();
@@ -374,9 +374,9 @@ export function buildRing(s, environment) {
     for (let i = -n; i <= n; i++) {
       const a = i * spacing;
       if (!isBand && Math.abs(a) < opening) continue;
-      const tracks=s.style==='split'?[-1,1].map(sign=>sign*(width*.65+.55)*Math.pow(Math.max(0,Math.cos(a)),2)):[0];
+      const tracks=['split','tension'].includes(s.style)?[-1,1].map(sign=>sign*(width*.65+.55)*Math.pow(Math.max(0,Math.cos(a)),2)):[0];
       for(const track of tracks) for (let row = 0; row < s.accentRows; row++) {
-        const w=s.style==='split'?width*.55:width;
+        const w=['split','tension'].includes(s.style)?width*.55:width;
         const z = track + (s.accentRows === 1 ? 0 : (row - 0.5) * w * 0.48);
         const o = gem(
           s.accents === "channel" ? "princess" : "round",
@@ -432,13 +432,13 @@ export function buildRing(s, environment) {
       const end=assembly.localToWorld(new T.Vector3(x*scale*.72,-scale*.32,z*scale*.72));
       const angle=Math.atan2(end.x,end.y);
       const splitSign=end.z<0?-1:1;
-      const track=s.style==='split'?splitSign*(width*.65+.55)*Math.pow(Math.max(0,Math.cos(angle)),2):bandShift(angle);
+      const track=['split','tension'].includes(s.style)?splitSign*(width*.65+.55)*Math.pow(Math.max(0,Math.cos(angle)),2):bandShift(angle);
       const start=new T.Vector3(Math.sin(angle)*radius,Math.cos(angle)*radius,track);
       const mid=start.clone().lerp(end,.5);
       if(s.style==='cathedral') mid.y+=.3;
       const support=tube([start.toArray(),mid.toArray(),end.toArray()],Math.min(.22,Math.max(.10,scale*.075)),group,head);
       support.userData.role='structural-support';
-      contacts.push({support,start,end,gallery,band:bands[s.style==='split'?(splitSign<0?0:1):0]});
+      contacts.push({support,start,end,gallery,band:bands[['split','tension'].includes(s.style)?(splitSign<0?0:1):0]});
     }
   }
   // Geometry/materials created but unused in a particular permutation are released too.

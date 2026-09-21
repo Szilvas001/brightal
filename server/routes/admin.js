@@ -21,6 +21,7 @@ function filterRequests(query) {
   const status = query.status;
   const q = String(query.q || '').trim().toLowerCase();
   let list = db.requests.all().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  if (query.source === 'diamond') list = list.filter(r => r.diamond);
   if (query.source === 'designer') list = list.filter(r => r.design);
   if (status && status !== 'all') list = list.filter(r => r.status === status);
   if (q) {

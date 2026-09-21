@@ -8,3 +8,14 @@ public/uploads/*
 *.log
 
 data/designs/
+
+# Reproducible build output and local scratch files
+/public/app.js
+/public/builder/bundle.js
+/public/builder/geometry-worker.js
+/public/**/*.br
+/public/builder/thumbnails/
+/work/
+.env.*
+!.env.example
+!.env.production.example
