@@ -21,6 +21,7 @@
   "dependencies": {
     "express": "^4.19.2",
     "fflate": "^0.8.3",
+    "manifold-3d": "3.5.1",
     "multer": "^2.2.0",
     "nodemailer": "^9.0.4",
     "three": "^0.180.0"

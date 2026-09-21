@@ -17,6 +17,9 @@ const barion = require('./barion');
 const mailer = require('./mailer');
 
 const app = express();
+// Locally served CAD runtime; no third-party CDN or geometry service.
+app.get('/builder/manifold.js', (req,res)=>res.sendFile(require.resolve('manifold-3d/manifold.js')));
+app.get('/builder/manifold.wasm', (req,res)=>res.sendFile(require.resolve('manifold-3d/manifold.wasm')));
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
 
@@ -29,7 +32,7 @@ app.use((req, res, next) => {
   if (cfg.isProd) res.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   res.set('Content-Security-Policy', [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://accounts.google.com https://assets.pinterest.com https://pixel.barion.com",
+    "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdnjs.cloudflare.com https://accounts.google.com https://assets.pinterest.com https://pixel.barion.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com",
     "font-src 'self' https://fonts.gstatic.com data:",
     "img-src 'self' data: blob: https://*.googleusercontent.com https://i.pinimg.com https://*.pinimg.com https://pixel.barion.com",

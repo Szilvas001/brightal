@@ -25,6 +25,8 @@ async function parseDesign(raw) {
 }
 
 async function makePackage(request, files = []) {
+  const { initKernel } = await import('../public/builder/kernel.mjs');
+  await initKernel();
   const { buildRing } = await import('../public/builder/model.mjs');
   const { Vector3 } = await import('three');
   const snapshot = request.design;
@@ -64,6 +66,7 @@ async function makePackage(request, files = []) {
     ...snapshot, requestNumber: request.requestNumber, createdAt: request.createdAt,
     units: 'mm', nominalInnerCircumferenceMm: s.size, nominalInnerDiameterMm: s.size / Math.PI,
     nominalBandWidthMm: s.width, meshParts: meshes,
+    engineering: model.engineering || null,
     limitations: [
       'Concept mesh only. One named ring object contains separate overlapping mesh groups, not a watertight Boolean-unioned manufacturing solid.',
       'Nominal ring size is a requested target. Existing render geometry uses the band centreline and does not certify the inner diameter.',

@@ -9,10 +9,12 @@ export const FASHION_STYLES = [
 export const isFashion = (s) => FASHION_STYLES.includes(s.style);
 export const DAILY_STYLES = ['bezelrow','scatter','chevron','ribbon','graduated','eastwest','alternating','crown'];
 export const isDaily = s => DAILY_STYLES.includes(s.style);
+export const isModern = s => isDaily(s) || isFashion(s) || ['band','eternity'].includes(s.style);
 export function maxDailyStones(s) {
-  const scale=2.4*Math.cbrt(s.dailyCarat),r=s.size/(2*Math.PI)*.8+.62+scale*.7+s.height*.18;
-  const step=2*Math.asin(Math.min(.9,(scale*1.7+.18+s.dailySpacing)/r));
-  return Math.max(3,Math.min(9,Math.floor(3/step)+1));
+  if(s.style==='eastwest') return 1;
+  const r=s.size/(2*Math.PI)+Math.max(s.thickness,s.stoneDepth*.72+.8);
+  const step=2*Math.asin(Math.min(.7,(Math.max(s.stoneLength,s.stoneWidth)+2*s.bezelWall+s.dailySpacing+.35)/(2*r)));
+  return Math.max(1,Math.min(9,Math.floor(2.2/step)+1));
 }
 export const OPTIONS = {
   style: [
@@ -143,6 +145,12 @@ export const DEFAULT = Object.freeze({
   dailyCarat: .1,
   dailySpacing: .15,
   alternateGems: false,
+  stoneLength: 2.6,
+  stoneWidth: 2.6,
+  stoneDepth: 1.6,
+  thickness: 1.6,
+  bezelWall: .45,
+  fashionStone: false,
 });
 export function normalize(input = {}) {
   if (!input || typeof input !== "object" || Array.isArray(input)) input = {};
@@ -151,7 +159,7 @@ export function normalize(input = {}) {
     if (choices.includes(input[key])) s[key] = input[key];
   for (const [key, min, max, step] of [
     ["carat", 0.3, 5, 0.1],
-    ["width", 1.6, 5, 0.1],
+    ["width", 1.6, 10, 0.1],
     ["size", 44, 72, 1],
     ["sideCarat", 0.1, 1.5, 0.05],
     ["accentSize", 0.6, 2, 0.1],
@@ -163,9 +171,14 @@ export function normalize(input = {}) {
     ["layers", 2, 4, 1],
     ["gap", 0.3, 1.5, 0.1],
     ["faceSize", 5, 11, 0.5],
-    ['dailyCount',3,9,1],
+    ['dailyCount',1,9,1],
     ['dailyCarat',.05,.3,.01],
     ['dailySpacing',0,.5,.05],
+    ['stoneLength',1.5,6,.1],
+    ['stoneWidth',1.5,5,.1],
+    ['stoneDepth',1,3.5,.1],
+    ['thickness',1.4,3,.1],
+    ['bezelWall',.35,.7,.05],
   ]) {
     const n = Number(input[key]);
     if (Number.isFinite(n) && input[key] !== undefined)
@@ -190,6 +203,15 @@ export function normalize(input = {}) {
   s.rotate = input.rotate === true;
   s.mixedMetal = input.mixedMetal === true;
   s.alternateGems = input.alternateGems === true;
+  s.fashionStone = input.fashionStone === true;
+  if(!isModern(s)) s.width=Math.min(5,s.width);
+  if(isModern(s)) {
+    s.setting='bezel'; s.mixedMetal=false; s.inlay='metal'; s.headMetal='match';
+    if(['round','princess','asscher','cushion'].includes(s.shape)) s.stoneLength=s.stoneWidth;
+    else s.stoneWidth=Math.min(s.stoneWidth,s.stoneLength);
+    s.stoneDepth=Math.min(s.stoneDepth,Number((s.stoneWidth*.75).toFixed(1)));
+    if(s.style==='eastwest') s.orientation='east';
+  }
   s.dailyCount=Math.min(s.dailyCount,maxDailyStones(s));
   if(isDaily(s)) {s.accents='none';s.sideMode='none';s.hiddenHalo=false;}
   if (["wave", "dome"].includes(s.style)) s.mixedMetal = false;
@@ -233,7 +255,7 @@ export function description(s) {
       .join("\n")
   );
 }
-export const PRESETS = [
+const LEGACY_PRESETS = [
   { name: ["Örök klasszikus", "Timeless oval"], config: { ...DEFAULT } },
   ...[
     ['Selyemfény', 'Silk diamonds', 'ribbon', 'oval', 'rose18'],
@@ -394,3 +416,4 @@ export const PRESETS = [
     },
   },
 ];
+export const PRESETS = LEGACY_PRESETS;

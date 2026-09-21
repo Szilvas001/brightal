@@ -303,3 +303,5 @@
     animation: none !important;
   }
 }
+.ring-builder .rb-style-photo{width:100%;aspect-ratio:1.2;object-fit:cover;border-radius:12px;display:block}
+.ring-builder .rb-style-story{display:block;font-size:10px;line-height:1.5;opacity:.7;font-weight:400;margin-top:6px}

@@ -1,4 +1,5 @@
 import * as T from "three";
+import { buildContemporary, MODERN_STYLES } from './contemporary.mjs';
 import { DAILY_STYLES } from "./state.mjs";
 import { buildFashion, FASHION_STYLES } from "./fashion.mjs";
 import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
@@ -16,6 +17,7 @@ export const METAL_COLORS = {
 
 /** Independent procedural model: usable in scene, thumbnails and geometry tests. */
 export function buildRing(s, environment) {
+  if (MODERN_STYLES.includes(s.style)) return buildContemporary(s, environment, METAL_COLORS);
   if (FASHION_STYLES.includes(s.style)) {
     const material = (key) =>
       new T.MeshPhysicalMaterial({

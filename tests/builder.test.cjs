@@ -147,6 +147,7 @@ test("all styles and side layouts build finite renderable models", async () => {
 });
 // Load browser ESM in the CommonJS server project without altering its package type.
 async function state() {
+  await import('../public/builder/kernel.mjs').then(({initKernel}) => initKernel());
   return import(
     "data:text/javascript;base64," +
       Buffer.from(fs.readFileSync("public/builder/state.mjs", "utf8")).toString(

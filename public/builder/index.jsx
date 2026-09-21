@@ -7,10 +7,14 @@ import {
   PRESETS,
   isBand,
   isFashion,
+  isModern,
   FASHION_STYLES,
   DAILY_STYLES, isDaily, maxDailyStones,
 } from "./state.mjs";
 import { RingRenderer } from "./renderer.js";
+import { initKernel } from './kernel.mjs';
+import { modernLayout } from './contemporary.mjs';
+import { COLLECTION } from './collection.mjs';
 import { GEM_TONES } from "./optics.mjs";
 const { useState, useEffect, useRef } = React;
 const names = {
@@ -92,6 +96,7 @@ const names = {
   lab: ["Laboratóriumi", "Lab grown"],
   natural: ["Természetes", "Natural"],
 };
+Object.assign(names, Object.fromEntries(COLLECTION.map(c=>[c.style,c.name])));
 function Icon({ type = "gem", size = 20 }) {
   const paths = {
     gem: "M3 8 7 3h10l4 5-9 13L3 8Zm0 0h18M7 3l5 18 5-18",
@@ -302,15 +307,17 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
         : h,
     );
   useEffect(() => {
-    try {
+    let canceled=false;
+    initKernel().then(()=>{ if(canceled)return; try {
       engine.current = new RingRenderer(host.current, () => setError(true));
       engine.current.update(latest.current);
       setReady(true);
     } catch (e) {
       console.error(e);
       setError(true);
-    }
+    }}).catch(e=>{console.error(e);if(!canceled)setError(true);});
     return () => {
+      canceled=true;
       engine.current?.dispose();
       engine.current = null;
       clearTimeout(timer.current);
@@ -330,6 +337,8 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
       node = null;
     const build = async () => {
       try {
+        await initKernel();
+        if(canceled)return;
         node = document.createElement("div");
         node.style.cssText =
           "position:fixed;left:-10000px;top:0;width:256px;height:224px;";
@@ -397,6 +406,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
               change(
                 key === "style"
                   ? {
+                      ...(COLLECTION.find(c=>c.style===value)?.config || {}),
                       ...{ [key]: value },
                     sideMode: value === "trilogy" ? "pair" : "none",
                     setting: value==='bezelrow'?'bezel':s.setting,
@@ -409,12 +419,13 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
               )
             }
           >
-            {visual && (
+            {visual && key==='style' && thumbs[PRESETS.findIndex(p=>p.config.style===value)] ? <img className="rb-style-photo" src={thumbs[PRESETS.findIndex(p=>p.config.style===value)]} alt=""/> : visual && (
               <Shape
                 {...(key === "style" ? { style: value } : { shape: value })}
               />
             )}
             <span>{label(value)}</span>
+            {key==='style'&&COLLECTION.find(c=>c.style===value)&&<small className="rb-style-story">{COLLECTION.find(c=>c.style===value).story[lang==='en'?1:0]}</small>}
             {s[key] === value && <i aria-hidden="true">✓</i>}
           </button>
         ))}
@@ -590,7 +601,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
   const fashionControls = () => (
     <div className="rb-sculpt-controls">
       <h3>{L("Alakítsd a sziluettet", "Sculpt the silhouette")}</h3>
-      {["wave", "dome", "open"].includes(s.style) &&
+      {["wave", "dome", "open", "rope", "signet"].includes(s.style) &&
         slider(
           "sculpt",
           L("Forma intenzitása", "Sculptural intensity"),
@@ -599,7 +610,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
           0.1,
           "",
         )}
-      {["wave", "rope"].includes(s.style) &&
+      {["rope"].includes(s.style) &&
         slider("rhythm", L("Forma ritmusa", "Pattern rhythm"), 2, 8, 1, "")}
       {s.style === "stack" &&
         slider("layers", L("Gyűrűsorok száma", "Number of bands"), 2, 4, 1, "")}
@@ -622,13 +633,26 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
             0.5,
             "mm",
           )}
-          {select("face", L("Pecsét formája", "Face shape"))}
-          {select("inlay", L("Dekoratív betét", "Decorative inlay"))}
         </>
       )}
-      {slider("width", L("Sín szélessége", "Band width"), 1.6, 5, 0.1, "mm")}
+      {slider("width", L("Sín szélessége", "Band width"), 1.6, 10, 0.1, "mm")}
     </div>
   );
+  const stoneControls = () => <>
+    {['wave','rope','dome','open','stack','band'].includes(s.style)&&<label className="rb-toggle"><input type="checkbox" checked={s.fashionStone} onChange={e=>change({fashionStone:e.target.checked})}/>{L('Gyémánt hozzáadása','Add a diamond')}</label>}
+    {modernLayout(s).stones.length>0&&<>
+      <h3>{L('Csiszolás és szín','Cut and colour')}</h3>{choices('shape',true)}{tones('gemTone')}
+      {s.style!=='eastwest'&&select('orientation',L('Kő tájolása','Stone orientation'))}
+      <h3>{L('Kőméretek milliméterben','Stone dimensions in millimetres')}</h3>
+      {slider('stoneWidth',L('Kő szélessége','Stone width'),1.5,5,.1,'mm')}
+      {!['round','cushion','princess','asscher'].includes(s.shape)&&slider('stoneLength',L('Kő hossza','Stone length'),s.stoneWidth,6,.1,'mm')}
+      {slider('stoneDepth',L('Kő teljes mélysége','Total stone depth'),1,Math.min(3.5,Math.round(s.stoneWidth*.75*10)/10),.1,'mm')}
+      {!['eastwest',...FASHION_STYLES].includes(s.style)&&slider('dailyCount',L('Kövek száma','Number of stones'),1,maxDailyStones(s),1,'')}
+      {s.style==='alternating'&&select('sideShape',L('Váltakozó csiszolás','Alternating cut'))}
+      {slider('dailySpacing',L('Kősor térköze','Stone spacing'),0,.5,.05,'mm')}
+      <p className="rb-fine">{L('A méreteket a kiválasztott kövekhez lehet igazítani. A végleges követ és a foglalást az ötvös ellenőrzi.','Match these dimensions to the selected stones. The goldsmith verifies the actual stones and setting.')}</p>
+    </>}
+  </>;
   const remix = () => {
     const pick = (values) => values[Math.floor(Math.random() * values.length)];
     change({
@@ -968,7 +992,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                 </div>
                 {choices("style", true)}
                 {isFashion(s) && fashionControls()}
-                {(!isBand(s)||isDaily(s)) && (
+                {!isModern(s) && (!isBand(s)||isDaily(s)) && (
                   <>
                     <h3>{L("A kő foglalata", "Stone setting")}</h3>
                     {choices("setting")}
@@ -1003,9 +1027,9 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                 </div>
               </>
             )}
-            {step === 1 && isFashion(s) && fashionControls()}
+            {step === 1 && isModern(s) && stoneControls()}
             {step === 1 &&
-              !isFashion(s) &&
+              !isModern(s) &&
               (isBand(s)&&!isDaily(s) ? (
                 <div className="rb-editorial">
                   <Icon />
@@ -1089,53 +1113,16 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                 </p>
               </>
             )}
-            {step === 3 && isFashion(s) && (
-              <>
-                <h3>{L("Fémek párbeszéde", "A dialogue of metals")}</h3>
-                {["rope", "stack", "open", "signet"].includes(s.style) ? (
-                  <>
-                    <label className="rb-toggle">
-                      <input
-                        type="checkbox"
-                        checked={s.mixedMetal}
-                        onChange={(e) =>
-                          change({ mixedMetal: e.target.checked })
-                        }
-                      />
-                      {L("Kéttónusú kompozíció", "Two-tone composition")}
-                    </label>
-                    {s.mixedMetal &&
-                      select(
-                        "secondaryMetal",
-                        L("Második nemesfém", "Secondary metal"),
-                      )}
-                  </>
-                ) : (
-                  <p>
-                    {L(
-                      "Ezt az egybefüggő formát egy nemesfémből tervezzük. A Nemesfém lépésben válthatsz színt és felületet.",
-                      "This continuous form uses one metal. Explore colors and finishes in Metal.",
-                    )}
-                  </p>
-                )}
-                {s.style === "signet" &&
-                  select("inlay", L("Dekoratív betét", "Decorative inlay"))}
-                <p className="rb-fine">
-                  {L(
-                    "A betétek színezett dekorációs látványtervek, nem tanúsított drágakövek.",
-                    "Inlays are colored decorative concepts, not certified gemstones.",
-                  )}
-                </p>
-              </>
-            )}
-            {step===3&&isDaily(s)&&<>
-              <h3>{L('Ritmus és szín','Rhythm and color')}</h3>
-              <label className="rb-toggle"><input type="checkbox" checked={s.alternateGems} onChange={e=>change({alternateGems:e.target.checked})}/>{L('Váltakozó kőszínek','Alternating gemstones')}</label>
+            {step === 3 && isModern(s) && <>
+              <h3>{L('Arányok és foglalat','Proportions and setting')}</h3>
+              {slider('thickness',L('Alap falvastagsága','Base metal thickness'),1.4,3,.1,'mm')}
+              {modernLayout(s).stones.length>0&&slider('bezelWall',L('Foglalat pereme','Bezel wall'),.35,.7,.05,'mm')}
+              {['chevron','ribbon','crown'].includes(s.style)&&slider('sculpt',L('Ív mélysége','Curve depth'),.4,2.5,.1,'mm')}
+              {modernLayout(s).stones.length>1&&<label className="rb-toggle"><input type="checkbox" checked={s.alternateGems} onChange={e=>change({alternateGems:e.target.checked})}/>{L('Váltakozó kőszínek','Alternating stone colours')}</label>}
               {s.alternateGems&&tones('sideTone')}
-              {select('headMetal',L('Foglalatok nemesféme','Setting metal'))}
-              <p>{L('Minden kő önálló, a sínhez csatlakozó foglalatot kap.','Each stone has its own setting connected to the shank.')}</p>
+              <p className="rb-fine">{L('Az ívek és a foglalatok egyetlen összefüggő fémtestet alkotnak. A szükséges szélesség a kőméretekhez igazodik.','The curves and settings form one continuous metal body. The required width adapts to the stone dimensions.')}</p>
             </>}
-            {step === 3 && !isFashion(s) && !isDaily(s) && (
+            {step === 3 && !isModern(s) && (
               <>
                 {!isBand(s) && (
                   <>
@@ -1289,7 +1276,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                   "width",
                   L("Sín szélessége", "Band width"),
                   1.6,
-                  5,
+                  isModern(s)?10:5,
                   0.1,
                   "mm",
                 )}
@@ -1302,7 +1289,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                   "mm",
                 )}
                 <div className="rb-select-row">
-                  {!isFashion(s) &&
+                  {!isModern(s) &&
                     select("profile", L("Sín profilja", "Band profile"))}
                   {(!isBand(s)||isDaily(s)) && s.setting !== "bezel" && (
                     <label className="rb-select">
@@ -1320,7 +1307,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                     </label>
                   )}
                 </div>
-                {(!isBand(s)||isDaily(s)) &&
+                {!isModern(s) && (!isBand(s)||isDaily(s)) &&
                   slider(
                     "height",
                     L("Foglalat emelése", "Setting lift"),
@@ -1329,7 +1316,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                     0.1,
                     "mm",
                   )}
-                {!isFashion(s) && (
+                {!isModern(s) && (
                   <>
                     <label className="rb-select rb-engraving">
                       {L("A ti titkos üzenetetek", "Your secret message")}
@@ -1366,7 +1353,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                   <p className="rb-fine">{L('Mentés ezen a böngészőn. Másik eszközhöz töltsd le a tervfájlt.','Saved in this browser. Download the design file to use another device.')}</p>
                 </div>
                 <dl className="rb-summary">
-                  {isDaily(s)&&<div><dt>{L('Gyémántkompozíció','Diamond composition')}</dt><dd>{s.dailyCount} × {s.dailyCarat.toFixed(2)} ct · {label(s.shape)} · {label(s.setting)} · {label(s.gemTone)}{s.alternateGems?` / ${label(s.sideTone)}`:''}</dd></div>}
+                  {isModern(s)&&<><div><dt>{L('Kövek és foglalat','Stones and setting')}</dt><dd>{modernLayout(s).stones.length} · {s.stoneLength} × {s.stoneWidth} × {s.stoneDepth} mm · {label(s.shape)}</dd></div><div><dt>{L('Belső átmérő / tényleges szélesség','Inner diameter / actual width')}</dt><dd>{(s.size/Math.PI).toFixed(3)} mm / {modernLayout(s).width.toFixed(2)} mm</dd></div></>}
                   {isFashion(s) && (
                     <>
                       <div>
