@@ -9,11 +9,13 @@ import {
   isFashion,
   FASHION_STYLES,
   DAILY_STYLES, isDaily, maxDailyStones,
-} from "./state.js";
+} from "./state.mjs";
 import { RingRenderer } from "./renderer.js";
 import { GEM_TONES } from "./optics.mjs";
 const { useState, useEffect, useRef } = React;
 const names = {
+  ribbon: ['Hullámzó gyémántsor','Diamond ribbon'], graduated: ['Fokozatos kősor','Graduated diamonds'],
+  eastwest: ['Horizont','East–west'], alternating: ['Váltakozó kőformák','Alternating cuts'], crown: ['Koronaív','Diamond crown'],
   bezelrow: ['Gyémántsor','Diamond row'], scatter: ['Csillagmező','Constellation'], chevron: ['Gyémánt V','Diamond V'],
   wave: ["Hullám", "Wave"],
   rope: ["Sodrott", "Rope"],
@@ -946,10 +948,10 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                 <h3>{L("Gyűrű stílusa", "Ring style")}</h3>
                 <div className="rb-family">
                   {[
-                    ["classic", L("Eljegyzés & klasszikus", "Bridal & classic")],
+                    ["classic", L("Eljegyzési gyűrűk", "Engagement rings")],
                     ["daily", L("Mindennapi gyémánt", "Everyday diamonds")],
                     ["fashion", L("Önkifejezés", "Self-expression")],
-                    ["all", L("Mind a 19", "All 19")],
+                    ["all", L(`Mind a ${OPTIONS.style.length}`, `All ${OPTIONS.style.length}`)],
                   ].map(([key, title]) => (
                     <button
                       key={key}
@@ -1019,9 +1021,10 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                   {isDaily(s)?<>
                     {slider('dailyCarat',L('Egy gyémánt súlya','Weight per diamond'),.05,.3,.01,'ct')}
                     {slider('dailyCount',L('Gyémántok száma','Diamond count'),3,maxDailyStones(s),1,'')}
+                    {s.style==='alternating'&&select('sideShape',L('Váltakozó kőforma','Alternating cut'))}
                     {slider('dailySpacing',L('Kövek közötti ráhagyás','Stone spacing'),0,.5,.05,'')}
-                    {s.style==='chevron'&&slider('sculpt',L('V-ív mélysége','V depth'),.4,2.5,.1,'')}
-                    <p className="rb-fine">{L('A maximális kőszám a mérethez és a távolsághoz igazodik, hogy ne érjenek össze a kövek.','Maximum count adapts to stone size and spacing to keep stones separated.')}</p>
+                    {['chevron','ribbon','crown'].includes(s.style)&&slider('sculpt',L('Ív mélysége','Curve depth'),.4,2.5,.1,'')}
+                    <p className="rb-fine">{L('A kőszám a látványterv arányaihoz igazodik; a tényleges kőméreteket a műhely ellenőrzi.','Maximum count adapts to the preview proportions; actual stone dimensions require workshop verification.')}</p>
                   </>:slider(
                     "carat",
                     L("Karátsúly", "Carat weight"),

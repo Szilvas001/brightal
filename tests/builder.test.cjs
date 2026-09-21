@@ -149,7 +149,7 @@ test("all styles and side layouts build finite renderable models", async () => {
 async function state() {
   return import(
     "data:text/javascript;base64," +
-      Buffer.from(fs.readFileSync("public/builder/state.js", "utf8")).toString(
+      Buffer.from(fs.readFileSync("public/builder/state.mjs", "utf8")).toString(
         "base64",
       )
   );

@@ -899,7 +899,7 @@ function Nav() {
 
         <div className="nav-links">
           {items.map(([id, label]) =>
-            <button key={id} className={'nav-link' + (page === id ? ' active' : '')} onClick={() => navigate(id)}>{label}</button>)}
+            <button key={id} className={'nav-link' + (id === 'builder' ? ' nav-designer' : '') + (page === id ? ' active' : '')} onClick={() => navigate(id)}>{id === 'builder' && <Ico.gem s={16}/>} {label}</button>)}
           {user && !isAdmin &&
             <button className={'nav-link' + (page === 'orders' ? ' active' : '')} onClick={() => navigate('orders')}>{t('nav_orders')}</button>}
         </div>
@@ -932,7 +932,7 @@ function Nav() {
     </nav>
 
     {mob && <div className="mobile-menu">
-      {items.map(([id, label]) => <button key={id} onClick={() => navigate(id)}>{label}</button>)}
+      {items.map(([id, label]) => <button key={id} className={id === 'builder' ? 'nav-designer' : undefined} onClick={() => navigate(id)}>{id === 'builder' && <Ico.gem s={16}/>} {label}</button>)}
       {user && !isAdmin && <button onClick={() => navigate('orders')}>{t('nav_orders')}</button>}
       {user && !isAdmin && <button onClick={() => navigate('account')}>{t('nav_account')}</button>}
       <div style={{ marginTop: 22, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>

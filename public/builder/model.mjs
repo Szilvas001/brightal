@@ -1,4 +1,5 @@
 import * as T from "three";
+import { DAILY_STYLES } from "./state.mjs";
 import { buildFashion, FASHION_STYLES } from "./fashion.mjs";
 import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import { outline, gemGeometry, gemstoneMaterial } from "./optics.mjs";
@@ -80,8 +81,14 @@ export function buildRing(s, environment) {
   const radius = (s.size / (2 * Math.PI)) * 0.8,
     width = s.width * 0.8,
     thick = 0.62,
-    isBand = ["band", "eternity", 'bezelrow','scatter','chevron'].includes(s.style);
-  const bandShift = a => s.style==='chevron'?Math.pow(Math.max(0,Math.cos(a)),4)*s.sculpt:0;
+    isBand = ["band", "eternity", ...DAILY_STYLES].includes(s.style);
+  const bandShift = a => {
+    const top = Math.pow(Math.max(0, Math.cos(a)), 4);
+    if(s.style==='chevron') return top*s.sculpt;
+    if(s.style==='crown') return -top*s.sculpt;
+    if(s.style==='ribbon') return Math.sin(a*2)*s.sculpt*.55;
+    return 0;
+  };
   const band = (splitSign = 0) => {
     const vertices = [],
       indices = [],
@@ -218,13 +225,16 @@ export function buildRing(s, environment) {
   const size = 2.4 * Math.cbrt(s.carat),
     top = radius + size * 0.7 + s.height * 0.45;
   const rotation = s.orientation === "east" ? Math.PI / 2 : 0;
-  if(['bezelrow','scatter','chevron'].includes(s.style)) {
+  if(DAILY_STYLES.includes(s.style)) {
     const scale=2.4*Math.cbrt(s.dailyCarat),r=radius+thick+scale*.7+s.height*.18;
     const step=2*Math.asin(Math.min(.9,(scale*1.7+.18+s.dailySpacing)/r));
     for(let i=0;i<s.dailyCount;i++) {
       const a=(i-(s.dailyCount-1)/2)*step;
       const z=bandShift(a)+(s.style==='scatter'?(i%2?1:-1)*width*.48:0);
-      const assembly=setting(s.shape,scale,[Math.sin(a)*r,Math.cos(a)*r,z],s.alternateGems&&i%2?s.sideTone:s.gemTone,rotation);
+      const cut=s.style==='alternating'&&i%2?s.sideShape:s.shape;
+      const stoneScale=s.style==='graduated'?scale*(1-.35*Math.abs(i-(s.dailyCount-1)/2)/Math.max(1,(s.dailyCount-1)/2)):scale;
+      const turn=s.style==='eastwest'?Math.PI/2:s.style==='crown'?a*.45:rotation;
+      const assembly=setting(cut,stoneScale,[Math.sin(a)*r,Math.cos(a)*r,z],s.alternateGems&&i%2?s.sideTone:s.gemTone,turn);
       assembly.rotation.z=-a;
     }
   }

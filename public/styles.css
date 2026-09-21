@@ -638,3 +638,8 @@ table.admin-table tfoot td{padding:12px 14px;background:var(--bg-warm);font-weig
   .legal-actions{flex-direction:column;align-items:stretch}
   .legal-nav{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 }
+
+/* The designer uses the existing blush/espresso identity. */
+.nav-link.nav-designer,.mobile-menu .nav-designer{display:inline-flex;align-items:center;gap:8px;background:var(--brand-blush);color:var(--brand-ink);border:1px solid var(--brand-taupe);border-radius:28px;padding:10px 15px;box-shadow:var(--sh-sm);font-weight:700}
+.nav-link.nav-designer:hover,.nav-link.nav-designer.active{background:var(--brand-ink);color:var(--brand-blush)}
+.nav-designer:focus-visible{outline:3px solid var(--brand-taupe);outline-offset:4px}

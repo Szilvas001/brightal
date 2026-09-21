@@ -1289,9 +1289,11 @@ function Nav() {
     className: "nav-links"
   }, items.map(([id, label]) => /*#__PURE__*/React.createElement("button", {
     key: id,
-    className: 'nav-link' + (page === id ? ' active' : ''),
+    className: 'nav-link' + (id === 'builder' ? ' nav-designer' : '') + (page === id ? ' active' : ''),
     onClick: () => navigate(id)
-  }, label)), user && !isAdmin && /*#__PURE__*/React.createElement("button", {
+  }, id === 'builder' && /*#__PURE__*/React.createElement(Ico.gem, {
+    s: 16
+  }), " ", label)), user && !isAdmin && /*#__PURE__*/React.createElement("button", {
     className: 'nav-link' + (page === 'orders' ? ' active' : ''),
     onClick: () => navigate('orders')
   }, t('nav_orders'))), /*#__PURE__*/React.createElement("div", {
@@ -1342,8 +1344,11 @@ function Nav() {
     className: "mobile-menu"
   }, items.map(([id, label]) => /*#__PURE__*/React.createElement("button", {
     key: id,
+    className: id === 'builder' ? 'nav-designer' : undefined,
     onClick: () => navigate(id)
-  }, label)), user && !isAdmin && /*#__PURE__*/React.createElement("button", {
+  }, id === 'builder' && /*#__PURE__*/React.createElement(Ico.gem, {
+    s: 16
+  }), " ", label)), user && !isAdmin && /*#__PURE__*/React.createElement("button", {
     onClick: () => navigate('orders')
   }, t('nav_orders')), user && !isAdmin && /*#__PURE__*/React.createElement("button", {
     onClick: () => navigate('account')

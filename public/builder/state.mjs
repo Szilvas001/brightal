@@ -7,7 +7,7 @@ export const FASHION_STYLES = [
   "stack",
 ];
 export const isFashion = (s) => FASHION_STYLES.includes(s.style);
-export const DAILY_STYLES = ['bezelrow','scatter','chevron'];
+export const DAILY_STYLES = ['bezelrow','scatter','chevron','ribbon','graduated','eastwest','alternating','crown'];
 export const isDaily = s => DAILY_STYLES.includes(s.style);
 export function maxDailyStones(s) {
   const scale=2.4*Math.cbrt(s.dailyCarat),r=s.size/(2*Math.PI)*.8+.62+scale*.7+s.height*.18;
@@ -228,13 +228,20 @@ export function description(s) {
     "BRIGHTAL Atelier / v2\n" +
     Object.entries(normalize(s))
       .filter(([k]) => !["rotate", "light"].includes(k))
-      .filter(([k]) => (isFashion(s)||k==='sculpt'&&s.style==='chevron'||!fashionKeys.includes(k)) && (isDaily(s)||!dailyKeys.includes(k)))
+      .filter(([k]) => (isFashion(s)||k==='sculpt'&&['chevron','ribbon','crown'].includes(s.style)||!fashionKeys.includes(k)) && (isDaily(s)||!dailyKeys.includes(k)))
       .map(([k, v]) => `${k}: ${v}`)
       .join("\n")
   );
 }
 export const PRESETS = [
   { name: ["Örök klasszikus", "Timeless oval"], config: { ...DEFAULT } },
+  ...[
+    ['Selyemfény', 'Silk diamonds', 'ribbon', 'oval', 'rose18'],
+    ['Fénylépcső', 'Crescendo', 'graduated', 'round', 'yellow18'],
+    ['Horizont', 'Horizon', 'eastwest', 'emerald', 'platinum'],
+    ['Ritmus', 'Diamond rhythm', 'alternating', 'oval', 'yellow18'],
+    ['Fénykorona', 'Light crown', 'crown', 'pear', 'rose18'],
+  ].map(([hu,en,style,shape,metal])=>({name:[hu,en],config:{...DEFAULT,style,shape,metal,dailyCarat:.1,dailyCount:5,setting:'bezel',sideShape:'round',width:2.5}})),
   {name:['Mindennapi ragyogás','Everyday light'],config:{...DEFAULT,style:'bezelrow',setting:'bezel',dailyCount:5,dailyCarat:.1,metal:'yellow18'}},
   {name:['Csillagtérkép','Star map'],config:{...DEFAULT,style:'scatter',dailyCount:5,shape:'round',dailyCarat:.08,alternateGems:true,sideTone:'sapphire',width:3.2}},
   {name:['Diamond V','Diamond V'],config:{...DEFAULT,style:'chevron',dailyCount:5,dailyCarat:.07,sculpt:1.6,metal:'platinum'}},
