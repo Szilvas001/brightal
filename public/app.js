@@ -246,6 +246,7 @@ const I18N = {
     e_ALREADY_PAID: 'Ez már ki van fizetve.',
     e_NO_PRICE: 'Még nincs ár megadva.',
     e_INVALID_PRICE: 'Érvénytelen ár.',
+    e_INVALID_DESIGN: 'Érvénytelen gyűrűterv. Nyisd meg újra a tervezőt és küldd be ismét.',
     e_PAYMENT_START_FAILED: 'A fizetés indítása sikertelen.',
     e_GOOGLE_NOT_CONFIGURED: 'A Google belépés nincs beállítva.',
     e_SERVER_ERROR: 'Szerverhiba.',
@@ -476,6 +477,7 @@ const I18N = {
     e_ALREADY_PAID: 'This has already been paid.',
     e_NO_PRICE: 'No price has been set yet.',
     e_INVALID_PRICE: 'Invalid price.',
+    e_INVALID_DESIGN: 'Invalid ring design. Reopen the designer and submit again.',
     e_PAYMENT_START_FAILED: 'Could not start the payment.',
     e_GOOGLE_NOT_CONFIGURED: 'Google sign-in is not configured.',
     e_SERVER_ERROR: 'Server error.',
@@ -2453,6 +2455,11 @@ function UploadPage() {
       files.forEach(file => fd.append('photos', file));
       Object.entries(f).forEach(([k, v]) => fd.append(k, typeof v === 'boolean' ? String(v) : v));
       fd.append('lang', lang);
+      if (window.brightalRingDraft) fd.append('ringDesign', JSON.stringify({
+        version: 3,
+        design: window.brightalRingDraft.design,
+        name: window.brightalRingDraft.name || ''
+      }));
       const d = await api('/requests', {
         method: 'POST',
         body: fd
@@ -2667,12 +2674,19 @@ function UploadPage() {
     className: "panel form-panel"
   }, /*#__PURE__*/React.createElement("h3", {
     className: "h-display"
-  }, t('up_details')), /*#__PURE__*/React.createElement("div", {
+  }, t('up_details')), window.brightalRingDraft && /*#__PURE__*/React.createElement("p", {
+    className: "hint"
+  }, lang === 'en' ? 'Metal, size and engraving come from your saved design. Change them in the designer before submitting.' : 'A fém, a méret és a gravírozás a tervedből származik. Módosításukhoz térj vissza a gyűrűtervezőbe.', " ", /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    className: "btn btn-ghost btn-sm",
+    onClick: () => navigate('builder')
+  }, lang === 'en' ? 'Edit design' : 'Terv szerkesztése')), /*#__PURE__*/React.createElement("div", {
     className: "grid-2-gap"
   }, /*#__PURE__*/React.createElement(Field, {
     label: t('up_metal')
   }, /*#__PURE__*/React.createElement("input", {
     className: "input",
+    readOnly: !!window.brightalRingDraft,
     value: f.metal,
     onChange: e => set('metal', e.target.value),
     placeholder: t('up_metal_ph')
@@ -2680,6 +2694,7 @@ function UploadPage() {
     label: t('up_size')
   }, /*#__PURE__*/React.createElement("input", {
     className: "input",
+    readOnly: !!window.brightalRingDraft,
     value: f.ringSize,
     onChange: e => set('ringSize', e.target.value),
     placeholder: t('up_size_ph')
@@ -2702,6 +2717,7 @@ function UploadPage() {
   }, /*#__PURE__*/React.createElement("input", {
     className: "input",
     maxLength: 40,
+    readOnly: !!window.brightalRingDraft,
     value: f.engraving,
     onChange: e => set('engraving', e.target.value),
     placeholder: t('up_engraving_ph')
@@ -3243,7 +3259,8 @@ function AdminRow({
   const {
     t,
     te,
-    toast
+    toast,
+    lang
   } = useA();
   const [open, setOpen] = useState(!!defaultOpen);
   useEffect(() => {
@@ -3287,7 +3304,7 @@ function AdminRow({
     className: "admin-main"
   }, /*#__PURE__*/React.createElement("p", {
     className: "mono-sm"
-  }, /*#__PURE__*/React.createElement("strong", null, req.requestNumber)), /*#__PURE__*/React.createElement("p", {
+  }, /*#__PURE__*/React.createElement("strong", null, req.requestNumber), req.design && /*#__PURE__*/React.createElement("span", null, " \xB7 \u25C7 ", lang === 'en' ? '3D design' : '3D gyűrűterv')), /*#__PURE__*/React.createElement("p", {
     className: "mono-sm dim"
   }, req.customer.name, " \xB7 ", req.customer.email), /*#__PURE__*/React.createElement("p", {
     className: "mono-sm dim"
@@ -3301,7 +3318,16 @@ function AdminRow({
     className: 'chev' + (open ? ' up' : '')
   }, "\u25BE")), open && /*#__PURE__*/React.createElement("div", {
     className: "admin-body"
-  }, /*#__PURE__*/React.createElement("div", {
+  }, req.design && /*#__PURE__*/React.createElement("div", {
+    className: "note-box",
+    style: {
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("h4", null, req.design.name || req.design.config.style, " \xB7 ", lang === 'en' ? 'Saved ring design' : 'Mentett gyűrűterv'), /*#__PURE__*/React.createElement("p", null, lang === 'en' ? 'The ZIP contains the submitted configuration, 3D concept (OBJ), reference images and a printable workshop brief. Production CAD preparation and goldsmith review are required.' : 'A ZIP tartalmazza a beküldött konfigurációt, a 3D látványtervet (OBJ), a referenciaképeket és a nyomtatható műhelylapot. Gyártási CAD-előkészítést és ötvösi ellenőrzést igényel.'), /*#__PURE__*/React.createElement("a", {
+    className: "btn btn-dark btn-sm",
+    href: `/api/admin/requests/${encodeURIComponent(req.requestNumber)}/design.zip`,
+    download: true
+  }, lang === 'en' ? 'Download workshop package (ZIP)' : 'Műhelycsomag letöltése (ZIP)')), /*#__PURE__*/React.createElement("div", {
     className: "admin-grid"
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h4", null, t('ord_photos')), /*#__PURE__*/React.createElement("div", {
     className: "order-thumbs big"
@@ -3453,7 +3479,7 @@ function AdminTable({
     }
   })), /*#__PURE__*/React.createElement("td", {
     className: "id"
-  }, r.requestNumber), /*#__PURE__*/React.createElement("td", {
+  }, r.requestNumber, r.design && /*#__PURE__*/React.createElement("span", null, " \u25C7 3D")), /*#__PURE__*/React.createElement("td", {
     className: "dim"
   }, fmtDate(r.createdAt)), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("div", null, r.customer.name), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -3485,10 +3511,12 @@ function AdminPage() {
     isAdmin,
     setAuthModal,
     navigate,
-    config
+    config,
+    lang
   } = useA();
   const [data, setData] = useState(null);
   const [filter, setFilter] = useState('all');
+  const [source, setSource] = useState('all');
   const [q, setQ] = useState('');
   const [view, setView] = useState('table'); // táblázat az alapértelmezett nézet
   const [openRow, setOpenRow] = useState(null); // táblázatból megnyitott sor
@@ -3497,12 +3525,13 @@ function AdminPage() {
     const params = new URLSearchParams();
     if (filter !== 'all') params.set('status', filter);
     if (q) params.set('q', q);
+    if (source === 'designer') params.set('source', source);
     api('/admin/requests?' + params.toString()).then(setData).catch(() => setData({
       requests: [],
       counts: {},
       revenue: 0
     }));
-  }, [filter, q]);
+  }, [filter, q, source]);
   useEffect(() => {
     if (isAdmin) load();
   }, [isAdmin, load]);
@@ -3542,6 +3571,7 @@ function AdminPage() {
     const p = new URLSearchParams();
     if (filter !== 'all') p.set('status', filter);
     if (q) p.set('q', q);
+    if (source === 'designer') p.set('source', source);
     const qs = p.toString();
     return qs ? '?' + qs : '';
   })();
@@ -3591,7 +3621,15 @@ function AdminPage() {
     onClick: () => setFilter(s)
   }, s === 'all' ? t('ad_all') : t('st_' + s), /*#__PURE__*/React.createElement("em", null, counts[s] || 0)))), /*#__PURE__*/React.createElement("div", {
     className: "admin-toolbar"
-  }, /*#__PURE__*/React.createElement("input", {
+  }, /*#__PURE__*/React.createElement("label", null, lang === 'en' ? 'Order source' : 'Rendelés forrása', " ", /*#__PURE__*/React.createElement("select", {
+    className: "input",
+    value: source,
+    onChange: e => setSource(e.target.value)
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "all"
+  }, lang === 'en' ? 'All orders' : 'Minden rendelés'), /*#__PURE__*/React.createElement("option", {
+    value: "designer"
+  }, lang === 'en' ? 'Ring designer' : 'Gyűrűtervező'))), /*#__PURE__*/React.createElement("input", {
     className: "input",
     value: q,
     onChange: e => setQ(e.target.value),
@@ -3693,6 +3731,9 @@ function BuilderPage() {
     onUpload: () => navigate('upload'),
     onQuote: draft => {
       window.brightalRingDraft = draft;
+      try {
+        localStorage.setItem('brightal-design-v1', JSON.stringify(draft.design));
+      } catch (e) {}
       try {
         const {
           file,

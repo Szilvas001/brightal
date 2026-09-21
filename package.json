@@ -12,6 +12,7 @@
     "dev": "node --watch server/index.js",
     "build": "node scripts/build.js",
     "test:builder": "node --test tests/builder.test.cjs",
+    "test:designs": "node --test tests/designs.test.cjs",
     "build:watch": "babel public/app.jsx --presets @babel/preset-react --out-file public/app.js --watch",
     "hash-password": "node scripts/hash-password.js",
     "gen-secret": "node -e \"console.log('SESSION_SECRET=' + require('crypto').randomBytes(32).toString('hex'))\"",
@@ -19,6 +20,7 @@
   },
   "dependencies": {
     "express": "^4.19.2",
+    "fflate": "^0.8.3",
     "multer": "^2.2.0",
     "nodemailer": "^9.0.4",
     "three": "^0.180.0"

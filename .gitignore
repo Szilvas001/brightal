@@ -6,3 +6,5 @@ public/uploads/*
 !public/uploads/README.txt
 .env
 *.log
+
+data/designs/

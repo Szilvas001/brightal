@@ -262,6 +262,7 @@ const I18N = {
     e_ALREADY_PAID: 'Ez már ki van fizetve.',
     e_NO_PRICE: 'Még nincs ár megadva.',
     e_INVALID_PRICE: 'Érvénytelen ár.',
+    e_INVALID_DESIGN: 'Érvénytelen gyűrűterv. Nyisd meg újra a tervezőt és küldd be ismét.',
     e_PAYMENT_START_FAILED: 'A fizetés indítása sikertelen.',
     e_GOOGLE_NOT_CONFIGURED: 'A Google belépés nincs beállítva.',
     e_SERVER_ERROR: 'Szerverhiba.',
@@ -509,6 +510,7 @@ const I18N = {
     e_ALREADY_PAID: 'This has already been paid.',
     e_NO_PRICE: 'No price has been set yet.',
     e_INVALID_PRICE: 'Invalid price.',
+    e_INVALID_DESIGN: 'Invalid ring design. Reopen the designer and submit again.',
     e_PAYMENT_START_FAILED: 'Could not start the payment.',
     e_GOOGLE_NOT_CONFIGURED: 'Google sign-in is not configured.',
     e_SERVER_ERROR: 'Server error.',
@@ -1677,6 +1679,7 @@ function UploadPage() {
       files.forEach(file => fd.append('photos', file));
       Object.entries(f).forEach(([k, v]) => fd.append(k, typeof v === 'boolean' ? String(v) : v));
       fd.append('lang', lang);
+      if (window.brightalRingDraft) fd.append('ringDesign', JSON.stringify({version:3, design:window.brightalRingDraft.design, name:window.brightalRingDraft.name || ''}));
       const d = await api('/requests', { method: 'POST', body: fd });
       setDone(d.request);
       window.brightalRingDraft = null;
@@ -1778,12 +1781,13 @@ function UploadPage() {
       {/* részletek */}
       <div className="panel form-panel">
         <h3 className="h-display">{t('up_details')}</h3>
+        {window.brightalRingDraft && <p className="hint">{lang === 'en' ? 'Metal, size and engraving come from your saved design. Change them in the designer before submitting.' : 'A fém, a méret és a gravírozás a tervedből származik. Módosításukhoz térj vissza a gyűrűtervezőbe.'} <button type="button" className="btn btn-ghost btn-sm" onClick={()=>navigate('builder')}>{lang === 'en' ? 'Edit design' : 'Terv szerkesztése'}</button></p>}
         <div className="grid-2-gap">
           <Field label={t('up_metal')}>
-            <input className="input" value={f.metal} onChange={e => set('metal', e.target.value)} placeholder={t('up_metal_ph')} />
+            <input className="input" readOnly={!!window.brightalRingDraft} value={f.metal} onChange={e => set('metal', e.target.value)} placeholder={t('up_metal_ph')} />
           </Field>
           <Field label={t('up_size')}>
-            <input className="input" value={f.ringSize} onChange={e => set('ringSize', e.target.value)} placeholder={t('up_size_ph')} />
+            <input className="input" readOnly={!!window.brightalRingDraft} value={f.ringSize} onChange={e => set('ringSize', e.target.value)} placeholder={t('up_size_ph')} />
           </Field>
           <Field label={t('up_budget')}>
             <input className="input" value={f.budget} onChange={e => set('budget', e.target.value)} placeholder={t('up_budget_ph')} />
@@ -1793,7 +1797,7 @@ function UploadPage() {
           </Field>
         </div>
         <Field label={t('up_engraving')}>
-          <input className="input" maxLength={40} value={f.engraving} onChange={e => set('engraving', e.target.value)} placeholder={t('up_engraving_ph')} />
+          <input className="input" maxLength={40} readOnly={!!window.brightalRingDraft} value={f.engraving} onChange={e => set('engraving', e.target.value)} placeholder={t('up_engraving_ph')} />
         </Field>
         <Field label={t('up_note')}>
           <textarea className="textarea" rows={3} maxLength={1000} value={f.note}
@@ -2088,7 +2092,7 @@ function AccountPage() {
 /* ═══════════ ADMIN ═══════════ */
 
 function AdminRow({ req, onChanged, defaultOpen }) {
-  const { t, te, toast } = useA();
+  const { t, te, toast, lang } = useA();
   const [open, setOpen] = useState(!!defaultOpen);
   useEffect(() => { if (defaultOpen) setOpen(true); }, [defaultOpen]);
   const [price, setPrice] = useState(req.price || '');
@@ -2116,7 +2120,7 @@ function AdminRow({ req, onChanged, defaultOpen }) {
         {req.images.length > 2 && <span className="more">+{req.images.length - 2}</span>}
       </div>
       <div className="admin-main">
-        <p className="mono-sm"><strong>{req.requestNumber}</strong></p>
+        <p className="mono-sm"><strong>{req.requestNumber}</strong>{req.design && <span> · ◇ {lang === 'en' ? '3D design' : '3D gyűrűterv'}</span>}</p>
         <p className="mono-sm dim">{req.customer.name} · {req.customer.email}</p>
         <p className="mono-sm dim">{fmtDate(req.createdAt)}</p>
       </div>
@@ -2128,6 +2132,11 @@ function AdminRow({ req, onChanged, defaultOpen }) {
     </div>
 
     {open && <div className="admin-body">
+      {req.design && <div className="note-box" style={{marginBottom:20}}>
+        <h4>{req.design.name || req.design.config.style} · {lang === 'en' ? 'Saved ring design' : 'Mentett gyűrűterv'}</h4>
+        <p>{lang === 'en' ? 'The ZIP contains the submitted configuration, 3D concept (OBJ), reference images and a printable workshop brief. Production CAD preparation and goldsmith review are required.' : 'A ZIP tartalmazza a beküldött konfigurációt, a 3D látványtervet (OBJ), a referenciaképeket és a nyomtatható műhelylapot. Gyártási CAD-előkészítést és ötvösi ellenőrzést igényel.'}</p>
+        <a className="btn btn-dark btn-sm" href={`/api/admin/requests/${encodeURIComponent(req.requestNumber)}/design.zip`} download>{lang === 'en' ? 'Download workshop package (ZIP)' : 'Műhelycsomag letöltése (ZIP)'}</a>
+      </div>}
       <div className="admin-grid">
         <div>
           <h4>{t('ord_photos')}</h4>
@@ -2231,7 +2240,7 @@ function AdminTable({ requests, onOpen }) {
           <td>{r.images && r.images[0]
             ? <img className="tbl-thumb" src={r.images[0].url} alt="" loading="lazy" />
             : <span className="tbl-thumb" style={{ display: 'inline-block', background: 'var(--bg-warm)' }} />}</td>
-          <td className="id">{r.requestNumber}</td>
+          <td className="id">{r.requestNumber}{r.design && <span> ◇ 3D</span>}</td>
           <td className="dim">{fmtDate(r.createdAt)}</td>
           <td>
             <div>{r.customer.name}</div>
@@ -2256,9 +2265,10 @@ function AdminTable({ requests, onOpen }) {
 }
 
 function AdminPage() {
-  const { t, isAdmin, setAuthModal, navigate, config } = useA();
+  const { t, isAdmin, setAuthModal, navigate, config, lang } = useA();
   const [data, setData] = useState(null);
   const [filter, setFilter] = useState('all');
+  const [source, setSource] = useState('all');
   const [q, setQ] = useState('');
   const [view, setView] = useState('table');     // táblázat az alapértelmezett nézet
   const [openRow, setOpenRow] = useState(null);  // táblázatból megnyitott sor
@@ -2267,8 +2277,9 @@ function AdminPage() {
     const params = new URLSearchParams();
     if (filter !== 'all') params.set('status', filter);
     if (q) params.set('q', q);
+    if (source === 'designer') params.set('source', source);
     api('/admin/requests?' + params.toString()).then(setData).catch(() => setData({ requests: [], counts: {}, revenue: 0 }));
-  }, [filter, q]);
+  }, [filter, q, source]);
 
   useEffect(() => { if (isAdmin) load(); }, [isAdmin, load]);
 
@@ -2298,6 +2309,7 @@ function AdminPage() {
     const p = new URLSearchParams();
     if (filter !== 'all') p.set('status', filter);
     if (q) p.set('q', q);
+    if (source === 'designer') p.set('source', source);
     const qs = p.toString();
     return qs ? '?' + qs : '';
   })();
@@ -2339,6 +2351,10 @@ function AdminPage() {
       </div>
 
       <div className="admin-toolbar">
+        <label>{lang === 'en' ? 'Order source' : 'Rendelés forrása'} <select className="input" value={source} onChange={e=>setSource(e.target.value)}>
+          <option value="all">{lang === 'en' ? 'All orders' : 'Minden rendelés'}</option>
+          <option value="designer">{lang === 'en' ? 'Ring designer' : 'Gyűrűtervező'}</option>
+        </select></label>
         <input className="input" value={q} onChange={e => setQ(e.target.value)} placeholder={t('ad_search')} />
         <div className="view-switch">
           <button className={view === 'table' ? 'on' : ''} onClick={() => setView('table')}>
@@ -2394,6 +2410,7 @@ function BuilderPage() {
   const Builder = window.BrightalBuilder.RingBuilder;
   return <Builder lang={lang} onUpload={() => navigate('upload')} onQuote={draft => {
     window.brightalRingDraft = draft;
+    try { localStorage.setItem('brightal-design-v1', JSON.stringify(draft.design)); } catch (e) {}
     try { const { file, ...saved } = draft; sessionStorage.setItem('brightal-quote-v1', JSON.stringify(saved)); } catch (e) {}
     navigate('upload');
   }}/>;
@@ -2402,7 +2419,7 @@ function BuilderPage() {
 const PAGES = {
   builder: BuilderPage,
   home: HomePage, how: HowPage, upload: UploadPage, inspiration: InspirationPage,
-  orders: OrdersPage, account: AccountPage, about: AboutPage, contact: ContactPage,
+  order: OrdersPage, account: AccountPage, about: AboutPage, contact: ContactPage,
   admin: AdminPage, 'payment-return': PaymentReturnPage,
   /* jogi oldalak — mind ugyanazt a komponenst használja, más tartalommal */
   terms: () => <LegalPage doc="terms" />,

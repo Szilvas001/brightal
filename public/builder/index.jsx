@@ -245,6 +245,9 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
     [saved, setSaved] = useState(false);
   const [thumbs, setThumbs] = useState([]);
   const [family, setFamily] = useState("classic");
+  useEffect(() => {
+    setFamily(isFashion(s) ? 'fashion' : isDaily(s) || ['band','eternity'].includes(s.style) ? 'daily' : 'classic');
+  }, [s.style]);
   const [designName,setDesignName]=useState('');
   useEffect(()=>setSaved(false),[s]);
   const [focus, setFocus] = useState(false);
@@ -382,7 +385,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
           (value) =>
             key !== "style" ||
             family === "all" ||
-            (family==='fashion'?FASHION_STYLES.includes(value):family==='daily'?DAILY_STYLES.includes(value):!FASHION_STYLES.includes(value)&&!DAILY_STYLES.includes(value)),
+            (family==='fashion'?FASHION_STYLES.includes(value):family==='daily'?[...DAILY_STYLES,'band','eternity'].includes(value):!FASHION_STYLES.includes(value)&&![...DAILY_STYLES,'band','eternity'].includes(value)),
         )
         .map((value) => (
           <button
@@ -529,6 +532,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
         }),
         preview: png,
         design: s,
+        name: designName.trim().slice(0,60),
         note: description(s),
         metal: label(s.metal),
       });
@@ -682,8 +686,8 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
           </h1>
           <p>
             {L(
-              "Eljegyzésre. Minden napra. 19 forma, számtalan személyes részlet.",
-              "For a proposal. For every day. 19 forms, countless personal details.",
+              "Eljegyzésre. Minden napra. 24 forma, számtalan személyes részlet.",
+              "For a proposal. For every day. 24 forms, countless personal details.",
             )}
           </p>
         </div>

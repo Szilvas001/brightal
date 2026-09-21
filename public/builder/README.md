@@ -8,6 +8,7 @@ The designer is available at `/ring-builder`, in both languages and both navigat
 npm ci
 npm run build
 npm run test:builder
+npm run test:designs
 npm start
 ```
 
@@ -15,7 +16,7 @@ npm start
 
 ## Architecture
 
-- `state.js`: allowlisted, bounded configuration, fourteen presets and share-link parsing. Existing v1 local saves remain compatible.
+- `state.mjs`: allowlisted, bounded configuration, twenty-two presets and share-link parsing. Existing v1 local saves remain compatible.
 - `index.jsx`: bilingual six-step UI, undo/redo, eight-design local library, JSON import/export, URL sharing, image export and quote handoff. Gallery thumbnails come from the real 3D models.
 - `model.mjs`: ten procedural ring families, nine center cuts, independently sized/shaped/colored side stones, two-tone settings, double halos, independent hidden halos, split shanks, cathedral bridges and configurable band accents.
 - `fashion.mjs`: six additional sculptural families: wave, rope, dome, signet, open cuff and stacked bands. Controls change amplitude, rhythm, layers, spacing, signet shape/size/inlay and mixed metals. These intentionally have no center-stone, pavé or engraving controls; incompatible state is normalized away. The stack is a coordinated set of separate bands, not a fused manufacturing solid.
@@ -40,3 +41,22 @@ The current PNG and complete specifications populate the existing authenticated 
 ## Validation
 
 Unit tests cover adversarial configuration values, Unicode/share round-trips, compatibility constraints, all 64 style/side-layout inputs (incompatible fashion side layouts normalize to none), geometry changes for each fashion family's primary control, and finite outward-facing convex geometry for all nine cuts within the shader plane budget. Browser checks cover desktop/mobile layouts, signet inlays, two-tone stacks, focus mode, variation/undo, independent side stones, saved-design library, quote handoff and live 3D rendering. Live payments, real certificate inventory and manufacturing validation are outside this local preview.
+
+
+## Order snapshots and workshop handoff (v3)
+
+There are 24 style families, including eight daily diamond layouts and six sculptural families. Engagement is the default filter; plain and eternity bands are in the daily collection. Five original daily designs add ribbon, graduated, east–west, alternating-cut and crown compositions. The original engagement models and all store destinations remain available.
+
+Submitting a designer quote sends a versioned `ringDesign` field through the existing authenticated request endpoint. The server validates and normalizes it using the same shared state module. The persisted request includes a design UUID, name, model version, canonical configuration and SHA-256 configuration digest. Metal, size and engraving in the order derive from this configuration, preventing contradictory form values. Prices and payment approval still come exclusively from the existing admin workflow.
+
+At submission time the server creates a private, immutable ZIP under `data/designs/<request-id>.zip`. Back up this directory with the existing data directory. The admin's **Rendelés forrása → Gyűrűtervező** filter also applies to CSV/XLS exports. Each designer order has an admin-only **Műhelycsomag letöltése (ZIP)** link, preserved across payment and production states. Existing photo-only orders work unchanged; old free-text designer requests cannot be reconstructed automatically and have no package.
+
+The ZIP contains:
+- `design.json`: full importable configuration, requested nominal dimensions, model version, digest and mesh bounds;
+- `ring-concept.obj`: one named logical object with separate component groups, with scene scale converted to millimetres;
+- reference images and `workshop.html`: a printable brief with all parameters, nominal size and space for workshop sign-off;
+- `READ-ME.txt`: exact manufacturing limitations.
+
+**This is workshop review material, not certified manufacturing CAD.** A single OBJ object is not a Boolean-unioned watertight solid. In particular, the legacy preview size follows the shank centreline, so its actual inner diameter differs from the requested nominal size; stones are approximate carat-scaled cuts, not measured stock. STEP/3DM production solids, proper seats and tolerances, engraving subtraction, casting shrinkage and wall/clearance validation require a separate parametric CAD implementation plus actual stones and workshop process specifications. Do not send this OBJ directly to casting/printing as an approved production file. Sculptural stacks remain separate physical bands and mixed materials require separate operations. No UI or package declares these designs 100% manufacturable.
+
+Verification includes malformed design rejection and uploaded-file cleanup, original photo orders, immutable ZIP bytes after payment-status changes, customer/anonymous download denial, admin source filtering and filtered exports, OBJ indices/finite coordinates, HTML escaping and new layout geometry differences. No live payment is executed by these tests.

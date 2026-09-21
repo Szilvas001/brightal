@@ -11,6 +11,7 @@ const cfg = require('../config');
 const R = require('../requests');
 const mailer = require('../mailer');
 const xport = require('../export');
+const designs = require('../designs');
 
 const router = express.Router();
 router.use(auth.requireAdmin);
@@ -20,6 +21,7 @@ function filterRequests(query) {
   const status = query.status;
   const q = String(query.q || '').trim().toLowerCase();
   let list = db.requests.all().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  if (query.source === 'designer') list = list.filter(r => r.design);
   if (status && status !== 'all') list = list.filter(r => r.status === status);
   if (q) {
     list = list.filter(r =>
@@ -138,6 +140,16 @@ router.get('/export.xls', (req, res) => {
   res.set('Content-Type', 'application/vnd.ms-excel; charset=utf-8');
   res.set('Content-Disposition', 'attachment; filename="' + xport.filename('xls') + '"');
   res.send(xport.toXls(rows));
+});
+
+/* Immutable submission package; access is protected by requireAdmin above. */
+router.get('/requests/:requestNumber/design.zip', (req, res) => {
+  const r = db.requests.find(x => x.requestNumber === req.params.requestNumber);
+  if (!r || !r.design) return res.status(404).json({ error: 'NOT_FOUND' });
+  res.set('Cache-Control', 'private, no-store');
+  res.download(designs.archivePath(r.id), `${r.requestNumber}-workshop.zip`, err => {
+    if (err && !res.headersSent) res.status(err.code === 'ENOENT' ? 404 : 500).json({ error: err.code === 'ENOENT' ? 'NOT_FOUND' : 'SERVER_ERROR' });
+  });
 });
 
 /* ---------- ügyféllista ---------- */

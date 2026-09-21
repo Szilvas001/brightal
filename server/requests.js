@@ -71,6 +71,8 @@ function toPublic(r, { includeInternal = false } = {}) {
     paidAt: r.paidAt || null,
     images: r.images.map(i => ({ url: i.url, name: i.originalName })),
     details: r.details,
+    source: r.design ? 'designer' : 'upload',
+    design: r.design || null,
     note: r.note,
     price: r.price,
     currency: r.currency,
@@ -91,12 +93,13 @@ function toPublic(r, { includeInternal = false } = {}) {
 }
 
 /** Új kérés objektum összeállítása. */
-function build({ user, body, files, lang }) {
+function build({ user, body, files, lang, design = null }) {
   const now = new Date().toISOString();
   return {
     id: crypto.randomUUID(),
     requestNumber: requestNumber(),
     userId: user.id,
+    design,
     lang: lang === 'en' ? 'en' : 'hu',
     status: STATUS.SUBMITTED,
     createdAt: now,
@@ -114,11 +117,11 @@ function build({ user, body, files, lang }) {
       mime: f.mimetype
     })),
     details: {
-      metal: S(body.metal, 40),
-      ringSize: S(body.ringSize, 10),
+      metal: design ? design.config.metal : S(body.metal, 40),
+      ringSize: design ? String(design.config.size) : S(body.ringSize, 10),
       budget: S(body.budget, 40),
       deadline: S(body.deadline, 40),
-      engraving: S(body.engraving, 40)
+      engraving: design ? design.config.engraving : S(body.engraving, 40)
     },
     note: S(body.note, 1000),
     price: null,

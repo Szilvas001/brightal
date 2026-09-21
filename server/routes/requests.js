@@ -10,6 +10,7 @@ const db = require('../db');
 const auth = require('../auth');
 const R = require('../requests');
 const mailer = require('../mailer');
+const designs = require('../designs');
 
 const router = express.Router();
 
@@ -73,14 +74,26 @@ router.post('/requests', auth.requireUser, handleUpload, async (req, res) => {
   if (String(body.name || req.user.name).trim().length < 2) { cleanup(req.files); return res.status(400).json({ error: 'NAME_REQUIRED' }); }
   if (!body.acceptTerms || body.acceptTerms === 'false') { cleanup(req.files); return res.status(400).json({ error: 'TERMS_REQUIRED' }); }
 
+  let design;
+  try { design = await designs.parseDesign(body.ringDesign); }
+  catch { cleanup(req.files); return res.status(400).json({ error: 'INVALID_DESIGN' }); }
   const request = R.build({
     user: req.user,
     body: { ...body, email },
+    design,
     files: req.files,
     lang: body.lang || cfg.defaultLang
   });
 
-  await db.requests.insert(request);
+  try {
+    if (design) await designs.savePackage(request, req.files);
+    await db.requests.insert(request);
+  } catch (e) {
+    cleanup(req.files);
+    if (design) { try { fs.unlinkSync(designs.archivePath(request.id)); } catch {} }
+    console.error('[request] persistence failed:', e.message);
+    return res.status(500).json({ error: 'SERVER_ERROR' });
+  }
 
   /* e-mail: az ügyfélnek visszaigazolás, az adminnak értesítés */
   mailer.requestReceived(request, request.lang).catch(e => console.error('[mail]', e.message));

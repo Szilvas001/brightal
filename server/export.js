@@ -15,6 +15,9 @@ const cfg = require('./config');
 
 const COLUMNS = [
   ['requestNumber', 'Azonosító'],
+  ['source', 'Forrás'],
+  ['designId', 'Gyűrűterv azonosító'],
+  ['designStyle', 'Gyűrű stílusa'],
   ['createdAt', 'Beérkezett'],
   ['statusLabel', 'Státusz'],
   ['customerName', 'Ügyfél neve'],
@@ -64,6 +67,9 @@ function toRow(r) {
   const d = r.details || {};
   return {
     requestNumber: r.requestNumber,
+    source: r.design ? 'Gyűrűtervező' : 'Képfeltöltés',
+    designId: r.design?.designId || '',
+    designStyle: r.design?.config?.style || '',
     createdAt: dt(r.createdAt),
     statusLabel: STATUS_LABEL[r.status] || r.status,
     customerName: (r.customer && r.customer.name) || '',
