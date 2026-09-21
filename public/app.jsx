@@ -2419,7 +2419,7 @@ function BuilderPage() {
 const PAGES = {
   builder: BuilderPage,
   home: HomePage, how: HowPage, upload: UploadPage, inspiration: InspirationPage,
-  order: OrdersPage, account: AccountPage, about: AboutPage, contact: ContactPage,
+  orders: OrdersPage, account: AccountPage, about: AboutPage, contact: ContactPage,
   admin: AdminPage, 'payment-return': PaymentReturnPage,
   /* jogi oldalak — mind ugyanazt a komponenst használja, más tartalommal */
   terms: () => <LegalPage doc="terms" />,
