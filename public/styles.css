@@ -55,15 +55,14 @@ body{font-family:var(--sans);color:var(--text);background:transparent;-webkit-fo
   position:relative;min-height:100vh}
 
 /* ══════════════════════════════════════════════════════════════════
-   OLDALHÁTTÉR — a márka rózsás selyemképe
+   OLDALHÁTTÉR — a feltöltött atelier-kompozíciók
    ──────────────────────────────────────────────────────────────────
-   EGYETLEN fix réteg az egész oldal mögött, minden aloldalon.
+   EGYETLEN fix réteg az egész oldal mögött, útvonal szerinti képpel.
    Szándékosan nincs második, életlenített réteg: bármilyen homály
    rárakva rontaná az élességet. A térérzet kizárólag abból jön,
    hogy ez a réteg finoman elmozdul az egérrel és a görgetéssel.
 
-   A kép 3200 px széles, ezért a böngésző szinte minden képernyőn
-   KICSINYÍT (az élesít), nem nagyít (az mosna). WebP + JPEG tartalék.
+   Optimalizált WebP-képek; mobilon a gyűrűs rész külön helyet kap.
    ══════════════════════════════════════════════════════════════════ */
 body::before{
   content:'';position:fixed;inset:-6%;z-index:-2;pointer-events:none;

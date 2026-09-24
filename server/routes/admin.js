@@ -21,7 +21,7 @@ function filterRequests(query) {
   const status = query.status;
   const q = String(query.q || '').trim().toLowerCase();
   let list = db.requests.all().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  if (query.source === 'diamond') list = list.filter(r => r.diamond);
+  if (query.source === 'diamond') list = list.filter(r => r.diamond || r.sourcing);
   if (query.source === 'designer') list = list.filter(r => r.design);
   if (status && status !== 'all') list = list.filter(r => r.status === status);
   if (q) {
@@ -60,6 +60,7 @@ router.get('/requests', (req, res) => {
 router.post('/requests/:requestNumber/approve', async (req, res) => {
   const r = db.requests.find(x => x.requestNumber === req.params.requestNumber);
   if (!r) return res.status(404).json({ error: 'NOT_FOUND' });
+  if (r.sourcing || r.diamond) return res.status(409).json({error:'DIAMOND_CONFIRMATION_REQUIRED'});
 
   const price = R.roundPrice((req.body || {}).price);
   if (price === null) return res.status(400).json({ error: 'INVALID_PRICE' });

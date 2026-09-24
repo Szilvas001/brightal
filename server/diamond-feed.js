@@ -18,11 +18,11 @@ function refresh(entries,actor){
   let reason;
   if(candidates.length!==1)reason='NO_UNIQUE_MATCH';
   else if(updated.has(candidates[0].id))reason='DUPLICATE_MATCH';
-  else if(entry.currency!=='HUF'||entry.vatIncluded!==true||entry.source!=='noordia'||entry.status!=='verified')reason='UNVERIFIED_GROSS_PRICE';
+  else if(entry.currency!=='HUF'||entry.source!=='dipen'||entry.status!=='verified')reason='UNVERIFIED_GROSS_PRICE';
   else if(!Number.isFinite(Date.parse(entry.checkedAt))||Date.parse(entry.checkedAt)>Date.now()+60000||Date.now()-Date.parse(entry.checkedAt)>86400000)reason='STALE_VERIFICATION';
-  else try{P.decimalMinor(entry.grossHuf);}catch{reason='INVALID_GROSS_PRICE';}
+  else try{P.decimalMinor(entry.costHuf);}catch{reason='INVALID_GROSS_PRICE';}
   if(reason){issues.push({at:new Date().toISOString(),actor,reason,certificateNumber:String(entry.certificateNumber||''),candidateIds:candidates.map(x=>x.id)});if(candidates.length===1)candidates[0].sourceStatus='review';continue;}
-  const x=candidates[0];x.referencePrice=String(entry.grossHuf);x.priceCheckedAt=entry.checkedAt;x.sourceStatus='verified';x.sourceReference='noordia-authorized-import';x.referenceSource='noordia';x.referenceVatIncluded=true;updated.add(x.id);
+  const x=candidates[0];x.referencePrice=String(entry.costHuf);x.priceCheckedAt=entry.checkedAt;x.sourceStatus='verified';x.sourceReference='dipen-approved-cost';x.referenceSource='dipen';x.referenceVatIncluded=true;updated.add(x.id);
  }
  D.save(rows);
  fs.mkdirSync(path.dirname(REVIEW),{recursive:true});fs.writeFileSync(REVIEW+'.tmp',JSON.stringify([...review(),...issues].slice(-2000)));fs.renameSync(REVIEW+'.tmp',REVIEW);

@@ -2094,13 +2094,17 @@ function AdminRow({ req, onChanged, defaultOpen }) {
   const [open, setOpen] = useState(!!defaultOpen);
   useEffect(() => { if (defaultOpen) setOpen(true); }, [defaultOpen]);
   const [price, setPrice] = useState(req.price || '');
+  const [stoneId,setStoneId]=useState(req.diamond?.id||'');
+  const [stock,setStock]=useState([]);
+  useEffect(()=>{if(open&&req.sourcing)api('/diamonds').then(x=>setStock(x.items.filter(s=>s.purchasable&&Object.keys(req.sourcing).every(k=>s[k]===req.sourcing[k])))).catch(()=>setStock([]));},[open,req.sourcing]);
   const [note, setNote] = useState(req.adminNote || '');
   const [busy, setBusy] = useState(false);
 
   const call = async (action, body) => {
     setBusy(true);
     try {
-      const d = await api(`/admin/requests/${encodeURIComponent(req.requestNumber)}/${action}`, { method: 'POST', body });
+      const endpoint=action==='approve'&&req.sourcing?`/diamonds/sourcing/${encodeURIComponent(req.requestNumber)}/confirm`:`/admin/requests/${encodeURIComponent(req.requestNumber)}/${action}`;
+      const d = await api(endpoint, { method: 'POST', body:{...body,stoneId} });
       onChanged(d.request);
       toast(action === 'approve' ? t('ad_approved_ok') : t('g_saved'));
       if (action === 'approve') setOpen(false);
@@ -2108,7 +2112,7 @@ function AdminRow({ req, onChanged, defaultOpen }) {
     setBusy(false);
   };
 
-  const canApprove = ['submitted', 'approved', 'rejected'].includes(req.status);
+  const canApprove = (!req.diamond||!!req.sourcing)&&['submitted', 'approved', 'rejected'].includes(req.status);
   const canReject = ['submitted', 'approved'].includes(req.status);
 
   return <div className="panel admin-row">
@@ -2161,12 +2165,12 @@ function AdminRow({ req, onChanged, defaultOpen }) {
       {(canApprove || canReject) && <div className="admin-actions">
         <h4>{t('ad_setprice')}</h4>
         <div className="price-form">
-          <input className="input" type="number" min="0" step="100" value={price}
-            onChange={e => setPrice(e.target.value)} placeholder={t('ad_price_ph')} />
+          {req.sourcing?<label>Igazolt, pontosan egyező kő<select value={stoneId} onChange={e=>setStoneId(e.target.value)}><option value="">Válassz igazolt készletből</option>{stock.map(s=><option key={s.id} value={s.id}>{s.id} · IGI {s.certificate.number} · {money(s.price)}</option>)}</select><small>A végösszeget a szerver számítja. Hiányzó kőnél előbb importálj igazolt készletet és friss beszerzési árat.</small></label>:<input className="input" type="number" min="0" step="100" value={price}
+            onChange={e => setPrice(e.target.value)} placeholder={t('ad_price_ph')} />}
           <input className="input" value={note} onChange={e => setNote(e.target.value)} placeholder={t('ad_note_ph')} />
         </div>
         <div className="btn-row" style={{ marginTop: 12 }}>
-          {canApprove && <button className="btn btn-gold" disabled={busy || !price}
+          {canApprove && <button className="btn btn-gold" disabled={busy || (req.sourcing?!stoneId:!price)}
             onClick={() => call('approve', { price: Number(price), adminNote: note })}>
             {busy ? <Spinner size={14} /> : <><Ico.check s={14} /> {t('ad_approve')}</>}
           </button>}
@@ -2372,7 +2376,7 @@ function AdminPage() {
         </a>
       </div>
 
-      <DiamondImport/><DiamondPriceAdmin/><AdminCad/>
+      <DiamondImport/><DiamondPriceAdmin/><SupplierAdmin/><AdminCad/>
       {!data && <div style={{ textAlign: 'center', padding: 40 }}><Spinner dark size={26} /></div>}
       {data && !list.length && <div className="empty-state"><p>{t('ad_empty')}</p></div>}
 
@@ -2434,6 +2438,20 @@ function DiamondScene({stone}) {
  useEffect(()=>{let live=true;loadRingRuntime().then(()=>{if(live){engine.current=new window.BrightalBuilder.DiamondViewer(host.current,stone,()=>setError(true));setLoaded(true);}}).catch(()=>setError(true));return()=>{live=false;engine.current?.dispose();};},[stone.id]);
  return <div className="diamond-view"><div className="diamond-canvas" ref={host}/>{!loaded&&!error&&<div className="diamond-skeleton" role="status">3D…</div>}{error&&<p role="alert">A 3D nézet nem tölthető be.</p>}<div className="diamond-tools"><button onClick={()=>engine.current?.zoom(.8)} aria-label="Nagyítás">+</button><button onClick={()=>engine.current?.zoom(1.2)} aria-label="Kicsinyítés">−</button><button aria-pressed={rotate} onClick={()=>{setRotate(!rotate);if(engine.current)engine.current.controls.autoRotate=!rotate;}}>Forgatás</button><button onClick={()=>engine.current?.view('hero')}>Nézet visszaállítása</button><button onClick={()=>{const box=host.current.parentElement;if(document.fullscreenElement)document.exitFullscreen();else box.requestFullscreen?.().catch(()=>setError(true));}}>Teljes képernyő</button></div><small>Húzás: forgatás · görgetés: nagyítás · jobb húzás / két ujj: eltolás</small></div>;
 }
+const DIAMOND_CHOICES={shape:['round','oval','pear','emerald','radiant','cushion','princess','marquise','asscher','heart'],color:['D','E','F','G','H','I','J','K','L','M'],clarity:['FL','IF','VVS1','VVS2','VS1','VS2','SI1','SI2']};
+function DiamondCombination({value,onChange}){
+ return <div className="cad-fields">{Object.entries(DIAMOND_CHOICES).map(([key,options])=><label key={key}>{({shape:'Forma',color:'Szín',clarity:'Tisztaság'})[key]}<select value={value[key]} onChange={e=>onChange({...value,[key]:e.target.value})}>{options.map(x=><option key={x}>{x}</option>)}</select></label>)}<label>Karát<input type="number" min="0.1" max="30" step="0.01" value={value.carat} onChange={e=>onChange({...value,carat:Number(e.target.value)})}/></label></div>;
+}
+function DiamondSourcing(){
+ const [value,setValue]=useState({shape:'round',color:'F',clarity:'VS1',carat:1}),[message,setMessage]=useState(''),[busy,setBusy]=useState(false);
+ return <details className="diamond-import"><summary>Egyedi kombináció · kő beszerzése</summary><p>Mind a tíz forma, D–M szín, FL–SI2 tisztaság és 0,10–30 ct választható. A készletet, az IGI-tanúsítványt és a végleges árat egyedileg igazoljuk; fizetés csak visszaigazolás után.</p><DiamondCombination value={value} onChange={setValue}/><button className="btn btn-dark" disabled={busy} onClick={async()=>{setBusy(true);try{const r=await api('/diamonds/sourcing',{method:'POST',body:value});setMessage('Igény rögzítve: '+r.request.requestNumber);}catch(e){setMessage(e.message==='UNAUTHORIZED'?'Az igény elküldéséhez jelentkezz be.':e.message);}finally{setBusy(false);}}}>Beszerzési igény elküldése</button><p role="status">{message}</p></details>;
+}
+function SupplierAdmin(){
+ const [data,setData]=useState(null),[value,setValue]=useState({shape:'oval',color:'F',clarity:'VS1',carat:1}),[result,setResult]=useState(null),[message,setMessage]=useState('');
+ useEffect(()=>{api('/diamonds/supplier/model').then(setData).catch(e=>setMessage(e.message));},[]);
+ const save=async next=>{try{setData(await api('/diamonds/supplier/model',{method:'POST',body:next}));setResult(null);setMessage('Privát beszállítói adatok mentve.');}catch(e){setMessage(e.message);}};
+ return <details className="diamond-import"><summary>DIPEN · beszerzési becslés és adatok</summary><p>A becslés a rögzített egységárakból készül. A szállítás külön tétel. Történeti ár vagy interpoláció nem készletigazolás és nem garantált mai ajánlat.</p>{data&&<><p>{data.observations.length} megfigyelés · adatok kizárólag az admin számára.</p><label>Megfigyelések importálása (JSON-tömb)<input type="file" accept=".json" onChange={async e=>{const f=e.target.files[0];if(!f)return;try{if(f.size>240000)throw Error('Legfeljebb 240 KB.');await save({...data,observations:JSON.parse(await f.text())});}catch(err){setMessage(err.message);}finally{e.target.value='';}}}/></label><small>Mezők: id, shape, color, clarity, carat, usd (egységár), currency: USD, date (ÉÉÉÉ-HH-NN), kind: purchase vagy quote, stoneOnly: true, evidence. Az import a teljes megfigyeléslistát cseréli.</small><div className="cad-fields"><label>USD/HUF<input type="number" step="0.01" min="0.01" value={data.fx?.hufPerUsd||''} onChange={e=>setData({...data,fx:{...data.fx,hufPerUsd:e.target.value}})}/></label><label>Árfolyam forrása<input value={data.fx?.source||''} onChange={e=>setData({...data,fx:{...data.fx,source:e.target.value}})}/></label></div><button className="btn btn-ghost" onClick={()=>save({...data,fx:{...data.fx,checkedAt:new Date().toISOString()}})}>Árfolyam rögzítése most ellenőrzöttként</button><p>Utolsó árfolyam-ellenőrzés: {data.fx?.checkedAt||'Nincs'}</p><DiamondCombination value={value} onChange={v=>{setValue(v);setResult(null);}}/><button className="btn btn-dark" onClick={async()=>{try{setResult(await api('/diamonds/supplier/estimate',{method:'POST',body:value}));setMessage('');}catch(e){setResult(null);setMessage(e.message);}}}>Beszerzési becslés kiszámítása</button>{result&&<div role="status"><p>Becsült kőár: {result.estimatedUsd} USD{result.estimatedCostHuf&&` · ${result.estimatedCostHuf} Ft`}</p><p>Bruttó eladási ár: {result.retailGrossHuf==null?'Árfolyam szükséges':result.retailGrossHuf.toLocaleString('hu-HU')+' Ft'}</p><p>Évesített trend: {result.annualTrendPercent==null?'Nincs elegendő adat':result.annualTrendPercent+'%'} · {result.trendPairs} összehasonlítható pár</p>{result.warnings.map(w=><p key={w}>⚠ {w}</p>)}<small>Felhasznált megfigyelések: {result.neighbors.map(x=>x.id).join(', ')}</small></div>}<details><summary>Rögzített ajánlatok és vásárlások</summary>{data.observations.map(x=><p key={x.id}>{x.date} · {x.shape} {x.carat} ct {x.color}/{x.clarity} · {x.usd} USD · {x.kind==='purchase'?'Vásárlás':'Ajánlat'}<br/><small>{x.evidence}</small></p>)}</details></>}<p role="alert">{message}</p></details>;
+}
 function DiamondsPage() {
  const {user,isAdmin,setAuthModal,navigate,lang}=useA();const [data,setData]=useState(null),[error,setError]=useState(''),[q,setQ]=useState({}),[selected,setSelected]=useState(null),[cart,setCart]=useState(()=>store.get('brightal-diamond-cart',[])),[busy,setBusy]=useState(false),[terms,setTerms]=useState(false);
  const dialog=useRef(null),opener=useRef(null);const money=x=>x==null?'Ár egyeztetés alatt':new Intl.NumberFormat(lang==='en'?'en-GB':'hu-HU',{style:'currency',currency:'HUF',maximumFractionDigits:0}).format(x);
@@ -2451,6 +2469,7 @@ function DiamondsPage() {
  return <div className="page diamond-page"><div className="wrap"><span className="eyebrow">BRIGHTAL / LOOSE DIAMONDS</span><h1 className="h-display">Laboratóriumi gyémántok</h1><p className="lead-sm">Egyetlen kő. Végtelen lehetőség.</p>{data?.items.some(x=>x.demo)&&<p className="diamond-demo" role="status">Fejlesztési mintakatalógus. A mintákhoz nem tartozik IGI-tanúsítvány, és nem vásárolhatók meg.</p>}
  {error&&<p role="alert">{error} <button onClick={()=>location.reload()}>Újrapróbálás</button></p>}
  {cart.length>0&&<aside className="diamond-cart"><strong>Kosár · {cart.length} kő</strong>{cart.map(id=>{const x=data?.items.find(x=>x.id===id);return <div key={id}><button onClick={e=>x&&choose(x,e)} disabled={!x}>{x?`${x.shape} · ${x.carat} ct · ${money(x.price)}`:id}</button><button onClick={()=>setCart(cart.filter(y=>y!==id))}>Eltávolítás</button></div>;})}<small>A kosár nem foglalja le a követ. A kövek egyenként fizethetők ki.</small></aside>}
+ <DiamondSourcing/>
  <div className="diamond-layout"><aside className="diamond-filters" aria-label="Gyémántszűrők"><h2>Találd meg a sajátodat</h2>{['shape','color','clarity'].map(key=><label key={key}>{labels[key]}<select value={q[key]||''} onChange={e=>setQ({...q,[key]:e.target.value})}><option value="">Mind</option>{data?.facets[key].map(v=><option key={v}>{v}</option>)}</select></label>)}{['carat','price'].map(key=><fieldset key={key}><legend>{labels[key]}</legend>{['Min','Max'].map((end,i)=><input key={end} type="number" min="0" step="any" placeholder={i?'Maximum':'Minimum'} aria-label={labels[key]+(i?' maximum':' minimum')} value={q[key+end]||''} onChange={e=>setQ({...q,[key+end]:e.target.value})}/>)}</fieldset>)}
  <details><summary>Részletes szűrők</summary>{['cut','polish','symmetry','fluorescence'].map(key=><label key={key}>{labels[key]}<select value={q[key]||''} onChange={e=>setQ({...q,[key]:e.target.value})}><option value="">Mind</option>{data?.facets[key].map(v=><option key={v}>{v}</option>)}</select></label>)}{['ratio','depth','table'].map(key=><fieldset key={key}><legend>{labels[key]}</legend>{['Min','Max'].map((end,i)=><input key={end} type="number" min="0" step="any" placeholder={i?'Maximum':'Minimum'} aria-label={labels[key]+end} value={q[key+end]||''} onChange={e=>setQ({...q,[key+end]:e.target.value})}/>)}</fieldset>)}<label>IGI-azonosító<input value={q.certificate||''} onChange={e=>setQ({...q,certificate:e.target.value})}/></label></details><button className="btn btn-ghost" onClick={()=>setQ({})}>Szűrők törlése</button></aside>
  <section><div className="diamond-results"><span role="status">{data?`${filtered.length} gyémánt`:'Betöltés…'}</span><label>Rendezés <select value={q.sort||'asc'} onChange={e=>setQ({...q,sort:e.target.value})}><option value="asc">Ár szerint növekvő</option><option value="desc">Ár szerint csökkenő</option></select></label></div><div className="diamond-grid">{!data&&!error&&Array.from({length:6},(_,i)=><div className="diamond-skeleton" key={i}/>)}{filtered.map(x=><button className="diamond-card" key={x.id} onClick={e=>choose(x,e)}><DiamondArtwork stone={x}/><span>{x.demo?'Fejlesztési minta':'IGI · '+x.certificate.number}</span><h2>{x.carat.toFixed(2)} ct · {x.shape}</h2><p>{x.color} · {x.clarity} · {x.cut}</p><strong>{money(x.price)}</strong><small>Részletek és 360° nézet ↗</small></button>)}</div>{data&&!filtered.length&&<p>Nincs a szűrésnek megfelelő kő. Módosítsd a feltételeket.</p>}</section></div>
@@ -2475,7 +2494,7 @@ function DiamondPriceAdmin(){
  const [status,setStatus]=useState(null),[message,setMessage]=useState(''),[authorized,setAuthorized]=useState(false);
  const refresh=()=>api('/diamonds/pricing/status').then(setStatus).catch(()=>setMessage('Az árlista nem tölthető be.'));
  useEffect(()=>{refresh();},[]);
- return <details className="diamond-import"><summary>Referenciaárak és ellenőrzési lista</summary><p>Engedélyezett, HUF bruttó árakat tartalmazó JSON-import. Az ellenőrzés legfeljebb 24 óráig érvényes.</p><label><input type="checkbox" checked={authorized} onChange={e=>setAuthorized(e.target.checked)}/> Jogosult vagyok az adatok használatára, a bruttó árakat ellenőriztem.</label><input type="file" accept=".json" aria-label="Árfrissítés JSON" disabled={!authorized} onChange={async e=>{const f=e.target.files[0];if(!f)return;try{if(f.size>240000)throw Error('Legfeljebb 240 KB.');const result=await api('/diamonds/pricing/import',{method:'POST',body:{authorized,items:JSON.parse(await f.text())}});setMessage(`${result.updated} ár frissítve; ${result.review.length} rekord ellenőrzést igényel.`);refresh();}catch(err){setMessage(err.message);}finally{e.target.value='';}}}/><p role="status">{message}</p>{status?.items.map(x=><p key={x.id}>{x.id}: {x.grossHuf} Ft · {x.status==='current'?'Ellenőrzött':'⚠ Ellenőrzés szükséges'} · {x.priceCheckedAt||'Nincs ellenőrzési időpont'}</p>)}{status?.review.map((x,i)=><p key={i} role="status">⚠ {x.certificateNumber||'Összetett azonosítás'}: {x.reason}</p>)}</details>;
+ return <details className="diamond-import"><summary>Referenciaárak és ellenőrzési lista</summary><p>Ellenőrzött beszállítói HUF-kőárak importja. Mezők: certificateNumber, costHuf, currency: HUF, source: dipen, status: verified, checkedAt (ISO). Szállítás nélküli kőár; ellenőrzés legfeljebb 24 óráig érvényes.</p><label><input type="checkbox" checked={authorized} onChange={e=>setAuthorized(e.target.checked)}/> Jogosult vagyok az adatok használatára, a beszállítói kőárakat ellenőriztem.</label><input type="file" accept=".json" aria-label="Árfrissítés JSON" disabled={!authorized} onChange={async e=>{const f=e.target.files[0];if(!f)return;try{if(f.size>240000)throw Error('Legfeljebb 240 KB.');const result=await api('/diamonds/pricing/import',{method:'POST',body:{authorized,items:JSON.parse(await f.text())}});setMessage(`${result.updated} ár frissítve; ${result.review.length} rekord ellenőrzést igényel.`);refresh();}catch(err){setMessage(err.message);}finally{e.target.value='';}}}/><p role="status">{message}</p>{status?.items.map(x=><p key={x.id}>{x.id}: {x.grossHuf} Ft · {x.status==='current'?'Ellenőrzött':'⚠ Ellenőrzés szükséges'} · {x.priceCheckedAt||'Nincs ellenőrzési időpont'}</p>)}{status?.review.map((x,i)=><p key={i} role="status">⚠ {x.certificateNumber||'Összetett azonosítás'}: {x.reason}</p>)}</details>;
 }
 
 const PAGES = {

@@ -1,6 +1,18 @@
 'use strict';
 const router=require('express').Router();
 const D=require('../diamonds'),auth=require('../auth'),db=require('../db'),R=require('../requests');
+const supplier=require('../supplier-model');
+router.get('/supplier/model',auth.requireAdmin,(req,res)=>{res.set('Cache-Control','no-store');try{res.json(supplier.read());}catch{res.status(503).json({error:'SUPPLIER_DATA_UNAVAILABLE'});}});
+router.post('/supplier/model',auth.requireAdmin,(req,res)=>{res.set('Cache-Control','no-store');try{res.json(supplier.save(req.body,req.user.id));}catch(e){res.status(400).json({error:e.message});}});
+router.post('/supplier/estimate',auth.requireAdmin,(req,res)=>{res.set('Cache-Control','no-store');try{res.json(supplier.estimate(req.body));}catch(e){res.status(400).json({error:e.message});}});
+router.post('/sourcing',auth.requireUser,async(req,res)=>{try{
+ if(req.user.role==='admin')return res.status(400).json({error:'ADMIN_CANNOT_ORDER'});
+ const c=supplier.combination(req.body);
+ const request=R.build({user:req.user,body:{},files:[],lang:req.body.lang});
+ request.note=`Laboratóriumi kő beszerzési igény · ${c.shape} · ${c.carat} ct · ${c.color}/${c.clarity}. Készlet, IGI és végleges ár egyeztetendő.`;
+ request.details.metal='Loose diamond';request.sourcing=c;
+ await db.requests.insert(request);res.json({request:R.toPublic(request)});
+}catch(e){res.status(400).json({error:e.message});}});
 router.get('/',(req,res)=>{try{
  const items=D.filter(D.catalogue().map(D.publicStone),req.query);
  const sort=req.query.sort==='price-desc'?-1:1;items.sort((a,b)=>sort*(a.price-b.price));
@@ -12,6 +24,22 @@ router.post('/pricing/import',auth.requireAdmin,(req,res)=>{try{if(req.body.auth
 // Reuse the established customer account, admin orders and Barion checkout.
 // A stone is held by the stored approved order; retries return that same order.
 let ordering=Promise.resolve();
+router.post('/sourcing/:number/confirm',auth.requireAdmin,(req,res)=>{
+ const run=async()=>{
+  const r=db.requests.find(x=>x.requestNumber===req.params.number);
+  if(!r?.sourcing)return res.status(404).json({error:'NOT_FOUND'});
+  if(!['submitted','rejected','approved'].includes(r.status))return res.status(409).json({error:'INVALID_TRANSITION'});
+  const stone=D.catalogue().find(x=>x.id===req.body.stoneId);
+  if(!stone||!Object.keys(r.sourcing).every(k=>stone[k]===r.sourcing[k]))return res.status(409).json({error:'EXACT_STONE_MATCH_REQUIRED'});
+  const checked=require('../diamond-pricing').checkout(stone,D.publicStone(stone).price);
+  if(db.requests.find(x=>x.id!==r.id&&x.diamond?.id===stone.id&&!['canceled','rejected'].includes(x.status)))return res.status(409).json({error:'STONE_RESERVED'});
+  const now=new Date().toISOString();
+  const updated=await db.requests.update(x=>x.id===r.id,x=>({...x,diamond:D.publicStone(stone),price:checked.price,accounting:checked.accounting,status:'approved',approvedAt:now,updatedAt:now,adminNote:String(req.body.adminNote||'').slice(0,600),history:[...x.history,{at:now,event:'supplier_stone_confirmed',by:req.user.id,stoneId:stone.id,price:checked.price}]}));
+  require('../mailer').requestApproved(updated,updated.lang).catch(()=>{});
+  res.json({request:R.toPublic(updated,{includeInternal:true})});
+ };
+ ordering=ordering.then(run,run).catch(e=>{if(!res.headersSent)res.status(409).json({error:e.message});});
+});
 router.post('/order',auth.requireUser,(req,res)=>{
  const run=async()=>{
   if(req.user.role==='admin')return res.status(400).json({error:'ADMIN_CANNOT_ORDER'});
