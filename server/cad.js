@@ -36,7 +36,7 @@ function create(actor,source,p){
  fs.writeFileSync(path.join(dir,'parameters.json'),JSON.stringify(p));fs.writeFileSync(path.join(dir,'source.json'),JSON.stringify({config:source,sha256:crypto.createHash('sha256').update(JSON.stringify(source)).digest('hex')}));
  const job={id,actor,source,status:'queued',createdAt:new Date().toISOString()};jobs.set(id,job);audit(actor,'generate',id);
  queue=queue.then(()=>new Promise(resolve=>{
-  job.status='running';const child=spawn(PYTHON,[path.join(__dirname,'cad/generate.py'),path.join(dir,'parameters.json'),dir],{stdio:['ignore','ignore','pipe']});let error='';
+  job.status='running';const mesh=p.mode==='mesh';const child=spawn(mesh?process.execPath:PYTHON,mesh?[path.join(__dirname,'cad/mesh-export.cjs'),dir]:[path.join(__dirname,'cad/generate.py'),path.join(dir,'parameters.json'),dir],{stdio:['ignore','ignore','pipe']});let error='';
   const timer=setTimeout(()=>{job.error='CAD_TIMEOUT';child.kill('SIGKILL');},120000);
   child.stderr.on('data',b=>{error=(error+b).slice(-2000);});
   const finish=(code)=>{clearTimeout(timer);job.status=code===0?'ready':'failed';if(code!==0)job.error=job.error||error||'CAD_KERNEL_UNAVAILABLE';job.finishedAt=new Date().toISOString();const report=path.join(dir,'report.json');if(fs.existsSync(report))job.report=JSON.parse(fs.readFileSync(report));fs.writeFileSync(path.join(dir,'job.json'),JSON.stringify(job));audit(actor,job.status,id);resolve();};
@@ -45,6 +45,8 @@ function create(actor,source,p){
 }
 function get(id){if(!/^[0-9a-f-]{36}$/.test(id))return undefined;if(jobs.has(id))return jobs.get(id);try{const job=JSON.parse(fs.readFileSync(path.join(ROOT,id,'job.json')));jobs.set(id,job);return job;}catch{return undefined;}}
 const tickets=new Map();
-function ticket(actor,id,format){const job=get(id);if(!job||job.status!=='ready'||!['step','stl','3mf','json','zip'].includes(format))throw Error('EXPORT_NOT_READY');for(const [key,t] of tickets)if(t.expires<Date.now())tickets.delete(key);const token=crypto.randomBytes(24).toString('hex');tickets.set(token,{actor,id,format,expires:Date.now()+5*60000});return token;}
+function formats(job){const dir=path.join(ROOT,job.id);return ['step','stl','3mf','obj'].filter(x=>fs.existsSync(path.join(dir,'ring.'+x))).concat(job.status==='ready'?['json','zip']:[]);}
+function list(){if(fs.existsSync(ROOT))for(const id of fs.readdirSync(ROOT))get(id);return [...jobs.values()].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).map(j=>({...j,formats:formats(j)}));}
+function ticket(actor,id,format){const job=get(id);if(!job||job.status!=='ready'||!formats(job).includes(format))throw Error('EXPORT_NOT_READY');for(const [key,t] of tickets)if(t.expires<Date.now())tickets.delete(key);const token=crypto.randomBytes(24).toString('hex');tickets.set(token,{actor,id,format,expires:Date.now()+5*60000});return token;}
 function consume(actor,token){const t=tickets.get(token);if(!t||t.actor!==actor||t.expires<Date.now())throw Error('DOWNLOAD_EXPIRED');tickets.delete(token);audit(actor,'download:'+t.format,t.id);return {...t,dir:path.join(ROOT,t.id)};}
-module.exports={parameters,limits,STYLES,create,get,ticket,consume,ROOT};
+module.exports={parameters,limits,STYLES,create,get,list,formats,ticket,consume,ROOT};
