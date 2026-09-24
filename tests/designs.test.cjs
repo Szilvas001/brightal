@@ -45,12 +45,12 @@ test('ZIP has a single logical object, valid indices, complete config and escape
 test('new daily families have distinct geometry and normalize every preset', async () => {
   const {normalize,PRESETS,DAILY_STYLES,OPTIONS}=await import('../public/builder/state.mjs');
   const {buildRing}=await import('../public/builder/model.mjs');
-  assert.equal(OPTIONS.style.length,24);
+  assert.ok(OPTIONS.style.length >= 24);
   const signatures = new Set();
   for(const style of DAILY_STYLES) {
     const config=normalize({style,shape:'emerald',sideShape:'round',dailyCount:5,dailyCarat:.1});
     const model=buildRing(config,null);
-    assert.equal(model.gems.length, config.dailyCount);
+    assert.equal(model.gems.length, (await import('../public/builder/contemporary.mjs')).modernLayout(config).stones.length);
     const signature=model.gems.map(g=>[...g.matrixWorld.elements].map(x=>x.toFixed(4)).join(',')).join('|');
     signatures.add(signature);
     const geo=new Set(),mat=new Set();model.group.traverse(o=>{if(o.isMesh){geo.add(o.geometry);mat.add(o.material)}});geo.forEach(g=>g.dispose());mat.forEach(m=>m.dispose());

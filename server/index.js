@@ -89,6 +89,7 @@ app.get('/api/config', (req, res) => {
   });
 });
 
+app.use('/api/admin/cad', require('./routes/cad'));
 app.use('/api/diamonds', require('./routes/diamonds'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api', require('./routes/requests'));

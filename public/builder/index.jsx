@@ -21,7 +21,7 @@ const { useState, useEffect, useRef } = React;
 const names = {
   ...Object.fromEntries(COLLECTION.map(c=>[c.style,c.name])),
   ribbon: ['Hullámzó gyémántsor','Diamond ribbon'], graduated: ['Fokozatos kősor','Graduated diamonds'],
-  eastwest: ['Horizont','East–west'], alternating: ['Váltakozó kőformák','Alternating cuts'], crown: ['Koronaív','Diamond crown'],
+  wavebezel:['Hullámos bezel','Tidal bezel'],openpair:['Nyitott ikergyémánt','Twin light'],eastwest: ['Horizont','East–west'], alternating: ['Váltakozó kőformák','Alternating cuts'], crown: ['Koronaív','Diamond crown'],
   bezelrow: ['Gyémántsor','Diamond row'], scatter: ['Csillagmező','Constellation'], chevron: ['Gyémánt V','Diamond V'],
   wave: ["Hullám", "Wave"],
   rope: ["Sodrott", "Rope"],
@@ -613,7 +613,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
       {slider('stoneWidth',L('Kő szélessége','Stone width'),1.5,5,.1,'mm')}
       {!['round','cushion','princess','asscher'].includes(s.shape)&&slider('stoneLength',L('Kő hossza','Stone length'),s.stoneWidth,6,.1,'mm')}
       {slider('stoneDepth',L('Kő teljes mélysége','Total stone depth'),1,Math.min(3.5,Math.round(s.stoneWidth*.75*10)/10),.1,'mm')}
-      {!['eastwest','curvedoval','fullcircle',...FASHION_STYLES].includes(s.style)&&slider('dailyCount',L('Kövek száma','Number of stones'),1,maxDailyStones(s),1,'')}
+      {!['eastwest','curvedoval','wavebezel','openpair','fullcircle',...FASHION_STYLES].includes(s.style)&&slider('dailyCount',L('Kövek száma','Number of stones'),1,maxDailyStones(s),1,'')}
       {s.style==='alternating'&&select('sideShape',L('Váltakozó csiszolás','Alternating cut'))}
       {slider('dailySpacing',L('Kősor térköze','Stone spacing'),0,.5,.05,'mm')}
       <p className="rb-fine">{L('A méreteket a kiválasztott kövekhez lehet igazítani. A végleges követ és a foglalást az ötvös ellenőrzi.','Match these dimensions to the selected stones. The goldsmith verifies the actual stones and setting.')}</p>
@@ -1017,7 +1017,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                     {slider('dailyCount',L('Gyémántok száma','Diamond count'),3,maxDailyStones(s),1,'')}
                     {s.style==='alternating'&&select('sideShape',L('Váltakozó kőforma','Alternating cut'))}
                     {slider('dailySpacing',L('Kövek közötti ráhagyás','Stone spacing'),0,.5,.05,'')}
-                    {['chevron','ribbon','crown','contour','curvedoval','asymmetric'].includes(s.style)&&slider('sculpt',L('Ív mélysége','Curve depth'),.4,2.5,.1,'')}
+                    {['chevron','ribbon','crown','contour','curvedoval','wavebezel','asymmetric'].includes(s.style)&&slider('sculpt',L('Ív mélysége','Curve depth'),.4,2.5,.1,'')}
                     <p className="rb-fine">{L('A kőszám a látványterv arányaihoz igazodik; a tényleges kőméreteket a műhely ellenőrzi.','Maximum count adapts to the preview proportions; actual stone dimensions require workshop verification.')}</p>
                   </>:slider(
                     "carat",
@@ -1083,7 +1083,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
               <h3>{L('Arányok és foglalat','Proportions and setting')}</h3>
               {slider('thickness',L('Alap falvastagsága','Base metal thickness'),1.4,3,.1,'mm')}
               {modernLayout(s).stones.length>0&&slider('bezelWall',L('Foglalat pereme','Bezel wall'),.35,.7,.05,'mm')}
-              {['chevron','ribbon','crown','contour','curvedoval','asymmetric'].includes(s.style)&&slider('sculpt',L('Ív mélysége','Curve depth'),.4,2.5,.1,'mm')}
+              {['chevron','ribbon','crown','contour','curvedoval','wavebezel','asymmetric'].includes(s.style)&&slider('sculpt',L('Ív mélysége','Curve depth'),.4,2.5,.1,'mm')}
               {modernLayout(s).stones.length>1&&<label className="rb-toggle"><input type="checkbox" checked={s.alternateGems} onChange={e=>change({alternateGems:e.target.checked})}/>{L('Váltakozó kőszínek','Alternating stone colours')}</label>}
               {s.alternateGems&&tones('sideTone')}
               <p className="rb-fine">{L('Az ívek és a foglalatok egyetlen összefüggő fémtestet alkotnak. A szükséges szélesség a kőméretekhez igazodik.','The curves and settings form one continuous metal body. The required width adapts to the stone dimensions.')}</p>

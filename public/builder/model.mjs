@@ -203,11 +203,12 @@ export function buildRing(s, environment) {
             tip = [x * scale * 0.995, scale * 0.12, z * scale * 0.995];
           tube(
             [
-              [x * scale * 0.36, -scale * 0.66, z * scale * 0.36],
               [x * scale * 0.72, -scale * 0.32, z * scale * 0.72],
+              [x * scale * 1.10, -scale * 0.28, z * scale * 1.10],
+              [x * scale * 1.10, scale * 0.04, z * scale * 1.10],
               tip,
             ],
-            (s.setting === "doubleclaw" ? 0.07 : 0.11) * fitting,
+            (s.setting === "doubleclaw" ? 0.10 : 0.16) * fitting,
             assembly,
             head,
           );
@@ -219,7 +220,7 @@ export function buildRing(s, environment) {
           claw.scale.y *= 0.65;
         }
       }
-    const gallery=seat(shape, scale * 0.72, assembly, -scale * 0.32, 0.115 * fitting);
+    const gallery=seat(shape, scale * 0.72, assembly, -scale * 0.32, 0.16 * fitting);
     gallery.userData.role='gallery';
     mountings.push({assembly,shape,scale,gallery});
     return assembly;
@@ -284,7 +285,7 @@ export function buildRing(s, environment) {
         }
       }
       if (s.hiddenHalo) {
-        seat(s.shape, size * 0.78, main, -size * 0.36, 0.11);
+        seat(s.shape, size * 0.78, main, -size * 0.36, 0.18);
         for(let i=0;i<4;i++) {
           const [x,z]=outline(s.shape,i*Math.PI/2);
           tube([[x*size*.72,-size*.32,z*size*.72],[x*size*.78,-size*.36,z*size*.78]],.085,main,head);

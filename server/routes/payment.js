@@ -35,6 +35,11 @@ router.post('/payment/start', auth.requireUser, async (req, res) => {
   if (!R.PAYABLE.includes(request.status)) return res.status(409).json({ error: 'NOT_PAYABLE' });
   if (!request.price || request.price <= 0) return res.status(409).json({ error: 'NO_PRICE' });
 
+  if(request.diamond){
+    try{const D=require('../diamonds');require('../diamond-pricing').checkout(D.catalogue().find(x=>x.id===request.diamond.id),request.price);}
+    catch(e){return res.status(409).json({error:e.message});}
+  }
+
   try {
     const paymentRequestId = `${request.requestNumber}-${Date.now().toString(36)}`;
     const started = await barion.startPayment({ ...request, paymentRequestId });

@@ -16,7 +16,15 @@
     "build:watch": "babel public/app.jsx --presets @babel/preset-react --out-file public/app.js --watch",
     "hash-password": "node scripts/hash-password.js",
     "gen-secret": "node -e \"console.log('SESSION_SECRET=' + require('crypto').randomBytes(32).toString('hex'))\"",
-    "postinstall": "node -e \"try{require('fs').accessSync('public/app.js')}catch(e){console.log('app.js hianyzik - futtasd: npm run build')}\""
+    "postinstall": "node -e \"try{require('fs').accessSync('public/app.js')}catch(e){console.log('app.js hianyzik - futtasd: npm run build')}\"",
+    "test": "node --test tests/*.test.cjs",
+    "check": "node scripts/check-source.cjs",
+    "test:cad": "node scripts/check-cad.cjs",
+    "test:geometry": "node scripts/check-geometry.mjs",
+    "build:previews": "node scripts/diamond-thumbnails.cjs < /dev/null",
+    "build:ring-previews": "node scripts/thumbnails.mjs",
+    "lint": "eslint server scripts tests public/builder public/app.jsx",
+    "typecheck": "tsc -p jsconfig.pricing.json"
   },
   "dependencies": {
     "express": "^4.19.2",
@@ -30,8 +38,13 @@
     "@babel/cli": "^7.24.0",
     "@babel/core": "^7.24.0",
     "@babel/preset-react": "^7.23.3",
+    "@types/node": "^22.18.6",
     "esbuild": "^0.28.2",
-    "sharp": "^0.35.4"
+    "eslint": "^9.36.0",
+    "globals": "^16.4.0",
+    "playwright": "^1.55.1",
+    "sharp": "^0.35.4",
+    "typescript": "^5.9.2"
   },
   "license": "UNLICENSED",
   "private": true

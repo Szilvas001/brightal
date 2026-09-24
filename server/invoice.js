@@ -48,10 +48,11 @@ function log(entry) {
 function buildInvoiceData(request) {
   const gross = Number(request.price) || 0;
   const vatRate = Number(cfg.shop.vatRate) || 0;
-  const vat = cfg.currency.decimals === 0
+  const exact=request.diamond?require('./diamond-pricing').accounting(gross):null;
+  const vat = exact ? Number(exact.vatHuf) : cfg.currency.decimals === 0
     ? Math.round(gross - gross / (1 + vatRate))
     : Math.round((gross - gross / (1 + vatRate)) * 100) / 100;
-  const net = cfg.currency.decimals === 0 ? gross - vat : Math.round((gross - vat) * 100) / 100;
+  const net = exact ? Number(exact.netHuf) : cfg.currency.decimals === 0 ? gross - vat : Math.round((gross - vat) * 100) / 100;
 
   const today = new Date().toISOString().slice(0, 10);
   const c = request.customer || {};
@@ -84,7 +85,7 @@ function buildInvoiceData(request) {
       net,
       vat,
       gross,
-      vatRateLabel: cfg.invoice.vatRateLabel
+      vatRateLabel: exact ? '27' : cfg.invoice.vatRateLabel
     },
     comment: cfg.invoice.comment
   };

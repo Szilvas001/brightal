@@ -2,10 +2,10 @@ import * as T from 'three';
 import { getKernel } from './kernel.mjs';
 import { gemGeometry, gemstoneMaterial } from './optics.mjs';
 
-export const MODERN_STYLES = ['bezelrow','scatter','chevron','ribbon','graduated','eastwest','alternating','crown','wave','rope','dome','signet','open','stack','band','eternity','curvedoval','contour','asymmetric','fullcircle'];
+export const MODERN_STYLES = ['bezelrow','scatter','chevron','ribbon','graduated','eastwest','alternating','crown','wave','rope','dome','signet','open','stack','band','eternity','curvedoval','wavebezel','openpair','contour','asymmetric','fullcircle'];
 export const SCALE = .8;
 export const MODEL_REVISION = 'atelier-solid-4';
-const single = s => ['eastwest','signet','curvedoval'].includes(s.style) || ['wave','rope','dome','open','stack'].includes(s.style);
+const single = s => ['eastwest','signet','curvedoval','wavebezel'].includes(s.style) || ['wave','rope','dome','open','stack'].includes(s.style);
 export function modernLayout(s) {
   const inner = s.size / (2*Math.PI);
   const jewel = !['band','wave','rope','dome','open','stack'].includes(s.style) || s.fashionStone;
@@ -23,7 +23,7 @@ export function modernLayout(s) {
   };
   const shift = a => {
     if(['chevron','crown','contour'].includes(s.style)) return top(a)*s.sculpt*(s.style==='crown'?-1:1);
-    if(['wave','ribbon','curvedoval','asymmetric'].includes(s.style)) return Math.sin(a*2)*s.sculpt*.5;
+    if(['wave','ribbon','curvedoval','wavebezel','asymmetric'].includes(s.style)) return Math.sin(a*2)*s.sculpt*.5;
     return 0;
   };
   const widthAt = a => width * (.72+.28*top(a));
@@ -33,7 +33,7 @@ export function modernLayout(s) {
   if(s.style==='fullcircle'){count=Math.max(3,Math.floor(2*Math.PI/angularStep));angularStep=2*Math.PI/count;}
   const stones = [];
   for(let i=0;i<count;i++) {
-    const angle=(i-(count-1)/2)*angularStep+(s.style==='asymmetric'?.3:0);
+    const angle=(i-(count-1)/2)*(s.style==='openpair'?Math.max(angularStep,.5):angularStep)+(s.style==='asymmetric'?.3:0);
     const factor=['graduated','asymmetric'].includes(s.style)?1-.3*Math.abs(i-(count-1)/2)/Math.max(1,(count-1)/2):1;
     const shape=s.style==='alternating'&&i%2?s.sideShape:s.shape;
     const z=shift(angle)+(['scatter','asymmetric'].includes(s.style)?(i%2?1:-1)*Math.max(0,(widthAt(angle)-s.stoneLength-2*s.bezelWall)/2)*.6:0);
@@ -71,6 +71,7 @@ export function buildContemporary(s, environment, colors) {
       return own(new Manifold(new Mesh({numProp:3,vertProperties:new Float32Array(positions),triVerts:new Uint32Array(indices)})));
     };
     let body=makeBand();
+    if(s.style==='openpair'){const gap=own(Manifold.cube([Math.max(.6,s.gap),30,60],true));const cut=own(gap.translate([0,inner+15-.3,0]));body=own(body.subtract(cut));}
     if(['open','stack'].includes(s.style)) {
       // A carved central groove leaves the palm-side bridges intact, producing
       // an architectural double band with one connected metal body.

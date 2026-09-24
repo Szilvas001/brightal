@@ -7,11 +7,11 @@ export const FASHION_STYLES = [
   "stack",
 ];
 export const isFashion = (s) => FASHION_STYLES.includes(s.style);
-export const DAILY_STYLES = ['bezelrow','scatter','chevron','ribbon','graduated','eastwest','alternating','crown','curvedoval','contour','asymmetric','fullcircle'];
+export const DAILY_STYLES = ['bezelrow','scatter','chevron','ribbon','graduated','eastwest','alternating','crown','curvedoval','wavebezel','openpair','contour','asymmetric','fullcircle'];
 export const isDaily = s => DAILY_STYLES.includes(s.style);
 export const isModern = s => isDaily(s) || isFashion(s) || ['band','eternity'].includes(s.style);
 export function maxDailyStones(s) {
-  if(['eastwest','curvedoval'].includes(s.style)) return 1;
+  if(['eastwest','curvedoval','wavebezel'].includes(s.style)) return 1;
   const r=s.size/(2*Math.PI)+Math.max(s.thickness,s.stoneDepth*.72+.8);
   const step=2*Math.asin(Math.min(.7,(Math.max(s.stoneLength,s.stoneWidth)+2*s.bezelWall+s.dailySpacing+.35)/(2*r)));
   return Math.max(1,Math.min(9,Math.floor(2.2/step)+1));
@@ -216,6 +216,7 @@ export function normalize(input = {}) {
     s.stoneDepth=Math.min(s.stoneDepth,Number((s.stoneWidth*.75).toFixed(1)));
     if(s.style==='eastwest') s.orientation='east';
   }
+  if(s.style==='openpair') {s.dailyCount=2;s.shape=['round','oval'].includes(s.shape)?s.shape:'round';s.stoneWidth=Math.min(2.5,s.stoneWidth);s.stoneLength=Math.min(3,s.stoneLength);s.stoneDepth=Math.min(1.5,s.stoneDepth);s.gap=Math.max(.5,s.gap);}
   s.dailyCount=Math.min(s.dailyCount,maxDailyStones(s));
   if(isDaily(s)) {s.accents='none';s.sideMode='none';s.hiddenHalo=false;}
   if (["wave", "dome"].includes(s.style)) s.mixedMetal = false;

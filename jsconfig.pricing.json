@@ -1,0 +1,1 @@
+{"compilerOptions":{"allowJs":true,"checkJs":true,"noEmit":true,"target":"ES2020","module":"commonjs","strict":false,"skipLibCheck":true},"include":["server/diamond-pricing.js"]}

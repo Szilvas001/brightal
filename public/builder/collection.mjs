@@ -1,5 +1,10 @@
 // Original BRIGHTAL proportions informed by the linked research, not replicas.
 export const COLLECTION = [
+  {style:'split',name:['Air Split','Air Split'],story:['Kettéváló vállak, könnyed központi foglalat.','Split shoulders and an airy central setting.'],config:{shape:'oval',width:3.4,setting:'claw',carat:1.2,metal:'white18'}},
+  {style:'trilogy',name:['Modern Trio','Modern Trio'],story:['Három kő, tiszta arányok és sima keretek.','Three stones, balanced proportions and smooth frames.'],config:{shape:'emerald',width:2.8,setting:'bezel',sideShape:'round',sideCarat:.2,metal:'yellow18'}},
+  {style:'duet',name:['Dialogue','Dialogue'],story:['Két eltérő csiszolás személyes találkozása.','A personal pairing of contrasting cuts.'],config:{shape:'pear',sideShape:'emerald',width:2.5,carat:.8,metal:'rose18'}},
+  {style:'wavebezel',name:['Tidal Bezel','Tidal Bezel'],story:['Hullámos sín, finom ovális keret.','A flowing band and a delicate oval bezel.'],config:{shape:'oval',width:2.8,stoneLength:4,stoneWidth:2.8,stoneDepth:1.8,sculpt:2.2,metal:'yellow18'}},
+  {style:'openpair',name:['Twin Light','Twin Light'],story:['Nyitott ív két kisebb gyémánttal.','An open arc tipped with two small diamonds.'],config:{shape:'round',width:2,stoneLength:2,stoneWidth:2,stoneDepth:1.3,dailyCount:2,gap:1,metal:'white18'}},
   {style:'curvedoval',name:['Arc Oval','Arc Oval'],story:['Ívelt, szoborszerű ovális foglalat.','A sculpted oval bezel on a curved band.'],config:{width:4,shape:'oval',stoneLength:5,stoneWidth:3.5,stoneDepth:2.3,sculpt:1.8,dailyCount:1}},
   {style:'contour',name:['Nesting Arc','Nesting Arc'],story:['Mély ív, finom gyémántölelés.','A deep contour embracing a line of diamonds.'],config:{width:2.2,shape:'round',stoneLength:1.6,stoneWidth:1.6,stoneDepth:1.1,sculpt:2.3,dailyCount:5}},
   {style:'asymmetric',name:['Offset Constellation','Offset Constellation'],story:['Eltolt kövek, organikus vállak.','Offset stones on organic shoulders.'],config:{width:6,shape:'oval',stoneLength:2.8,stoneWidth:2,stoneDepth:1.4,dailyCount:3,sculpt:2}},

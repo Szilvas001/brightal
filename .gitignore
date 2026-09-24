@@ -19,3 +19,8 @@ data/designs/
 .env.*
 !.env.example
 !.env.production.example
+
+.venv*/
+data/cad/
+data/diamond-previews/
+public/diamond-previews/
