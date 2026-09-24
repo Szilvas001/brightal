@@ -2495,6 +2495,7 @@ const PAGES = {
 
 function App() {
   const { page, loading, t } = useA();
+  useEffect(() => { document.body.dataset.page = page; }, [page]);
   const Page = PAGES[page] || NotFoundPage;
   if (loading) return <>
     <Nav />

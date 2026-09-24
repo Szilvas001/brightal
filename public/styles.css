@@ -68,13 +68,7 @@ body{font-family:var(--sans);color:var(--text);background:transparent;-webkit-fo
 body::before{
   content:'';position:fixed;inset:-6%;z-index:-2;pointer-events:none;
   background-color:var(--bg);
-  background-image:url('/assets/brightal-bg.jpg');            /* tartalék */
-  background-image:-webkit-image-set(
-      url('/assets/brightal-bg.webp') type('image/webp'),
-      url('/assets/brightal-bg.jpg')  type('image/jpeg'));
-  background-image:image-set(
-      url('/assets/brightal-bg.webp') type('image/webp'),
-      url('/assets/brightal-bg.jpg')  type('image/jpeg'));
+  background-image:url('/assets/atelier-pages.webp');
   background-position:center center;
   background-size:cover;
   background-repeat:no-repeat;
@@ -90,7 +84,21 @@ body::before{
 /* Aki kevesebb mozgást kér, annak a háttér áll. */
 @media (prefers-reduced-motion:reduce){
   body::before{transform:none!important}
-}}
+}
+body[data-page="home"]::before{background-image:url('/assets/atelier-home.webp')}
+body[data-page="home"] .hero{justify-content:flex-start;padding-left:6vw}
+body[data-page="home"] .hero-inner{width:48%;max-width:660px}
+body[data-page="home"] .hero-glow{display:none}
+body[data-page="home"] .hero-sub,
+body[data-page="home"] .hero-trust{color:var(--ink-soft)}
+@media(max-width:760px){
+  body[data-page="home"]::before{background-image:url('/assets/atelier-pages.webp')}
+  body[data-page="home"] .hero{padding:100px 20px 260px;align-items:flex-start}
+  body[data-page="home"] .hero::before{content:'';position:absolute;inset:0;pointer-events:none;
+    background:url('/assets/atelier-home.webp') 72% bottom / auto 440px no-repeat;
+    mask-image:linear-gradient(transparent calc(100% - 330px),#000 calc(100% - 230px))}
+  body[data-page="home"] .hero-inner{width:100%;max-width:none}
+}
 ::selection{background:var(--brand-ink);color:var(--brand-blush)}
 ::-webkit-scrollbar{width:7px;height:7px}
 ::-webkit-scrollbar-track{background:var(--bg-warm)}
