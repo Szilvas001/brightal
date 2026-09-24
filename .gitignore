@@ -21,6 +21,7 @@ data/designs/
 !.env.production.example
 
 .venv*/
+__pycache__/
 data/cad/
 data/diamond-previews/
 public/diamond-previews/

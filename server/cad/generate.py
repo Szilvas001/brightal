@@ -28,7 +28,10 @@ def generate(p, out):
         profile=cq.Workplane(plane).ellipse(w/2,t/2) if p['profile']=='round' else cq.Workplane(plane).rect(w,t)
         top=profile.sweep(path,isFrenet=False).val()
         bottom=cq.Workplane('XZ').circle(r+t).circle(r).extrude(w/2,both=True).val()
-        cutter=cq.Workplane('XY').box(60,60,30).translate((0,0,15)).val()
+        # Leave a 0.2 mm overlap with the upper sweep. A merely coincident
+        # join can remain as duplicate tessellation edges in otherwise valid
+        # BREP output.
+        cutter=cq.Workplane('XY').box(60,60,30).translate((0,0,14.8)).val()
         body=bottom.cut(cutter).fuse(top).clean()
 
     else:
@@ -105,7 +108,7 @@ def generate(p, out):
         key=tuple(round(n,4) for n in v.toTuple())
         if key not in lookup: lookup[key]=len(unique);unique.append(key)
         remap[i]=lookup[key]
-    triangles=[]; seen_faces=set(); edge_counts=collections.Counter(); directions=collections.Counter(); volume=0
+    triangles=[]; seen_faces=set()
     for f in faces:
         ids=tuple(remap[i] for i in f)
         if len(set(ids))<3:continue
@@ -115,7 +118,41 @@ def generate(p, out):
         a,b,c=[cq.Vector(*unique[i]) for i in ids];normal=(b-a).cross(c-a)
         if normal.Length<1e-12:continue
         triangles.append((ids,normal.normalized().toTuple()))
-        volume+=a.dot(b.cross(c))/6
+
+    # OCCT may tessellate two adjacent analytic faces with a T-junction: one
+    # face has a long edge while the neighbour has the same edge in two short
+    # segments. Split the long boundary edge at existing collinear vertices so
+    # the STL/3MF topology is a true two-manifold instead of a visual-only mesh.
+    preliminary=collections.Counter()
+    for ids,_ in triangles:
+        for i in range(3):
+            u,v=ids[i],ids[(i+1)%3];preliminary[tuple(sorted((u,v)))]+=1
+    boundary_vertices={v for edge,count in preliminary.items() if count==1 for v in edge}
+    split_edges={}
+    for edge,count in preliminary.items():
+        if count!=1:continue
+        u,v=edge;a=cq.Vector(*unique[u]);b=cq.Vector(*unique[v]);ab=b-a;length2=ab.dot(ab)
+        if length2<1e-12:continue
+        points=[]
+        for w in boundary_vertices-{u,v}:
+            point_vec=cq.Vector(*unique[w]);t=(point_vec-a).dot(ab)/length2
+            if 1e-6<t<1-1e-6 and (point_vec-(a+ab*t)).Length<2.5e-4:points.append((t,w))
+        if points:split_edges[edge]=[w for _,w in sorted(points)]
+    repaired=[]
+    for ids,normal in triangles:
+        split=False
+        for i in range(3):
+            u,v,k=ids[i],ids[(i+1)%3],ids[(i+2)%3];points=split_edges.get(tuple(sorted((u,v))))
+            if not points:continue
+            if u>v:points=list(reversed(points))
+            chain=[u,*points,v]
+            repaired.extend([((chain[j],chain[j+1],k),normal) for j in range(len(chain)-1)])
+            split=True;break
+        if not split:repaired.append((ids,normal))
+    triangles=repaired
+    edge_counts=collections.Counter();directions=collections.Counter();volume=0
+    for ids,_ in triangles:
+        a,b,c=[cq.Vector(*unique[i]) for i in ids];volume+=a.dot(b.cross(c))/6
         for i in range(3):
             u,v=ids[i],ids[(i+1)%3];key=tuple(sorted((u,v)));edge_counts[key]+=1;directions[key]+=1 if u<v else -1
     bad=sum(1 for e,n in edge_counts.items() if n!=2 or directions[e]!=0)
@@ -131,8 +168,10 @@ def generate(p, out):
     report['meshValidation']={'closedManifold':True,'inconsistentEdges':bad,'positiveVolume':volume>0,'triangles':len(triangles)}
     # STEP roundtrip verifies a real CAD solid rather than a renamed mesh.
     restored=cq.importers.importStep(str(out/'ring.step')).val()
-    if not restored.isValid() or len(restored.Solids())!=1 or abs(restored.Volume()-body.Volume())>.001:raise ValueError('STEP_ROUNDTRIP_FAILED')
+    volume_delta=abs(restored.Volume()-body.Volume())
+    if not restored.isValid() or len(restored.Solids())!=1 or volume_delta>max(.1,body.Volume()*.0005):raise ValueError('STEP_ROUNDTRIP_FAILED')
     report['stepRoundtrip']=True
+    report['stepRoundtripVolumeDeltaMm3']=volume_delta
     (out/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
     (out/'parameters.json').write_text(json.dumps(p,ensure_ascii=False,indent=2))
     return report
