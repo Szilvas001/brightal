@@ -53,7 +53,7 @@ function toBarionItems(request) {
     `${request.images.length} referenciakép`
   ].filter(Boolean).join(' · ');
   return [{
-    Name: `Egyedi jegygyűrű — ${request.requestNumber}`.slice(0, 250),
+    Name: `${request.diamond||request.combinationOffer?'Laboratóriumi gyémánt':'Egyedi jegygyűrű'} — ${request.requestNumber}`.slice(0, 250),
     Description: (desc || 'Egyedi készítésű jegygyűrű').slice(0, 500),
     Quantity: 1,
     Unit: 'db',
@@ -83,7 +83,7 @@ async function startPayment(request) {
     OrderNumber: request.requestNumber,
     PayerHint: request.customer.email || undefined,
     Locale: cfg.barion.locale,
-    Currency: cfg.currency.code,
+    Currency: request.currency || cfg.currency.code,
     RedirectUrl: `${cfg.barion.redirectUrl}?request=${encodeURIComponent(request.requestNumber)}`,
     CallbackUrl: cfg.barion.callbackUrl,
     Transactions: [{
@@ -104,7 +104,7 @@ async function startPayment(request) {
       OrderNumber: request.requestNumber,
       Status: STATUS.PREPARED,
       Total: total,
-      Currency: cfg.currency.code,
+      Currency: request.currency || cfg.currency.code,
       createdAt: new Date().toISOString()
     });
     return {

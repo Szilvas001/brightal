@@ -73,6 +73,7 @@ function toPublic(r, { includeInternal = false } = {}) {
     details: r.details,
     source: r.diamond || r.sourcing ? 'diamond' : r.design ? 'designer' : 'upload',
     sourcing: r.sourcing || null,
+    combinationOffer: r.combinationOffer || null,
     diamond: r.diamond || null,
     design: r.design || null,
     note: r.note,

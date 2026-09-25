@@ -35,7 +35,10 @@ router.post('/payment/start', auth.requireUser, async (req, res) => {
   if (!R.PAYABLE.includes(request.status)) return res.status(409).json({ error: 'NOT_PAYABLE' });
   if (!request.price || request.price <= 0) return res.status(409).json({ error: 'NO_PRICE' });
 
-  if(request.diamond){
+  if(request.combinationOffer){
+    const offer=request.combinationOffer;
+    if(offer.price!==request.price||request.currency!=='HUF'||!request.sourcing||!Object.keys(offer.combination).every(k=>offer.combination[k]===request.sourcing[k]))return res.status(409).json({error:'PRICE_CHANGED'});
+  }else if(request.diamond){
     try{const D=require('../diamonds');require('../diamond-pricing').checkout(D.catalogue().find(x=>x.id===request.diamond.id),request.price);}
     catch(e){return res.status(409).json({error:e.message});}
   }

@@ -38,11 +38,21 @@ costHuf, currency (`HUF`), source (`dipen`), status (`verified`), checkedAt.
 Cost verification expires after 24 hours. Estimates are never silently
 published as confirmed stock.
 
-All supported combinations can be requested through the sourcing form.
-Requests are visible in admin and initially unpaid. Admin selects a certified,
-available, exact-matching catalogue stone to confirm. Its current calculated
-price is attached server-side, ignoring submitted totals. Duplicate reservation
-is blocked. Payment rechecks the same stone and cost before gateway creation.
+All supported combinations now have a public retail offer at POST
+`/api/diamonds/offer`. It uses the same estimator and fresh FX as the admin,
+returning only combination, gross HUF price and sourced fulfilment status.
+It never exposes private observations or represents a sourced order as stock.
+POST `/api/diamonds/combination/order` requires a customer login, accepted terms,
+the displayed expected price and a retry key. The server recalculates the price,
+rejects mismatches and persists the accepted offer and VAT breakdown. Repeated
+requests with the same customer/key return the same order. The fixed order price
+survives later FX changes, and payment verifies the stored offer before charging.
+These paid orders follow the ordinary production/completion workflow; the old
+stock-confirmation endpoint cannot overwrite their accepted price.
+
+The legacy `/sourcing` request flow remains available for manual enquiries.
+Those requests initially remain unpaid and require an exact certified catalogue
+match. Actual catalogue purchases retain the 24-hour cost-freshness check.
 
 The local deployment still requires configured real stock and payment-provider
 credentials before it can accept real customer payments.

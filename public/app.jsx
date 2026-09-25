@@ -2112,7 +2112,7 @@ function AdminRow({ req, onChanged, defaultOpen }) {
     setBusy(false);
   };
 
-  const canApprove = (!req.diamond||!!req.sourcing)&&['submitted', 'approved', 'rejected'].includes(req.status);
+  const canApprove = !req.combinationOffer&&(!req.diamond||!!req.sourcing)&&['submitted', 'approved', 'rejected'].includes(req.status);
   const canReject = ['submitted', 'approved'].includes(req.status);
 
   return <div className="panel admin-row">
@@ -2443,8 +2443,19 @@ function DiamondCombination({value,onChange}){
  return <div className="cad-fields">{Object.entries(DIAMOND_CHOICES).map(([key,options])=><label key={key}>{({shape:'Forma',color:'Szín',clarity:'Tisztaság'})[key]}<select value={value[key]} onChange={e=>onChange({...value,[key]:e.target.value})}>{options.map(x=><option key={x}>{x}</option>)}</select></label>)}<label>Karát<input type="number" min="0.1" max="30" step="0.01" value={value.carat} onChange={e=>onChange({...value,carat:Number(e.target.value)})}/></label></div>;
 }
 function DiamondSourcing(){
- const [value,setValue]=useState({shape:'round',color:'F',clarity:'VS1',carat:1}),[message,setMessage]=useState(''),[busy,setBusy]=useState(false);
- return <details className="diamond-import"><summary>Egyedi kombináció · kő beszerzése</summary><p>Mind a tíz forma, D–M szín, FL–SI2 tisztaság és 0,10–30 ct választható. A készletet, az IGI-tanúsítványt és a végleges árat egyedileg igazoljuk; fizetés csak visszaigazolás után.</p><DiamondCombination value={value} onChange={setValue}/><button className="btn btn-dark" disabled={busy} onClick={async()=>{setBusy(true);try{const r=await api('/diamonds/sourcing',{method:'POST',body:value});setMessage('Igény rögzítve: '+r.request.requestNumber);}catch(e){setMessage(e.message==='UNAUTHORIZED'?'Az igény elküldéséhez jelentkezz be.':e.message);}finally{setBusy(false);}}}>Beszerzési igény elküldése</button><p role="status">{message}</p></details>;
+ const {user,isAdmin,setAuthModal,lang}=useA();
+ const [value,setValue]=useState({shape:'round',color:'F',clarity:'VS1',carat:1}),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),[offer,setOffer]=useState(null),[loading,setLoading]=useState(true),[terms,setTerms]=useState(false),[revision,setRevision]=useState(0);
+ const orderKey=useRef(null);
+ const errors={NO_SUPPLIER_OBSERVATIONS:'Az árak feltöltése folyamatban van.',PRICE_UNAVAILABLE:'Az ár jelenleg nem elérhető. Kérjük, próbáld újra később.',INVALID_COMBINATION:'Válassz 0,10 és 30 ct közötti karátértéket.',PRICE_CHANGED:'Az ár megváltozott. Frissítsd az árat, majd fogadd el az új összeget.'};
+ useEffect(()=>{let live=true;setOffer(null);setLoading(true);setMessage('');setTerms(false);orderKey.current=null;
+  const timer=setTimeout(()=>api('/diamonds/offer',{method:'POST',body:value}).then(x=>{if(live)setOffer(x);}).catch(e=>{if(live)setMessage(errors[e.code]||'Az ár nem tölthető be.');}).finally(()=>{if(live)setLoading(false);}),200);
+  return()=>{live=false;clearTimeout(timer);};
+ },[value,revision]);
+ const buy=async()=>{if(!user){setAuthModal('login');return;}setBusy(true);setMessage('');
+  try{if(!orderKey.current)orderKey.current=crypto.randomUUID();const {request}=await api('/diamonds/combination/order',{method:'POST',body:{...value,expectedPrice:offer.price,orderKey:orderKey.current,acceptTerms:terms,lang}});setMessage('Rendelés rögzítve: '+request.requestNumber+'. A fiókodban is megtalálod.');const payment=await api('/payment/start',{method:'POST',body:{requestNumber:request.requestNumber}});location.href=payment.gatewayUrl;}
+  catch(e){if(e.code==='PRICE_CHANGED'){setOffer(null);setTerms(false);}setMessage(errors[e.code]||'A fizetés nem indult el. Próbáld újra, vagy nyisd meg a rendelést a fiókodban.');}finally{setBusy(false);}
+ };
+ return <section className="diamond-import" aria-label="Egyedi gyémánt vásárlása"><h2>Válaszd ki a gyémántodat</h2><p>10 forma · D–M szín · FL–SI2 tisztaság · 0,10–30 ct. Egyedileg beszerzendő laboratóriumi gyémánt, tanúsítvány a beszerzéskor.</p><fieldset disabled={busy} style={{border:0,padding:0}}><DiamondCombination value={value} onChange={v=>{setOffer(null);setLoading(true);setTerms(false);setValue(v);}}/></fieldset><div aria-live="polite">{loading?<p>Ár kiszámítása…</p>:offer?<><h3>Bruttó ár: {offer.price.toLocaleString('hu-HU')} Ft</h3><p>A megrendeléskor rögzített ár a gyémánt ára; a szállítás egyeztetése külön történik.</p></>:<p>Az ár jelenleg nem elérhető.</p>}</div>{offer&&!isAdmin&&<><label><input type="checkbox" checked={terms} disabled={busy} onChange={e=>setTerms(e.target.checked)}/> Elfogadom az <a href="/aszf" target="_blank" rel="noopener noreferrer">ÁSZF-et</a>, és tudomásul veszem, hogy egyedileg beszerzendő követ rendelek.</label><button className="btn btn-dark" disabled={busy||!terms||loading} onClick={buy}>{busy?'Fizetés indítása…':user?'Vásárlás':'Belépés és vásárlás'}</button></>}{isAdmin&&<p>Vásárláshoz vásárlói fiókkal jelentkezz be.</p>}<button className="btn btn-ghost" disabled={busy||loading} onClick={()=>setRevision(x=>x+1)}>Ár frissítése</button><p role="status">{message}</p></section>;
 }
 function SupplierAdmin(){
  const [data,setData]=useState(null),[value,setValue]=useState({shape:'oval',color:'F',clarity:'VS1',carat:1}),[result,setResult]=useState(null),[message,setMessage]=useState('');

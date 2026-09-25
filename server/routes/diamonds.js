@@ -2,6 +2,7 @@
 const router=require('express').Router();
 const D=require('../diamonds'),auth=require('../auth'),db=require('../db'),R=require('../requests');
 const supplier=require('../supplier-model');
+router.post('/offer',(req,res)=>{res.set('Cache-Control','no-store');try{res.json(require('../diamond-offer').offer(req.body));}catch(e){res.status(e.message==='INVALID_COMBINATION'?400:503).json({error:['INVALID_COMBINATION','NO_SUPPLIER_OBSERVATIONS','PRICE_UNAVAILABLE'].includes(e.message)?e.message:'PRICE_UNAVAILABLE'});}});
 router.get('/supplier/model',auth.requireAdmin,(req,res)=>{res.set('Cache-Control','no-store');try{res.json(supplier.read());}catch{res.status(503).json({error:'SUPPLIER_DATA_UNAVAILABLE'});}});
 router.post('/supplier/model',auth.requireAdmin,(req,res)=>{res.set('Cache-Control','no-store');try{res.json(supplier.save(req.body,req.user.id));}catch(e){res.status(400).json({error:e.message});}});
 router.post('/supplier/estimate',auth.requireAdmin,(req,res)=>{res.set('Cache-Control','no-store');try{res.json(supplier.estimate(req.body));}catch(e){res.status(400).json({error:e.message});}});
@@ -24,10 +25,34 @@ router.post('/pricing/import',auth.requireAdmin,(req,res)=>{try{if(req.body.auth
 // Reuse the established customer account, admin orders and Barion checkout.
 // A stone is held by the stored approved order; retries return that same order.
 let ordering=Promise.resolve();
+router.post('/combination/order',auth.requireUser,(req,res)=>{
+ const run=async()=>{
+  if(req.user.role==='admin')return res.status(400).json({error:'ADMIN_CANNOT_ORDER'});
+  if(req.body.acceptTerms!==true)return res.status(400).json({error:'TERMS_REQUIRED'});
+  if(!/^[a-zA-Z0-9-]{16,80}$/.test(req.body.orderKey||''))return res.status(400).json({error:'ORDER_KEY_REQUIRED'});
+  const c=supplier.combination(req.body);
+  const existing=db.requests.find(x=>x.userId===req.user.id&&x.combinationOrderKey===req.body.orderKey);
+  if(existing){
+   if(!Object.keys(c).every(k=>existing.sourcing[k]===c[k])||existing.price!==req.body.expectedPrice)return res.status(409).json({error:'ORDER_KEY_CONFLICT'});
+   return res.json({request:R.toPublic(existing)});
+  }
+  const offer=require('../diamond-offer').checkout(c,req.body.expectedPrice);
+  const request=R.build({user:req.user,body:{},files:[],lang:req.body.lang});
+  request.sourcing=c;request.combinationOffer=offer;request.combinationOrderKey=req.body.orderKey;
+  request.price=offer.price;request.currency='HUF';request.accounting=offer.accounting;
+  request.status='approved';request.approvedAt=offer.acceptedAt;
+  request.details.metal='Loose diamond';
+  request.note=`Egyedileg beszerzendő laboratóriumi gyémánt · ${c.shape} · ${c.carat} ct · ${c.color}/${c.clarity}. A megrendelésben rögzített bruttó ár: ${offer.price} Ft. Tanúsítvány a beszerzéskor.`;
+  request.history.push({at:offer.acceptedAt,event:'combination_order',price:offer.price});
+  await db.requests.insert(request);res.json({request:R.toPublic(request)});
+ };
+ ordering=ordering.then(run,run).catch(e=>{if(!res.headersSent)res.status(409).json({error:['INVALID_COMBINATION','PRICE_CHANGED','NO_SUPPLIER_OBSERVATIONS','PRICE_UNAVAILABLE'].includes(e.message)?e.message:'ORDER_FAILED'});});
+});
 router.post('/sourcing/:number/confirm',auth.requireAdmin,(req,res)=>{
  const run=async()=>{
   const r=db.requests.find(x=>x.requestNumber===req.params.number);
   if(!r?.sourcing)return res.status(404).json({error:'NOT_FOUND'});
+  if(r.combinationOffer)return res.status(409).json({error:'FIXED_PRICE_ORDER'});
   if(!['submitted','rejected','approved'].includes(r.status))return res.status(409).json({error:'INVALID_TRANSITION'});
   const stone=D.catalogue().find(x=>x.id===req.body.stoneId);
   if(!stone||!Object.keys(r.sourcing).every(k=>stone[k]===r.sourcing[k]))return res.status(409).json({error:'EXACT_STONE_MATCH_REQUIRED'});

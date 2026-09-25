@@ -48,7 +48,7 @@ function log(entry) {
 function buildInvoiceData(request) {
   const gross = Number(request.price) || 0;
   const vatRate = Number(cfg.shop.vatRate) || 0;
-  const exact=request.diamond?require('./diamond-pricing').accounting(gross):null;
+  const exact=request.diamond||request.combinationOffer?require('./diamond-pricing').accounting(gross):null;
   const vat = exact ? Number(exact.vatHuf) : cfg.currency.decimals === 0
     ? Math.round(gross - gross / (1 + vatRate))
     : Math.round((gross - gross / (1 + vatRate)) * 100) / 100;
@@ -78,7 +78,7 @@ function buildInvoiceData(request) {
       street: (request.billing && request.billing.street) || ''
     },
     item: {
-      name: `${cfg.invoice.itemName} — ${request.requestNumber}`,
+      name: `${request.diamond||request.combinationOffer?'Laboratóriumi gyémánt':cfg.invoice.itemName} — ${request.requestNumber}`,
       quantity: 1,
       unit: 'db',
       netUnitPrice: net,
