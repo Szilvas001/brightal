@@ -12,7 +12,7 @@ npm run test:designs
 npm start
 ```
 
-`scripts/build.js` builds the existing React app and the new designer. Commit both generated `public/app.js` and `public/builder/bundle.js`, as the existing deployment serves these files directly. `build:watch` watches the original app only; rerun `build` after designer changes.
+`scripts/build.js` builds the app, designer and geometry worker. Generated bundles are ignored by Git; run `npm run build` after pulling or use `npm run local`, which builds before starting. `build:watch` watches the original app only; rerun `build` after designer changes.
 
 ## Architecture
 

@@ -6,6 +6,7 @@ import {buildRing} from '../public/builder/model.mjs';
 import {initKernel} from '../public/builder/kernel.mjs';
 await initKernel();fs.mkdirSync('public/builder/thumbnails',{recursive:true});
 for(const [i,p] of PRESETS.entries()) {
+ if(process.argv.includes('--missing')&&fs.existsSync(`public/builder/thumbnails/preset-${i}.webp`))continue;
  const model=buildRing(p.config,null);model.group.updateMatrixWorld(true);
  const camera=new T.PerspectiveCamera(32,1.2,.1,150);camera.position.set(22,19,31);camera.lookAt(0,1.5,0);camera.updateMatrixWorld();
  const faces=[];const light=new T.Vector3(-.4,.8,1).normalize();

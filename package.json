@@ -9,6 +9,7 @@
   },
   "scripts": {
     "start": "node server/index.js",
+    "local": "node scripts/start-local.cjs",
     "dev": "node --watch server/index.js",
     "build": "node scripts/build.js",
     "test:builder": "node --test tests/builder.test.cjs",
@@ -21,7 +22,7 @@
     "check": "node scripts/check-source.cjs",
     "test:cad": "node scripts/check-cad.cjs",
     "test:geometry": "node scripts/check-geometry.mjs",
-    "build:previews": "node scripts/diamond-thumbnails.cjs < /dev/null",
+    "build:previews": "node scripts/diamond-thumbnails.cjs --catalogue",
     "build:ring-previews": "node scripts/thumbnails.mjs",
     "lint": "eslint server scripts tests public/builder public/app.jsx",
     "typecheck": "tsc -p jsconfig.pricing.json"

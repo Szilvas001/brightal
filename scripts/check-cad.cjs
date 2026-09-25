@@ -10,7 +10,7 @@ const C=require('../server/cad');
   const config={style:overrides.style,shape:'oval',width:3.4,thickness:1.8,stoneLength:4,stoneWidth:3,stoneDepth:1.8};
   const p=await C.parameters(config,{stoneLength:4,stoneWidth:3,stoneDepth:1.8,sideSize:1.5,settingHeight:5,...overrides});
   const dir=path.join(out,String(i));fs.mkdirSync(dir);fs.writeFileSync(path.join(dir,'input.json'),JSON.stringify(p));
-  const start=Date.now(),r=spawnSync(process.env.CAD_PYTHON||'.venv-cad/bin/python',['server/cad/generate.py',path.join(dir,'input.json'),dir],{timeout:120000,encoding:'utf8'});
+  const start=Date.now(),r=spawnSync(C.PYTHON,['server/cad/generate.py',path.join(dir,'input.json'),dir],{timeout:120000,encoding:'utf8'});
   if(r.status!==0){failures++;console.log('FAIL',p.style,r.stderr,r.error?.message||'');continue;}
   const report=JSON.parse(fs.readFileSync(path.join(dir,'report.json'))),step=fs.readFileSync(path.join(dir,'ring.step'),'utf8');
   if(!step.includes('MANIFOLD_SOLID_BREP')||!report.stepRoundtrip){failures++;console.log('FAIL',p.style,'STEP_BREP');continue;}

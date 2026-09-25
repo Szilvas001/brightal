@@ -1,7 +1,7 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),{spawn}=require('node:child_process');
 const ROOT=process.env.CAD_DATA_DIR||path.join(__dirname,'../data/cad');
-const PYTHON=process.env.CAD_PYTHON||path.join(__dirname,'../.venv-cad/bin/python');
+const PYTHON=process.env.CAD_PYTHON||path.join(__dirname,'../.venv-cad',process.platform==='win32'?'Scripts/python.exe':'bin/python');
 const STYLES=['solitaire','bezel','band','eastwest','contour','split','trilogy','duet','curvedoval','wavebezel','openpair'];
 const limits={innerDiameter:[14,24],width:[1.8,8],thickness:[1.2,3.5],stoneLength:[1,10],stoneWidth:[1,8],stoneDepth:[.6,6],bezelWall:[.6,1.5],prongDiameter:[.7,1.5],prongCount:[4,8],prongRotation:[0,360],underOpening:[.3,3],settingHeight:[2.5,10],sideSize:[1,4],sideCount:[0,7],minimumWall:[.5,1],allowance:[0,.3],tolerance:[.01,.15],sculpt:[0,2.5],gap:[1,4]};
 async function parameters(config,overrides={}){
@@ -49,4 +49,4 @@ function formats(job){const dir=path.join(ROOT,job.id);return ['step','stl','3mf
 function list(){if(fs.existsSync(ROOT))for(const id of fs.readdirSync(ROOT))get(id);return [...jobs.values()].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).map(j=>({...j,formats:formats(j)}));}
 function ticket(actor,id,format){const job=get(id);if(!job||job.status!=='ready'||!formats(job).includes(format))throw Error('EXPORT_NOT_READY');for(const [key,t] of tickets)if(t.expires<Date.now())tickets.delete(key);const token=crypto.randomBytes(24).toString('hex');tickets.set(token,{actor,id,format,expires:Date.now()+5*60000});return token;}
 function consume(actor,token){const t=tickets.get(token);if(!t||t.actor!==actor||t.expires<Date.now())throw Error('DOWNLOAD_EXPIRED');tickets.delete(token);audit(actor,'download:'+t.format,t.id);return {...t,dir:path.join(ROOT,t.id)};}
-module.exports={parameters,limits,STYLES,create,get,list,formats,ticket,consume,ROOT};
+module.exports={parameters,limits,STYLES,create,get,list,formats,ticket,consume,ROOT,PYTHON};

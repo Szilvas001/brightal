@@ -3,7 +3,7 @@ const fs=require('node:fs'),http=require('node:http'),path=require('node:path');
 const {chromium}=require('playwright'),sharp=require('sharp'),esbuild=require('esbuild');
 const {DIR,key}=require('../server/diamond-previews');
 (async()=>{
- let input='';if(!process.stdin.isTTY)for await(const chunk of process.stdin)input+=chunk;
+ let input='';if(!process.argv.includes('--catalogue')&&!process.stdin.isTTY)for await(const chunk of process.stdin)input+=chunk;
  const stones=input.trim()?JSON.parse(input):require('../server/diamonds').catalogue();
  fs.mkdirSync(DIR,{recursive:true});
  const bundle=esbuild.buildSync({entryPoints:[path.join(__dirname,'../public/builder/diamond-preview.mjs')],bundle:true,write:false,format:'iife',logLevel:'silent'}).outputFiles[0].contents;
