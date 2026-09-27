@@ -5,6 +5,7 @@ export const FASHION_STYLES = [
   "signet",
   "open",
   "stack",
+  "fluted", "petal", "twist", "saddle", "ripple", "tapered",
 ];
 export const isFashion = (s) => FASHION_STYLES.includes(s.style);
 export const DAILY_STYLES = ['bezelrow','scatter','chevron','ribbon','graduated','eastwest','alternating','crown','curvedoval','wavebezel','openpair','contour','asymmetric','fullcircle'];

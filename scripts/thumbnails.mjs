@@ -1,4 +1,6 @@
 import fs from 'node:fs';
+import {createHash} from 'node:crypto';
+import {MODEL_REVISION} from '../public/builder/contemporary.mjs';
 import sharp from 'sharp';
 import * as T from 'three';
 import {PRESETS} from '../public/builder/catalog.mjs';
@@ -6,7 +8,9 @@ import {buildRing} from '../public/builder/model.mjs';
 import {initKernel} from '../public/builder/kernel.mjs';
 await initKernel();fs.mkdirSync('public/builder/thumbnails',{recursive:true});
 for(const [i,p] of PRESETS.entries()) {
- if(process.argv.includes('--missing')&&fs.existsSync(`public/builder/thumbnails/preset-${i}.webp`))continue;
+ const fingerprint=createHash('sha256').update(JSON.stringify([MODEL_REVISION,p.config])).digest('hex');
+ const stamp=`public/builder/thumbnails/preset-${i}.sha256`;
+ if(process.argv.includes('--missing')&&fs.existsSync(`public/builder/thumbnails/preset-${i}.webp`)&&fs.existsSync(stamp)&&fs.readFileSync(stamp,'utf8')===fingerprint)continue;
  const model=buildRing(p.config,null);model.group.updateMatrixWorld(true);
  const camera=new T.PerspectiveCamera(32,1.2,.1,150);camera.position.set(22,19,31);camera.lookAt(0,1.5,0);camera.updateMatrixWorld();
  const faces=[];const light=new T.Vector3(-.4,.8,1).normalize();
@@ -19,5 +23,6 @@ for(const [i,p] of PRESETS.entries()) {
  faces.sort((a,b)=>a.z-b.z);
  fs.writeFileSync(`public/builder/thumbnails/preset-${i}.svg`,`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 250"><rect width="300" height="250" fill="#fcfaf7"/>${faces.map(f=>`<polygon points="${f.path}" fill="${f.fill}"/>`).join('')}</svg>`);
  await sharp(`public/builder/thumbnails/preset-${i}.svg`).webp({quality:86}).toFile(`public/builder/thumbnails/preset-${i}.webp`);fs.unlinkSync(`public/builder/thumbnails/preset-${i}.svg`);
+ fs.writeFileSync(stamp,fingerprint);
  model.group.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});console.log(i,p.config.style);
 }

@@ -15,6 +15,7 @@ import { RingRenderer } from "./renderer.js";
 import { previewModel, unpackModel } from './progressive.js';
 import { modernLayout } from './contemporary.mjs';
 import { COLLECTION } from './collection.mjs';
+import { CATEGORIES, inCategory } from './categories.mjs';
 import { GEM_TONES } from "./optics.mjs";
 import { PRESETS } from './catalog.mjs';
 const { useState, useEffect, useRef } = React;
@@ -359,8 +360,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
         .filter(
           (value) =>
             key !== "style" ||
-            family === "all" ||
-            (family==='fashion'?FASHION_STYLES.includes(value):family==='daily'?[...DAILY_STYLES,'band','eternity'].includes(value):!FASHION_STYLES.includes(value)&&![...DAILY_STYLES,'band','eternity'].includes(value)),
+            inCategory(value, family),
         )
         .map((value) => (
           <button
@@ -567,7 +567,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
   const fashionControls = () => (
     <div className="rb-sculpt-controls">
       <h3>{L("Alakítsd a sziluettet", "Sculpt the silhouette")}</h3>
-      {["wave", "dome", "open", "rope", "signet"].includes(s.style) &&
+      {FASHION_STYLES.filter(x=>x!=='stack').includes(s.style) &&
         slider(
           "sculpt",
           L("Forma intenzitása", "Sculptural intensity"),
@@ -576,7 +576,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
           0.1,
           "",
         )}
-      {["rope"].includes(s.style) &&
+      {["rope","fluted","petal","twist","ripple"].includes(s.style) &&
         slider("rhythm", L("Forma ritmusa", "Pattern rhythm"), 2, 8, 1, "")}
       {s.style === "stack" &&
         slider("layers", L("Gyűrűsorok száma", "Number of bands"), 2, 4, 1, "")}
@@ -605,7 +605,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
     </div>
   );
   const stoneControls = () => <>
-    {['wave','rope','dome','open','stack','band'].includes(s.style)&&<label className="rb-toggle"><input type="checkbox" checked={s.fashionStone} onChange={e=>change({fashionStone:e.target.checked})}/>{L('Gyémánt hozzáadása','Add a diamond')}</label>}
+    {['band',...FASHION_STYLES.filter(x=>x!=='signet')].includes(s.style)&&<label className="rb-toggle"><input type="checkbox" checked={s.fashionStone} onChange={e=>change({fashionStone:e.target.checked})}/>{L('Gyémánt hozzáadása','Add a diamond')}</label>}
     {modernLayout(s).stones.length>0&&<>
       <h3>{L('Csiszolás és szín','Cut and colour')}</h3>{choices('shape',true)}{tones('gemTone')}
       {s.style!=='eastwest'&&select('orientation',L('Kő tájolása','Stone orientation'))}
@@ -942,9 +942,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                 <h3>{L("Gyűrű stílusa", "Ring style")}</h3>
                 <div className="rb-family">
                   {[
-                    ["classic", L("Eljegyzési gyűrűk", "Engagement rings")],
-                    ["daily", L("Mindennapi gyémánt", "Everyday diamonds")],
-                    ["fashion", L("Önkifejezés", "Self-expression")],
+                    ...CATEGORIES.map(c=>[c.id,L(...c.name)]),
                     ["all", L(`Mind a ${OPTIONS.style.length}`, `All ${OPTIONS.style.length}`)],
                   ].map(([key, title]) => (
                     <button

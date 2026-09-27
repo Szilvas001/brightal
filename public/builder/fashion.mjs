@@ -1,14 +1,7 @@
 import * as T from "three";
 import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 
-export const FASHION_STYLES = [
-  "wave",
-  "rope",
-  "dome",
-  "signet",
-  "open",
-  "stack",
-];
+export { FASHION_STYLES } from './state.mjs';
 
 // Visual-concept jewelry, in the same scene scale as the classic collection.
 // A family has its own construction, rather than a center-stone substitution.

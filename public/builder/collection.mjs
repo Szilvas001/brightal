@@ -28,4 +28,10 @@ export const COLLECTION = [
   {style:'crown',name:['Marquise Crown','Marquise Crown'],story:['Nyúlánk kövek, könnyed koronaív.','Elongated stones along a light crown.'],config:{width:3,shape:'marquise',stoneLength:3,stoneWidth:1.7,stoneDepth:1.2,dailyCount:5,sculpt:.7,metal:'yellow18'}},
   {style:'band',name:['Essential Band','Essential Band'],story:['Letisztult, lekerekített aranysáv.','A clean, softly rounded gold band.'],config:{width:3,thickness:1.5,metal:'yellow18'}},
   {style:'eternity',name:['Diamond Half Band','Diamond Half Band'],story:['Hétköznapokra tervezett gyémántsáv.','A diamond band made for everyday wear.'],config:{width:2.8,shape:'round',stoneLength:1.8,stoneWidth:1.8,stoneDepth:1.2,dailyCount:7,metal:'platinum'}},
+  {style:'fluted',name:['Kannelúra','Fluted gold'],story:['Körbefutó bordák állítható sűrűséggel.','Sculpted ribs with adjustable rhythm.'],config:{width:5,sculpt:1.2,rhythm:6,metal:'yellow18'}},
+  {style:'petal',name:['Szirom','Petal'],story:['Virágformát idéző, hullámos szélű aranysáv.','A scalloped band inspired by petals.'],config:{width:6,sculpt:1.6,rhythm:5,metal:'rose18'}},
+  {style:'twist',name:['Csavart szalag','Twisted ribbon'],story:['Térben hullámzó, változó szélességű szalag.','A spatial wave with changing band width.'],config:{width:4.5,sculpt:2,rhythm:3,metal:'platinum'}},
+  {style:'saddle',name:['Nyereg','Saddle'],story:['Két irányba hajló, széles szoborszerű forma.','A broad silhouette curving in two directions.'],config:{width:8,sculpt:2,thickness:1.8,metal:'yellow18'}},
+  {style:'ripple',name:['Víztükör','Ripple'],story:['Együtt hullámzó perem és felület.','A rippling edge and sculpted surface.'],config:{width:5,sculpt:1.7,rhythm:4,metal:'white18'}},
+  {style:'tapered',name:['Aranyváll','Golden shoulder'],story:['Keskeny tenyéroldal, hangsúlyos felső ív.','A narrow palm side with a prominent upper curve.'],config:{width:7,sculpt:1.8,metal:'yellow18'}},
 ];
