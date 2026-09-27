@@ -15,3 +15,11 @@ test('all style tiles reset inherited geometry to the exact thumbnail design',as
  assert.equal(cathedral.sideMode,'pair');
  assert.throws(()=>stylePreset('missing'));
 });
+test('thumbnail URLs belong to designs rather than catalogue positions',async()=>{
+ const {PRESETS,thumbnailUrl}=await import('../public/builder/catalog.mjs');
+ const urls=PRESETS.map(p=>thumbnailUrl(p.config));
+ assert.equal(new Set(urls).size,PRESETS.length);
+ for(const p of [...PRESETS].reverse())assert.equal(thumbnailUrl(p.config),urls[PRESETS.indexOf(p)]);
+ const c=PRESETS.find(p=>p.config.style==='cathedral').config;
+ assert.notEqual(thumbnailUrl(c),thumbnailUrl({...c,gemTone:'ruby'}));
+});

@@ -1,6 +1,5 @@
 import { initKernel } from './kernel.mjs';
-import { buildRing } from './model.mjs';
-import {unifyLegacy} from './solidify.mjs';
+import {buildFinishedRing} from './finished-model.mjs';
 const cache = new Map();
 self.onmessage = async ({data:{id,config}}) => {
   try {
@@ -8,7 +7,7 @@ self.onmessage = async ({data:{id,config}}) => {
     const key=JSON.stringify({...config,rotate:false});
     let packed=cache.get(key);
     if(!packed) {
-      const start=performance.now(), model=unifyLegacy(buildRing(config,null));
+      const start=performance.now(), model=buildFinishedRing(config);
       packed={object:model.group.toJSON(),radius:model.radius,width:model.width,engineering:model.engineering,buildMs:performance.now()-start};
       model.group.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});
       cache.set(key,packed);

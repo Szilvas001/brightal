@@ -17,7 +17,7 @@ import { modernLayout } from './contemporary.mjs';
 import { COLLECTION } from './collection.mjs';
 import { CATEGORIES, inCategory } from './categories.mjs';
 import { GEM_TONES } from "./optics.mjs";
-import { PRESETS, stylePreset } from './catalog.mjs';
+import { PRESETS, stylePreset, thumbnailUrl } from './catalog.mjs';
 const { useState, useEffect, useRef } = React;
 const names = {
   ...Object.fromEntries(COLLECTION.map(c=>[c.style,c.name])),
@@ -251,7 +251,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
     [ready, setReady] = useState(false),
     [busy, setBusy] = useState(false),
     [saved, setSaved] = useState(false);
-  const thumbs = PRESETS.map((_,i)=>`/builder/thumbnails/preset-${i}.webp`);
+  const thumbs = PRESETS.map(p=>thumbnailUrl(p.config));
   const worker = useRef(null), job = useRef(0), queued = useRef(null), active = useRef(false);
   const [refining,setRefining] = useState(true);
   const [family, setFamily] = useState("classic");
@@ -323,6 +323,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
             engine.current.update(latest.current,unpackModel(data.packed,engine.current.studioTexture));
             host.current.dataset.geometryMs=data.packed.buildMs.toFixed(1);
             host.current.dataset.quality='detailed';
+            host.current.dataset.renderedStyle=latest.current.style;
             setRefining(false);setError(false);setReady(true);
           }
         }
@@ -342,6 +343,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
       engine.current.update(s,previewModel(s,engine.current.studioTexture));
       host.current.dataset.previewMs=(performance.now()-start).toFixed(1);
       host.current.dataset.quality='preview';setReady(false);setRefining(true);setError(false);
+      host.current.dataset.renderedStyle=s.style;
       const request={id:++job.current,config:s};
       if(active.current)queued.current=request;
       else {active.current=true;worker.current.postMessage(request);}
