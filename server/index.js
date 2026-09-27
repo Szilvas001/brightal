@@ -292,7 +292,6 @@ app.listen(cfg.port, () => {
   console.log(`     felhasználó: ${cfg.admin.username}`);
   console.log(`     jelszó tár.: ${cfg.admin.passwordHash ? '✔  scrypt hash' : '⚠  NYÍLT SZÖVEG a .env-ben'}`);
   if (!cfg.admin.passwordHash && cfg.admin.password === '12345') {
-    console.log(`     jelszó     : ${cfg.admin.password}`);
     console.log(`  ⚠  FIGYELEM: alapértelmezett, gyenge admin jelszó!`);
   }
   if (!cfg.admin.passwordHash) {

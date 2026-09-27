@@ -1,5 +1,7 @@
 # BRIGHTAL — élesítési terv A-tól Z-ig
 
+> Az aktuális kódhoz tartozó indítási és üzemeltetési útmutató: [WEBSZERVER-INDITAS.md](WEBSZERVER-INDITAS.md). Az alábbi korábbi terv árai, szolgáltatói csomagjai és ügyintézési adatai nem frissen ellenőrzöttek; beszerzéskor ellenőrizendők.
+
 > Készült: 2026-08-24 · a `she-said-yes` projekt tényleges kódja alapján.
 > Az árak **tájékoztató jellegűek** (2026. augusztusi nagyságrendek) — rendelés előtt
 > mindig nézd meg a szolgáltató saját, aktuális díjszabását.

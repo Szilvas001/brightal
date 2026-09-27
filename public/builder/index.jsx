@@ -256,7 +256,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
   const [refining,setRefining] = useState(true);
   const [family, setFamily] = useState("classic");
   useEffect(() => {
-    setFamily(isFashion(s) ? 'fashion' : isDaily(s) || ['band','eternity'].includes(s.style) ? 'daily' : 'classic');
+    setFamily(current=>inCategory(s.style,current)?current:(CATEGORIES.find(c=>c.styles.includes(s.style))?.id||'all'));
   }, [s.style]);
   const [designName,setDesignName]=useState('');
   useEffect(()=>setSaved(false),[s]);

@@ -119,3 +119,7 @@ npm run local
 
 A buildelt JS-fájlok és a `node_modules` újra előállíthatók, ezért nem kerülnek Gitbe.
 A teljes forrás, a függőségek rögzített verziói és ez az útmutató a repó része.
+
+## Éles webszerver
+
+A VPS telepítését, HTTPS-t, systemd szolgáltatást, naplókat, mentést és frissítést a [WEBSZERVER-INDITAS.md](WEBSZERVER-INDITAS.md) írja le.

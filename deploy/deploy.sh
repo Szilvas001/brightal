@@ -64,6 +64,7 @@ rollback() {
   sudo -u "$APP_USER" git checkout -B "$BRANCH" "$PREV_COMMIT"
   sudo -u "$APP_USER" npm ci --include=dev --no-audit --no-fund
   sudo -u "$APP_USER" npm run build
+  sudo -u "$APP_USER" npm run build:ring-previews
   systemctl restart "$SERVICE"
   exit 1
 }
@@ -84,6 +85,7 @@ sudo -u "$APP_USER" npm ci --include=dev --no-audit --no-fund
 log "Frontend fordítása"
 sudo -u "$APP_USER" npm run build
 ok "public/app.js legyártva"
+sudo -u "$APP_USER" npm run build:ring-previews
 
 # a mappák biztosan létezzenek és a megfelelő usert illessék
 mkdir -p "$APP_DIR/data" "$APP_DIR/public/uploads"
@@ -115,6 +117,7 @@ trap - ERR
 sudo -u "$APP_USER" git checkout -B "$BRANCH" "$PREV_COMMIT"
 sudo -u "$APP_USER" npm ci --include=dev --no-audit --no-fund
 sudo -u "$APP_USER" npm run build
+sudo -u "$APP_USER" npm run build:ring-previews
 systemctl restart "$SERVICE"
 sleep 3
 

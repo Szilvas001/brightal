@@ -26,6 +26,8 @@ fail() { printf '\033[1;31m  ✗ %s\033[0m\n' "$*" >&2; }
 
 [[ $EUID -eq 0 ]] || { fail "Root jogosultság kell."; exit 1; }
 [[ -n "$DOMAIN" ]] || { fail "Add meg a domaint: DOMAIN=brightal.hu $0"; exit 1; }
+[[ "$DOMAIN" =~ ^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?$ ]] || { fail "Érvénytelen domain."; exit 1; }
+[[ "$APP_DIR" == /opt/brightal && "$APP_USER" == brightal ]] || { fail "Ez a telepítő /opt/brightal útvonalra és brightal felhasználóra készült."; exit 1; }
 [[ -d "$APP_DIR" ]] || { fail "Nincs ilyen mappa: $APP_DIR (előbb git clone)"; exit 1; }
 
 # ---------- 1. alaprendszer ----------
@@ -72,6 +74,7 @@ log "Telepítés és frontend fordítás"
 cd "$APP_DIR"
 sudo -u "$APP_USER" npm ci --include=dev --no-audit --no-fund
 sudo -u "$APP_USER" npm run build
+sudo -u "$APP_USER" npm run build:ring-previews
 ok "public/app.js kész"
 
 # ---------- 7. .env ----------
@@ -119,7 +122,7 @@ ok "Caddy beállítva a(z) $DOMAIN domainre"
 log "Napi mentés beállítása"
 cp "$APP_DIR/deploy/backup.sh" /usr/local/bin/brightal-backup
 chmod +x /usr/local/bin/brightal-backup
-( crontab -l 2>/dev/null | grep -v brightal-backup; \
+( { crontab -l 2>/dev/null | grep -v brightal-backup || true; }; \
   echo "30 3 * * * /usr/local/bin/brightal-backup >> /var/log/brightal-backup.log 2>&1" ) | crontab -
 ok "Minden hajnali 3:30-kor fut"
 
