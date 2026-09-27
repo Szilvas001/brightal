@@ -13,4 +13,16 @@ function checkout(input,expected){
  if(result.price!==expected)throw Error('PRICE_CHANGED');
  return {...result,accounting:P.accounting(result.price),acceptedAt:new Date().toISOString()};
 }
-module.exports={offer,checkout};
+function catalogue(){
+ const D=require('./diamonds'),data=supplier.read();
+ return D.catalogue().map(stone=>{
+  const publicItem=D.publicStone(stone);
+  const result=supplier.estimate(stone,data);
+  const price=result.retailGrossHuf;
+  // These cards offer a specification to source, not a reservation of the
+  // illustrative feed stone. Never imply its certificate or dimensions apply.
+  return {...publicItem,price,currency:'HUF',certificate:null,demo:false,
+   illustrative:true,fulfilment:'sourced',purchasable:Number.isSafeInteger(price)&&price>0};
+ });
+}
+module.exports={offer,checkout,catalogue};

@@ -12,6 +12,15 @@ test('public combination prices use admin model; orders fix price, retry safely 
  try{
   const c={shape:'round',color:'F',clarity:'VS1',carat:1};
   const offer=await (await post('diamonds/offer',c)).json();assert.equal(offer.price,70275);assert.deepEqual(Object.keys(offer).sort(),['combination','currency','fulfilment','price','purchasable']);
+  const cards=await (await fetch(base+'/api/diamonds/offers')).json();
+  assert.ok(cards.items.length>0);
+  for(const card of cards.items){
+   const admin=await (await post('diamonds/supplier/estimate',card,'admin')).json();
+   assert.equal(card.price,admin.retailGrossHuf);
+   assert.equal(card.price,require('../server/diamond-pricing').price(admin.estimatedCostHuf));
+   assert.equal(card.purchasable,true);assert.equal(card.fulfilment,'sourced');assert.equal(card.certificate,null);
+   assert.equal(card.estimatedCostHuf,undefined);assert.equal(card.neighbors,undefined);assert.equal(card.referencePrice,undefined);
+  }
   for(const shape of D.SHAPES)for(const color of D.COLORS)for(const clarity of D.CLARITIES)for(const carat of [.1,30])assert.ok(require('../server/diamond-offer').offer({shape,color,clarity,carat}).price>0);
   const body={...c,expectedPrice:offer.price,orderKey:'test-combination-order-001',acceptTerms:true};
   assert.equal((await post('diamonds/combination/order',body)).status,401);
@@ -23,6 +32,7 @@ test('public combination prices use admin model; orders fix price, retry safely 
   assert.equal((await post('diamonds/combination/order',{...body,carat:2},'user')).status,409);
   data={...data,fx:{...data.fx,checkedAt:'2020-01-01'}};
   assert.equal((await post('diamonds/offer',c)).status,503);
+  const expiredCards=await (await fetch(base+'/api/diamonds/offers')).json();assert.ok(expiredCards.items.every(x=>x.price===null&&!x.purchasable));
   assert.equal((await post('payment/start',{requestNumber:a.request.requestNumber,price:1},'user')).status,200);assert.equal(charged,70275);
   const invoice=require('../server/invoice').buildInvoiceData(rows[0]);assert.equal(invoice.item.vat,Number(rows[0].accounting.vatHuf));assert.match(invoice.item.name,/Laboratóriumi gyémánt/);
   const gateway=await original.start({...rows[0],paymentRequestId:'synthetic'});const state=await barion.getPaymentState(gateway.paymentId);assert.equal(state.Total,70275);assert.equal(state.Currency,'HUF');
