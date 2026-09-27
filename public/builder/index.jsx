@@ -17,7 +17,7 @@ import { modernLayout } from './contemporary.mjs';
 import { COLLECTION } from './collection.mjs';
 import { CATEGORIES, inCategory } from './categories.mjs';
 import { GEM_TONES } from "./optics.mjs";
-import { PRESETS } from './catalog.mjs';
+import { PRESETS, stylePreset } from './catalog.mjs';
 const { useState, useEffect, useRef } = React;
 const names = {
   ...Object.fromEntries(COLLECTION.map(c=>[c.style,c.name])),
@@ -371,16 +371,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
             onClick={() =>
               change(
                 key === "style"
-                  ? {
-                      ...(COLLECTION.find(c=>c.style===value)?.config || {}),
-                      ...{ [key]: value },
-                    sideMode: value === "trilogy" ? "pair" : "none",
-                    setting: COLLECTION.find(c=>c.style===value)?.config.setting || (value==='bezelrow'?'bezel':s.setting),
-                      accents:
-                        value === "eternity" || value === "pave"
-                          ? "pave"
-                          : s.accents,
-                    }
+                  ? stylePreset(value)
                   : { [key]: value },
               )
             }
