@@ -2376,7 +2376,7 @@ function AdminPage() {
         </a>
       </div>
 
-      <DiamondImport/><DiamondPriceAdmin/><SupplierAdmin/><AdminCad/>
+      <DiamondImport/><DiamondPriceAdmin/><SupplierAdmin/><SupplierEvidenceAdmin/><AdminCad/>
       {!data && <div style={{ textAlign: 'center', padding: 40 }}><Spinner dark size={26} /></div>}
       {data && !list.length && <div className="empty-state"><p>{t('ad_empty')}</p></div>}
 
@@ -2456,6 +2456,20 @@ function DiamondSourcing(){
   catch(e){if(e.code==='PRICE_CHANGED'){setOffer(null);setTerms(false);}setMessage(errors[e.code]||'A fizetés nem indult el. Próbáld újra, vagy nyisd meg a rendelést a fiókodban.');}finally{setBusy(false);}
  };
  return <section className="diamond-import" aria-label="Egyedi gyémánt vásárlása"><h2>Válaszd ki a gyémántodat</h2><p>10 forma · D–M szín · FL–SI2 tisztaság · 0,10–30 ct. Egyedileg beszerzendő laboratóriumi gyémánt, tanúsítvány a beszerzéskor.</p><fieldset disabled={busy} style={{border:0,padding:0}}><DiamondCombination value={value} onChange={v=>{setOffer(null);setLoading(true);setTerms(false);setValue(v);}}/></fieldset><div aria-live="polite">{loading?<p>Ár kiszámítása…</p>:offer?<><h3>Bruttó ár: {offer.price.toLocaleString('hu-HU')} Ft</h3><p>A megrendeléskor rögzített ár a gyémánt ára; a szállítás egyeztetése külön történik.</p></>:<p>Az ár jelenleg nem elérhető.</p>}</div>{offer&&!isAdmin&&<><label><input type="checkbox" checked={terms} disabled={busy} onChange={e=>setTerms(e.target.checked)}/> Elfogadom az <a href="/aszf" target="_blank" rel="noopener noreferrer">ÁSZF-et</a>, és tudomásul veszem, hogy egyedileg beszerzendő követ rendelek.</label><button className="btn btn-dark" disabled={busy||!terms||loading} onClick={buy}>{busy?'Fizetés indítása…':user?'Vásárlás':'Belépés és vásárlás'}</button></>}{isAdmin&&<p>Vásárláshoz vásárlói fiókkal jelentkezz be.</p>}<button className="btn btn-ghost" disabled={busy||loading} onClick={()=>setRevision(x=>x+1)}>Ár frissítése</button><p role="status">{message}</p></section>;
+}
+function SupplierEvidenceAdmin(){
+ const [data,setData]=useState(null),[message,setMessage]=useState('');
+ useEffect(()=>{api('/diamonds/supplier/model').then(setData).catch(e=>setMessage(e.message));},[]);
+ return <details className="diamond-import"><summary>DIPEN · forrásellenőrzés és privát biztonsági mentés</summary>
+  <p>Az egységármodell kizárólag elkülönített kőárakat használ. A csomagárakat, szállítást és bizonytalan tételeket az alábbi ellenőrzési jegyzék őrzi. Kevés adatból a nem megfigyelt formák, színek és tisztaságok felára nem azonosítható; az ezekre kapott ár extrapoláció.</p>
+  {data?.reviewNotes?.map((x,i)=><article key={i}><p>{x.summary}</p><p><strong>Kezelés:</strong> {x.reason}</p></article>)}
+  <a className="btn btn-ghost" href="/api/diamonds/supplier/model/export" download>Teljes privát modell letöltése (JSON)</a>
+  <label>Teljes modell visszatöltése (felülírja a jelenlegi modellt)<input type="file" accept=".json" onChange={async e=>{
+   const file=e.target.files[0];if(!file)return;
+   try{if(file.size>1000000)throw Error('Legfeljebb 1 MB.');const next=JSON.parse(await file.text());await api('/diamonds/supplier/model',{method:'POST',body:next});setData(next);setMessage('Modell mentve. Az árbecslő adatait az oldal újratöltése frissíti.');}
+   catch(err){setMessage(err.message);}finally{e.target.value='';}
+  }}/></label><p>A letöltés beszállítói árakat tartalmaz. Saját szerverre költözéshez használd; ne tedd nyilvános repóba.</p><p role="status">{message}</p>
+ </details>;
 }
 function SupplierAdmin(){
  const [data,setData]=useState(null),[value,setValue]=useState({shape:'oval',color:'F',clarity:'VS1',carat:1}),[result,setResult]=useState(null),[message,setMessage]=useState('');

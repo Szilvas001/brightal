@@ -20,7 +20,13 @@ function validate(input){
  });
  let fx=null;
  if(input.fx){P.decimalMinor(input.fx.hufPerUsd);const at=Date.parse(input.fx.checkedAt);if(!Number.isFinite(at)||at>Date.now()+60000||!String(input.fx.source||'').trim())throw Error('INVALID_FX');fx={hufPerUsd:String(input.fx.hufPerUsd),checkedAt:new Date(at).toISOString(),source:String(input.fx.source).slice(0,200)};}
- return {observations,fx};
+ const reviewNotes=input.reviewNotes||[];
+ if(!Array.isArray(reviewNotes)||reviewNotes.length>100)throw Error('INVALID_REVIEW_NOTES');
+ const notes=reviewNotes.map(x=>{
+  if(!x||typeof x.summary!=='string'||typeof x.reason!=='string')throw Error('INVALID_REVIEW_NOTE');
+  return {summary:x.summary.slice(0,1200),reason:x.reason.slice(0,600)};
+ });
+ return {observations,fx,reviewNotes:notes};
 }
 function read(){if(!fs.existsSync(FILE))return {observations:[],fx:null};return validate(JSON.parse(fs.readFileSync(FILE,'utf8')));}
 function save(input,actor){const data=validate(input);data.updatedAt=new Date().toISOString();data.updatedBy=actor;fs.mkdirSync(path.dirname(FILE),{recursive:true});fs.writeFileSync(FILE+'.tmp',JSON.stringify(data,null,2),{mode:0o600});fs.renameSync(FILE+'.tmp',FILE);return data;}
@@ -49,6 +55,8 @@ function estimate(input,data=read(),now=Date.now()){
  if(!rows.some(x=>x.shape===c.shape))warnings.push('Ehhez a formához nincs megfigyelés: más formákból extrapolált becslés.');
  if(!exact)warnings.push('Becsült ár, nem aktuális beszállítói ajánlat.');
  if(rows.length<10)warnings.push('Kevés adat: a szín- és tisztasági felárak nem becsülhetők megbízhatóan.');
+ if(!rows.some(x=>x.color===c.color))warnings.push('Ehhez a színhez nincs megfigyelt egységár; a színfelár nem azonosítható.');
+ if(!rows.some(x=>x.clarity===c.clarity))warnings.push('Ehhez a tisztasághoz nincs megfigyelt egységár; a tisztasági felár nem azonosítható.');
  if(c.carat<Math.min(...rows.map(x=>x.carat))||c.carat>Math.max(...rows.map(x=>x.carat)))warnings.push('A karát a megfigyelt tartományon kívül esik.');
  const fxCurrent=data.fx&&now-Date.parse(data.fx.checkedAt)<=7*86400000&&Date.parse(data.fx.checkedAt)<=now+60000;
  const costHuf=fxCurrent?convertUsd(usd,data.fx.hufPerUsd):null;

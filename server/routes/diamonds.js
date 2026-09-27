@@ -4,6 +4,7 @@ const D=require('../diamonds'),auth=require('../auth'),db=require('../db'),R=req
 const supplier=require('../supplier-model');
 router.post('/offer',(req,res)=>{res.set('Cache-Control','no-store');try{res.json(require('../diamond-offer').offer(req.body));}catch(e){res.status(e.message==='INVALID_COMBINATION'?400:503).json({error:['INVALID_COMBINATION','NO_SUPPLIER_OBSERVATIONS','PRICE_UNAVAILABLE'].includes(e.message)?e.message:'PRICE_UNAVAILABLE'});}});
 router.get('/supplier/model',auth.requireAdmin,(req,res)=>{res.set('Cache-Control','no-store');try{res.json(supplier.read());}catch{res.status(503).json({error:'SUPPLIER_DATA_UNAVAILABLE'});}});
+router.get('/supplier/model/export',auth.requireAdmin,(req,res)=>{res.set('Cache-Control','no-store');try{res.attachment('supplier-model-private.json').json(supplier.read());}catch{res.status(503).json({error:'SUPPLIER_DATA_UNAVAILABLE'});}});
 router.post('/supplier/model',auth.requireAdmin,(req,res)=>{res.set('Cache-Control','no-store');try{res.json(supplier.save(req.body,req.user.id));}catch(e){res.status(400).json({error:e.message});}});
 router.post('/supplier/estimate',auth.requireAdmin,(req,res)=>{res.set('Cache-Control','no-store');try{res.json(supplier.estimate(req.body));}catch(e){res.status(400).json({error:e.message});}});
 router.post('/sourcing',auth.requireUser,async(req,res)=>{try{

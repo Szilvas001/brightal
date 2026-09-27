@@ -17,5 +17,11 @@ test('fixed point USD conversion, retail markup, FX expiry and matched temporal 
 });
 test('supplier APIs refuse anonymous callers',async()=>{
  const express=require('express'),app=express();app.use(express.json());app.use('/api/diamonds',require('../server/routes/diamonds'));
- const server=app.listen(0);try{const base='http://127.0.0.1:'+server.address().port;for(const [path,method] of [['model','GET'],['model','POST'],['estimate','POST']]){const r=await fetch(base+'/api/diamonds/supplier/'+path,{method,headers:{'Content-Type':'application/json'},...(method==='POST'?{body:'{}'}:{})});assert.ok([401,403].includes(r.status));}}finally{server.close();}
+ const server=app.listen(0);try{const base='http://127.0.0.1:'+server.address().port;for(const [path,method] of [['model','GET'],['model/export','GET'],['model','POST'],['estimate','POST']]){const r=await fetch(base+'/api/diamonds/supplier/'+path,{method,headers:{'Content-Type':'application/json'},...(method==='POST'?{body:'{}'}:{})});assert.ok([401,403].includes(r.status));}}finally{server.close();}
+});
+test('private bundle notes survive backup roundtrip but never become independent unit prices',()=>{
+ const data=S.validate({observations:[row],reviewNotes:[{summary:'Synthetic five-stone bundle with shipping',reason:'No unit-price allocation'}]});
+ assert.deepEqual(S.validate(JSON.parse(JSON.stringify(data))),data);
+ assert.equal(S.estimate(row,data).observations,1);
+ assert.throws(()=>S.validate({observations:[row],reviewNotes:[{}]}));
 });
