@@ -9,6 +9,7 @@ import {
   isFashion,
   isModern,
   FASHION_STYLES,
+  ATELIER_STYLES,
   DAILY_STYLES, isDaily, maxDailyStones,
 } from "./state.mjs";
 import { RingRenderer } from "./renderer.js";
@@ -569,7 +570,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
           0.1,
           "",
         )}
-      {["rope","fluted","petal","twist","ripple"].includes(s.style) &&
+      {["rope","fluted","petal","twist","ripple",...ATELIER_STYLES].includes(s.style) &&
         slider("rhythm", L("Forma ritmusa", "Pattern rhythm"), 2, 8, 1, "")}
       {s.style === "stack" &&
         slider("layers", L("Gyűrűsorok száma", "Number of bands"), 2, 4, 1, "")}
@@ -595,6 +596,12 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
         </>
       )}
       {slider("width", L("Sín szélessége", "Band width"), 1.6, 10, 0.1, "mm")}
+      {ATELIER_STYLES.includes(s.style)&&<>
+        {slider('motifDepth',L('Domborminta magassága','Relief height'),0,1.2,.1,'mm')}
+        {slider('motifOffset',L('Mintázat eltolása','Pattern offset'),-1,1,.1,'')}
+        {slider('edgeSoftness',L('Profil kerekítése','Profile rounding'),.35,1.2,.05,'')}
+        {slider('thickness',L('Alapvastagság','Base thickness'),1.4,3,.1,'mm')}
+      </>}
     </div>
   );
   const stoneControls = () => <>

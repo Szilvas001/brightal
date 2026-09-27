@@ -7,6 +7,8 @@ import {buildFinishedRing} from '../public/builder/finished-model.mjs';
 import {initKernel} from '../public/builder/kernel.mjs';
 await initKernel();fs.mkdirSync('public/builder/thumbnails',{recursive:true});
 for(const [i,p] of PRESETS.entries()) {
+ const requestedStyle=process.argv.indexOf('--style');
+ if(requestedStyle>=0&&p.config.style!==process.argv[requestedStyle+1])continue;
  const destination='public'+thumbnailUrl(p.config);
  if(process.argv.includes('--missing')&&fs.existsSync(destination))continue;
  const model=buildFinishedRing(p.config);model.group.updateMatrixWorld(true);

@@ -12,8 +12,8 @@ export function previewModel(s,environment) {
     const a=i*2*Math.PI/n;
     for(let j=0;j<m;j++) {
       const b=j*2*Math.PI/m,co=Math.cos(b),si=Math.sin(b);
-      const r=layout.inner+layout.thicknessAt(a)*(.5+.5*Math.sign(co)*Math.abs(co)**.55);
-      positions.push(Math.sin(a)*r*.8,Math.cos(a)*r*.8,(layout.shift(a)+layout.widthAt(a)*.5*Math.sign(si)*Math.abs(si)**.55)*.8);
+      const r=layout.inner+layout.thicknessAt(a)*(.5+.5*Math.sign(co)*Math.abs(co)**layout.profileExponent)+layout.relief(a,b);
+      positions.push(Math.sin(a)*r*.8,Math.cos(a)*r*.8,(layout.shift(a)+layout.widthAt(a)*.5*Math.sign(si)*Math.abs(si)**layout.profileExponent)*.8);
       const k=i*m+j,q=i*m+(j+1)%m,next=(i+1)%n*m+j,nextQ=(i+1)%n*m+(j+1)%m;
       indices.push(k,q,next,q,nextQ,next);
     }

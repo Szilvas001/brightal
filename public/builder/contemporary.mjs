@@ -1,12 +1,12 @@
 import * as T from 'three';
 import { getKernel } from './kernel.mjs';
 import { gemGeometry, gemstoneMaterial } from './optics.mjs';
-import { FASHION_STYLES } from './state.mjs';
+import { FASHION_STYLES, ATELIER_STYLES } from './state.mjs';
 
 export const MODERN_STYLES = ['bezelrow','scatter','chevron','ribbon','graduated','eastwest','alternating','crown','wave','rope','dome','signet','open','stack','band','eternity','curvedoval','wavebezel','openpair','contour','asymmetric','fullcircle'];
 export const SCALE = .8;
 MODERN_STYLES.push(...FASHION_STYLES.filter(s=>!MODERN_STYLES.includes(s)));
-export const MODEL_REVISION = 'atelier-solid-5';
+export const MODEL_REVISION = 'atelier-solid-6';
 const single = s => ['eastwest','curvedoval','wavebezel'].includes(s.style) || FASHION_STYLES.includes(s.style);
 export function modernLayout(s) {
   const inner = s.size / (2*Math.PI);
@@ -19,7 +19,25 @@ export function modernLayout(s) {
   const width = Math.max(s.width, count ? (east?s.stoneWidth:s.stoneLength) + 2*s.bezelWall + .6 : 0,
     s.style==='stack'?s.layers*1.25+(s.layers-1)*s.gap:0,s.style==='signet'?s.faceSize:0);
   const top = a => Math.pow(Math.max(0,Math.cos(a)),4);
+  const atelier=ATELIER_STYLES.includes(s.style),phase=s.motifOffset*Math.PI;
+  const profileExponent=atelier?s.edgeSoftness:.55;
+  const relief=(a,b)=>{
+    if(!atelier)return 0;
+    const outer=Math.max(0,Math.cos(b))*Math.sin(b)**2;
+    const rhythm=s.rhythm;
+    const pattern=s.style==='braid'?Math.sin(a*rhythm+b*3+phase)**2:
+      s.style==='lotus'?Math.cos(a*rhythm+phase)**2:
+      s.style==='orbit'?Math.cos(b*rhythm/2+phase)**2:
+      s.style==='shield'?Math.cos(a*rhythm+Math.abs(b)*2+phase)**2:
+      Math.sin(a*rhythm+b+phase)**2;
+    return outer*s.motifDepth*pattern;
+  };
   const rise = a => {
+    if(s.style==='aurora')return top(a)*s.sculpt*(.55+.25*Math.sin(a*2+phase));
+    if(s.style==='orbit')return s.sculpt*.2*Math.cos(a*2+phase)**2;
+    if(s.style==='lotus')return top(a)*s.sculpt*.45*(1+Math.cos(a*2+phase)**2);
+    if(s.style==='shield')return Math.max(0,Math.cos(a))**2*s.sculpt;
+    if(s.style==='braid')return s.sculpt*.2*(1+Math.sin(a*s.rhythm+phase));
     if(s.style==='fluted') return s.sculpt*.3*(1+Math.cos(a*s.rhythm*2));
     if(s.style==='ripple') return s.sculpt*.35*(1+Math.cos(a*s.rhythm));
     if(s.style==='saddle') return s.sculpt*.5*Math.sin(a)**2;
@@ -28,6 +46,11 @@ export function modernLayout(s) {
     return 0;
   };
   const shift = a => {
+    if(s.style==='aurora')return Math.sin(a+phase)*s.sculpt*.75;
+    if(s.style==='orbit')return Math.sin(a*2+phase)*s.sculpt*.2;
+    if(s.style==='lotus')return top(a)*s.motifOffset*s.sculpt*.4;
+    if(s.style==='shield')return top(a)*s.motifOffset*s.sculpt*.3;
+    if(s.style==='braid')return Math.sin(a*s.rhythm+phase)*s.sculpt*.18;
     if(s.style==='twist') return Math.sin(a*s.rhythm)*s.sculpt*.3;
     if(s.style==='saddle') return Math.cos(a*2)*s.sculpt*.5;
     if(s.style==='ripple') return Math.sin(a*s.rhythm)*s.sculpt*.2;
@@ -36,6 +59,11 @@ export function modernLayout(s) {
     return 0;
   };
   const widthAt = a => {
+    if(s.style==='aurora')return width*(.65+.35*top(a))*(1+.12*Math.sin(a+phase));
+    if(s.style==='orbit')return width*(.85+.15*Math.cos(a*2+phase));
+    if(s.style==='lotus')return width*(.65+.35*top(a))*(1+.16*top(a)*Math.cos(a*s.rhythm+phase));
+    if(s.style==='shield')return width*(.35+.65*Math.max(0,Math.cos(a))**.5);
+    if(s.style==='braid')return width*(.85+.15*Math.sin(a*s.rhythm+phase));
     if(s.style==='petal') return width*(.8+.2*Math.cos(a*s.rhythm))*(1+top(a)*s.sculpt*.15);
     if(s.style==='tapered') return width*(.4+.6*top(a));
     if(s.style==='twist') return width*(.8+.2*Math.cos(a*s.rhythm));
@@ -56,7 +84,7 @@ export function modernLayout(s) {
       angle,rotation:east?Math.PI/2:s.style==='crown'?angle*.25:0,z,
       girdleRadius:surface+.1, tone:s.alternateGems&&i%2?s.sideTone:s.gemTone });
   }
-  return {inner,width,thickness,widthAt,thicknessAt,shift,stones};
+  return {inner,width,thickness,widthAt,thicknessAt,shift,stones,profileExponent,relief};
 }
 
 // Exact shared millimetre geometry: the browser and the workshop exporter use
@@ -75,8 +103,8 @@ export function buildContemporary(s, environment, colors) {
         const a=2*Math.PI*i/n, width=widthAt(a)*widthFactor;
         for(let j=0;j<m;j++) {
           const b=2*Math.PI*j/m, co=Math.cos(b),si=Math.sin(b);
-          const r=inner+thicknessAt(a)*(.5+.5*Math.sign(co)*Math.pow(Math.abs(co),.55));
-          const z=shift(a)+offset+width*.5*Math.sign(si)*Math.pow(Math.abs(si),.55);
+          const r=inner+thicknessAt(a)*(.5+.5*Math.sign(co)*Math.pow(Math.abs(co),layout.profileExponent))+layout.relief(a,b);
+          const z=shift(a)+offset+width*.5*Math.sign(si)*Math.pow(Math.abs(si),layout.profileExponent);
           positions.push(Math.sin(a)*r,Math.cos(a)*r,z);
           const k=i*m+j, next=((i+1)%n)*m+j, q=i*m+(j+1)%m, nextQ=((i+1)%n)*m+(j+1)%m;
           indices.push(k,q,next,q,nextQ,next);

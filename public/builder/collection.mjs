@@ -34,4 +34,9 @@ export const COLLECTION = [
   {style:'saddle',name:['Nyereg','Saddle'],story:['Két irányba hajló, széles szoborszerű forma.','A broad silhouette curving in two directions.'],config:{width:8,sculpt:2,thickness:1.8,metal:'yellow18'}},
   {style:'ripple',name:['Víztükör','Ripple'],story:['Együtt hullámzó perem és felület.','A rippling edge and sculpted surface.'],config:{width:5,sculpt:1.7,rhythm:4,metal:'white18'}},
   {style:'tapered',name:['Aranyváll','Golden shoulder'],story:['Keskeny tenyéroldal, hangsúlyos felső ív.','A narrow palm side with a prominent upper curve.'],config:{width:7,sculpt:1.8,metal:'yellow18'}},
+  {style:'aurora',name:['Aurora','Aurora'],story:['Aszimmetrikus, megemelt hullámgerinc.','An asymmetric, elevated flowing crest.'],config:{width:6,sculpt:2,rhythm:3,motifDepth:.7,motifOffset:.3,edgeSoftness:.6,metal:'rose18'}},
+  {style:'orbit',name:['Orbit','Orbit'],story:['Kerekített pályák finoman bordázott vállakkal.','Rounded orbits with finely ribbed shoulders.'],config:{width:6,sculpt:1.2,rhythm:4,motifDepth:.9,motifOffset:0,edgeSoftness:1.1,metal:'platinum'}},
+  {style:'lotus',name:['Lótusz','Lotus'],story:['Szétnyíló szirmokat idéző felső ív.','An upper curve inspired by opening petals.'],config:{width:7,sculpt:1.6,rhythm:6,motifDepth:.6,motifOffset:0,edgeSoftness:.8,metal:'yellow18'}},
+  {style:'shield',name:['Pajzs','Shield'],story:['Széles felső felület keskenyre futó tenyéroldallal.','A broad upper face tapering towards the palm.'],config:{width:8,sculpt:2.2,rhythm:3,motifDepth:.4,motifOffset:.2,edgeSoftness:.4,metal:'white18'}},
+  {style:'braid',name:['Fonat','Braid'],story:['Átlós domborminta hullámzó aranysávon.','Diagonal relief along a flowing gold band.'],config:{width:5.5,sculpt:1,rhythm:6,motifDepth:1.1,motifOffset:0,edgeSoftness:.65,metal:'yellow18'}},
 ];

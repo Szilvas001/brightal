@@ -1,5 +1,6 @@
-import { FASHION_STYLES, DAILY_STYLES } from './state.mjs';
+import { FASHION_STYLES, DAILY_STYLES, ATELIER_STYLES } from './state.mjs';
 export const CATEGORIES = [
+  {id:'atelier',name:['Atelier Variációk','Atelier Variations'],styles:ATELIER_STYLES},
   {id:'classic',name:['Eljegyzési gyűrűk','Engagement rings'],styles:['solitaire','hiddenhalo','bezel','tension','halo','trilogy','vintage','pave','duet','cathedral','split']},
   {id:'daily',name:['Mindennapi gyémánt','Everyday diamonds'],styles:DAILY_STYLES},
   {id:'wedding',name:['Karika és örökkévalóság','Wedding and eternity'],styles:['band','eternity','fullcircle','tapered','fluted']},

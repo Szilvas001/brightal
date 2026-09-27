@@ -1,3 +1,4 @@
+export const ATELIER_STYLES = ['aurora','orbit','lotus','shield','braid'];
 export const FASHION_STYLES = [
   "wave",
   "rope",
@@ -6,6 +7,7 @@ export const FASHION_STYLES = [
   "open",
   "stack",
   "fluted", "petal", "twist", "saddle", "ripple", "tapered",
+  ...ATELIER_STYLES,
 ];
 export const isFashion = (s) => FASHION_STYLES.includes(s.style);
 export const DAILY_STYLES = ['bezelrow','scatter','chevron','ribbon','graduated','eastwest','alternating','crown','curvedoval','wavebezel','openpair','contour','asymmetric','fullcircle'];
@@ -153,6 +155,9 @@ export const DEFAULT = Object.freeze({
   thickness: 1.6,
   bezelWall: .45,
   fashionStone: false,
+  motifDepth: .5,
+  motifOffset: 0,
+  edgeSoftness: .7,
 });
 export function normalize(input = {}) {
   if (!input || typeof input !== "object" || Array.isArray(input)) input = {};
@@ -181,6 +186,9 @@ export function normalize(input = {}) {
     ['stoneDepth',1,3.5,.1],
     ['thickness',1.4,3,.1],
     ['bezelWall',.35,.7,.05],
+    ['motifDepth',0,1.2,.1],
+    ['motifOffset',-1,1,.1],
+    ['edgeSoftness',.35,1.2,.05],
   ]) {
     const n = Number(input[key]);
     if (Number.isFinite(n) && input[key] !== undefined)

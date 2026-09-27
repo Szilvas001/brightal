@@ -47,6 +47,11 @@ test("fashion controls change geometry and incompatible gemstone state is cleare
     saddle: ["sculpt", .4, 2.5],
     ripple: ["sculpt", .4, 2.5],
     tapered: ["sculpt", .4, 2.5],
+    aurora: ["sculpt", .4, 2.5],
+    orbit: ["sculpt", .4, 2.5],
+    lotus: ["sculpt", .4, 2.5],
+    shield: ["sculpt", .4, 2.5],
+    braid: ["sculpt", .4, 2.5],
   };
   for (const style of FASHION_STYLES) {
     const config = normalize({
