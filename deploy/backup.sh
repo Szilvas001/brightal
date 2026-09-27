@@ -17,6 +17,7 @@
 #      tar tzf /opt/backup/brightal-2026-08-24.tar.gz | head
 # ══════════════════════════════════════════════════════════════════
 set -euo pipefail
+umask 077
 
 APP_DIR="${APP_DIR:-/opt/brightal}"
 BACKUP_DIR="${BACKUP_DIR:-/opt/backup}"
@@ -27,7 +28,7 @@ KEEP_DAYS="${KEEP_DAYS:-14}"
 #   REMOTE="user@masik-gep:/mentes/brightal"     (rsync/ssh)
 REMOTE="${REMOTE:-}"
 
-STAMP=$(date +%F)
+STAMP=$(date +%F-%H%M%S)
 ARCHIVE="$BACKUP_DIR/brightal-$STAMP.tar.gz"
 
 mkdir -p "$BACKUP_DIR"
@@ -58,6 +59,7 @@ if [[ -n "$REMOTE" ]]; then
     echo "[$(date '+%F %T')] ✔ Távoli másolat kész."
   else
     echo "[$(date '+%F %T')] ✗ A távoli másolás nem sikerült!" >&2
+    exit 1
   fi
 fi
 

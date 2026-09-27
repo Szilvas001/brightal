@@ -31,12 +31,26 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 cd "$APP_DIR"
+umask 077
+if [[ -n "$(sudo -u "$APP_USER" git status --porcelain)" ]]; then
+  fail "Nem tiszta a munkafa; mentsd a helyi kódváltozásokat frissítés előtt."
+  exit 1
+fi
+BRANCH=$(sudo -u "$APP_USER" git symbolic-ref --short HEAD)
+sudo -u "$APP_USER" git fetch origin "$BRANCH" --quiet
+sudo -u "$APP_USER" git merge-base --is-ancestor HEAD "origin/$BRANCH" || {
+  fail "A helyi ág eltér a GitHub ágtól; automatikus felülírás nem történik."
+  exit 1
+}
 
 # ---------- 1. mentés ----------
 log "Biztonsági mentés"
 mkdir -p "$BACKUP_DIR"
-STAMP=$(date +%F-%H%M)
-tar czf "$BACKUP_DIR/pre-deploy-$STAMP.tar.gz" -C "$APP_DIR" data public/uploads .env 2>/dev/null || true
+STAMP=$(date +%F-%H%M%S)
+systemctl stop "$SERVICE"
+trap 'systemctl start "$SERVICE"' EXIT
+tar czf "$BACKUP_DIR/pre-deploy-$STAMP.tar.gz" -C "$APP_DIR" data public/uploads .env
+tar tzf "$BACKUP_DIR/pre-deploy-$STAMP.tar.gz" >/dev/null
 ok "Mentés: $BACKUP_DIR/pre-deploy-$STAMP.tar.gz"
 
 PREV_COMMIT=$(sudo -u "$APP_USER" git rev-parse HEAD)
@@ -44,8 +58,17 @@ ok "Jelenlegi verzió: ${PREV_COMMIT:0:8}"
 
 # ---------- 2. kód ----------
 log "Kód frissítése"
-sudo -u "$APP_USER" git fetch --all --quiet
-sudo -u "$APP_USER" git reset --hard origin/"$(sudo -u "$APP_USER" git rev-parse --abbrev-ref HEAD)" --quiet
+rollback() {
+  trap - ERR
+  fail "Frissítés sikertelen; korábbi kód visszaállítása: $PREV_COMMIT"
+  sudo -u "$APP_USER" git checkout -B "$BRANCH" "$PREV_COMMIT"
+  sudo -u "$APP_USER" npm ci --include=dev --no-audit --no-fund
+  sudo -u "$APP_USER" npm run build
+  systemctl restart "$SERVICE"
+  exit 1
+}
+trap rollback ERR
+sudo -u "$APP_USER" git merge --ff-only "origin/$BRANCH" --quiet
 NEW_COMMIT=$(sudo -u "$APP_USER" git rev-parse HEAD)
 
 if [[ "$PREV_COMMIT" == "$NEW_COMMIT" ]]; then
@@ -56,7 +79,7 @@ fi
 
 # ---------- 3. függőségek + build ----------
 log "Függőségek telepítése"
-sudo -u "$APP_USER" npm install --no-audit --no-fund
+sudo -u "$APP_USER" npm ci --include=dev --no-audit --no-fund
 
 log "Frontend fordítása"
 sudo -u "$APP_USER" npm run build
@@ -88,8 +111,9 @@ fi
 
 # ---------- visszaállás ----------
 fail "Az alkalmazás nem válaszol — visszaállás a(z) ${PREV_COMMIT:0:8} verzióra."
-sudo -u "$APP_USER" git reset --hard "$PREV_COMMIT" --quiet
-sudo -u "$APP_USER" npm install --no-audit --no-fund
+trap - ERR
+sudo -u "$APP_USER" git checkout -B "$BRANCH" "$PREV_COMMIT"
+sudo -u "$APP_USER" npm ci --include=dev --no-audit --no-fund
 sudo -u "$APP_USER" npm run build
 systemctl restart "$SERVICE"
 sleep 3

@@ -70,7 +70,7 @@ ok "Felhasználó: $APP_USER, mappa: $APP_DIR"
 # ---------- 6. függőségek + build ----------
 log "Telepítés és frontend fordítás"
 cd "$APP_DIR"
-sudo -u "$APP_USER" npm install --no-audit --no-fund
+sudo -u "$APP_USER" npm ci --include=dev --no-audit --no-fund
 sudo -u "$APP_USER" npm run build
 ok "public/app.js kész"
 
@@ -97,9 +97,8 @@ chmod 600 "$APP_DIR/.env"
 log "systemd szolgáltatás"
 cp "$APP_DIR/deploy/brightal.service" /etc/systemd/system/brightal.service
 systemctl daemon-reload
-systemctl enable --now brightal
-sleep 2
-systemctl is-active --quiet brightal && ok "A brightal szolgáltatás fut" || fail "Nem indult el — journalctl -u brightal -n 40"
+systemctl enable brightal
+warn "Indítás a .env kitöltése után: systemctl start brightal"
 
 # ---------- 9. Caddy ----------
 log "Caddy telepítése (automatikus HTTPS)"
