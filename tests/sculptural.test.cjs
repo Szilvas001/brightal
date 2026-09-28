@@ -13,7 +13,7 @@ test('sculptural categories cover all styles; new solid rings survive extreme si
    const model=buildRing(config,null);
    assert.equal(model.engineering.metalSolids,1,style);
    assert.ok(model.engineering.volumeMm3>0,style);
-   assert.equal(model.gems.length,fashionStone?1:0,style);
+   assert.equal(model.gems.length,1,style);
    if(!fashionStone)volumes.add(model.engineering.volumeMm3.toFixed(4));
    model.group.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});
   }

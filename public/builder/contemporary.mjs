@@ -6,12 +6,11 @@ import { FASHION_STYLES, ATELIER_STYLES } from './state.mjs';
 export const MODERN_STYLES = ['bezelrow','scatter','chevron','ribbon','graduated','eastwest','alternating','crown','wave','rope','dome','signet','open','stack','band','eternity','curvedoval','wavebezel','openpair','contour','asymmetric','fullcircle'];
 export const SCALE = .8;
 MODERN_STYLES.push(...FASHION_STYLES.filter(s=>!MODERN_STYLES.includes(s)));
-export const MODEL_REVISION = 'atelier-solid-6';
-const single = s => ['eastwest','curvedoval','wavebezel'].includes(s.style) || FASHION_STYLES.includes(s.style);
+export const MODEL_REVISION = 'diamond-only-7';
+const single = s => ['band','eastwest','curvedoval','wavebezel'].includes(s.style) || FASHION_STYLES.includes(s.style);
 export function modernLayout(s) {
   const inner = s.size / (2*Math.PI);
-  const jewel = s.style==='signet' || !['band',...FASHION_STYLES].includes(s.style) || s.fashionStone;
-  let count = !jewel ? 0 : single(s) ? 1 : s.dailyCount;
+  let count = single(s) ? 1 : Math.max(1,s.dailyCount);
   const east = s.style === 'eastwest' || s.orientation === 'east';
   const maxDimension = Math.max(s.stoneLength,s.stoneWidth);
   const spacing = maxDimension + 2*s.bezelWall + s.dailySpacing + .35;

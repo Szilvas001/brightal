@@ -154,7 +154,7 @@ export const DEFAULT = Object.freeze({
   stoneDepth: 1.6,
   thickness: 1.6,
   bezelWall: .45,
-  fashionStone: false,
+  fashionStone: true,
   motifDepth: .5,
   motifOffset: 0,
   edgeSoftness: .7,
@@ -213,7 +213,8 @@ export function normalize(input = {}) {
   s.rotate = input.rotate === true;
   s.mixedMetal = input.mixedMetal === true;
   s.alternateGems = input.alternateGems === true;
-  s.fashionStone = input.fashionStone === true;
+  // Every sellable design includes diamonds, including older saved plain bands.
+  s.fashionStone = true;
   if(s.style==='hiddenhalo') s.hiddenHalo=true;
   if(s.style==='bezel') s.setting='bezel';
   if(s.style==='tension') {s.setting='bezel';s.headMetal='match';}

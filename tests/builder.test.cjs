@@ -147,6 +147,7 @@ test("all styles and side layouts build finite renderable models", async () => {
         }
       });
       assert.ok(meshes >= 1, style);
+      assert.ok(gems.length >= 1, `${style}: every sellable ring must contain a diamond`);
       assert.equal(
         new Set(gems.map((g) => g.material.uniforms.localEye.value)).size,
         gems.length,

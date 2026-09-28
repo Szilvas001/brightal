@@ -12,7 +12,7 @@ test('sourcing accepts all valid combinations but requires certified matching st
   assert.equal((await post('/api/diamonds/sourcing',null,c)).status,401);
   assert.equal((await post('/api/diamonds/sourcing','user',{...c,carat:31})).status,400);
   const result=await (await post('/api/diamonds/sourcing','user',c)).json();const r=result.request;
-  assert.equal(r.payable,false);assert.equal(r.source,'diamond');assert.deepEqual(r.sourcing,c);
+  assert.equal(r.payable,false);assert.equal(r.source,'diamond');assert.deepEqual(r.sourcing,require('../server/supplier-model').combination(c));
   const path='/api/diamonds/sourcing/'+r.requestNumber+'/confirm';
   assert.equal((await post(path,'user',{stoneId:stock.id})).status,403);
   assert.equal((await post('/api/admin/requests/'+r.requestNumber+'/approve','admin',{price:1})).status,409);

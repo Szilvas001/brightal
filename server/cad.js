@@ -7,7 +7,7 @@ const limits={innerDiameter:[14,24],width:[1.8,8],thickness:[1.2,3.5],stoneLengt
 async function parameters(config,overrides={}){
  const {normalize}=await import('../public/builder/state.mjs');const s=normalize(config);
  if(!STYLES.includes(s.style))throw Error('CAD_STYLE_NOT_SUPPORTED');
- const modern=['eastwest','contour','curvedoval','wavebezel','openpair'].includes(s.style);
+ const modern=['band','eastwest','contour','curvedoval','wavebezel','openpair'].includes(s.style);
  const side=Number(s.sideCarat||.15),dim=6.5*Math.cbrt(s.carat||1);
  const defaults={style:s.style,innerDiameter:s.size/Math.PI,width:s.width,thickness:s.thickness,profile:s.profile,setting:modern?'bezel':s.setting==='bezel'?'bezel':'claw',shape:s.shape,orientation:s.orientation,stoneLength:modern?s.stoneLength:dim*(s.shape==='oval'?1.3:1),stoneWidth:modern?s.stoneWidth:dim,stoneDepth:modern?s.stoneDepth:dim*.6,bezelWall:Math.max(.6,s.bezelWall||.7),prongDiameter:1,prongCount:4,prongRotation:45,underOpening:.8,settingHeight:6.8,sideSize:Math.min(4,6.5*Math.cbrt(side)),sideCount:s.style==='contour'?5:0,minimumWall:.6,allowance:0,tolerance:.05,sculpt:s.sculpt||1,gap:2};
  const p={...defaults};
@@ -20,7 +20,7 @@ async function parameters(config,overrides={}){
  const {outline}=await import('../public/builder/optics.mjs');const shapes=['round','oval','pear','emerald','radiant','cushion','princess','marquise','asscher','heart'];if(!shapes.includes(p.shape))throw Error('INVALID_SHAPE');
  const coords=Array.from({length:32},(_,i)=>outline(p.shape,2*Math.PI*i/32));const maxX=Math.max(...coords.map(x=>Math.abs(x[0]))),maxY=Math.max(...coords.map(x=>Math.abs(x[1])));
  const stone=(x,y,scale=1)=>({length:p.stoneLength*scale,width:p.stoneWidth*scale,depth:p.stoneDepth*scale,x,y,rotation:p.orientation==='east'?90:0,outline:coords.map(([a,b])=>[a/maxX,b/maxY])});
- p.stones=p.style==='band'?[]:[stone(0,0)];
+ p.stones=[stone(0,0)];
  if(p.style==='trilogy')p.stones.push(stone(-(p.stoneWidth+p.sideSize)/2-1,0,p.sideSize/p.stoneWidth),stone((p.stoneWidth+p.sideSize)/2+1,0,p.sideSize/p.stoneWidth));
  if(p.style==='duet')p.stones=[stone(-p.stoneWidth*.6,-p.stoneLength*.18,.82),stone(p.stoneWidth*.6,p.stoneLength*.18,.82)];
  if(p.style==='openpair')p.stones=[stone(-p.gap/2-p.stoneWidth*.45,0,.8),stone(p.gap/2+p.stoneWidth*.45,0,.8)];

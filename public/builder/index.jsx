@@ -605,7 +605,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
     </div>
   );
   const stoneControls = () => <>
-    {['band',...FASHION_STYLES.filter(x=>x!=='signet')].includes(s.style)&&<label className="rb-toggle"><input type="checkbox" checked={s.fashionStone} onChange={e=>change({fashionStone:e.target.checked})}/>{L('Gyémánt hozzáadása','Add a diamond')}</label>}
+    {['band',...FASHION_STYLES].includes(s.style)&&<p>{L('A gyémánt minden modell része. Méretét és formáját szabadon alakíthatod.','Every design includes a diamond. Customize its size and shape.')}</p>}
     {modernLayout(s).stones.length>0&&<>
       <h3>{L('Csiszolás és szín','Cut and colour')}</h3>{choices('shape',true)}{tones('gemTone')}
       {s.style!=='eastwest'&&select('orientation',L('Kő tájolása','Stone orientation'))}
