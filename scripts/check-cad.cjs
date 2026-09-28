@@ -3,7 +3,7 @@ const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),{spa
 const C=require('../server/cad');
 (async()=>{
  const out=fs.mkdtempSync(path.join(os.tmpdir(),'brightal-cad-validation-'));let failures=0;
- const cases=['eastwest','contour','split','trilogy','duet','wavebezel','openpair','band'].map(style=>({style}));
+ const cases=['cathedral','eastwest','contour','split','trilogy','duet','wavebezel','openpair','band'].map(style=>({style}));
  cases.push({style:'bezel',innerDiameter:14,width:1.8,thickness:1.2,stoneLength:3,stoneWidth:2,stoneDepth:1,settingHeight:3,underOpening:.3});
  cases.push({style:'bezel',innerDiameter:24,width:8,thickness:3.5,stoneLength:10,stoneWidth:8,stoneDepth:6,settingHeight:9,bezelWall:1.5});
  for(const [i,overrides] of cases.entries()){

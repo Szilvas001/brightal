@@ -1,5 +1,7 @@
 # BRIGHTAL webszerver – indítás és üzemeltetés
 
+A legfrissebb, CAD-ot és privát árazási adatokat is lefedő élesítési sorrend: [docs/DEPLOYMENT-HANDOFF.md](docs/DEPLOYMENT-HANDOFF.md). Éles indítás előtt kötelező: `npm run check:production`.
+
 Ez az útmutató a jelenlegi Node.js alkalmazáshoz készült. A GitHub a kódot tárolja; a folyamatosan futó szerver szolgálja ki a vásárlókat. Az éles gép külön számítógép: a saját Windows gépedet kikapcsolhatod.
 
 ## 1. Helyi indítás ezen a Windows gépen

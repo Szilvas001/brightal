@@ -20,6 +20,7 @@
     "postinstall": "node -e \"try{require('fs').accessSync('public/app.js')}catch(e){console.log('app.js hianyzik - futtasd: npm run build')}\"",
     "test": "node --test tests/*.test.cjs",
     "check": "node scripts/check-source.cjs",
+    "check:production": "node scripts/check-production.cjs",
     "test:cad": "node scripts/check-cad.cjs",
     "test:geometry": "node scripts/check-geometry.mjs",
     "build:previews": "node scripts/diamond-thumbnails.cjs --catalogue",

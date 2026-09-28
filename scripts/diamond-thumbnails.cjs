@@ -4,7 +4,7 @@ const {chromium}=require('playwright'),sharp=require('sharp'),esbuild=require('e
 const {DIR,key}=require('../server/diamond-previews');
 (async()=>{
  let input='';if(!process.argv.includes('--catalogue')&&!process.stdin.isTTY)for await(const chunk of process.stdin)input+=chunk;
- const stones=input.trim()?JSON.parse(input):require('../server/diamonds').catalogue();
+ const stones=input.trim()?JSON.parse(input):require('../server/diamonds').sample();
  fs.mkdirSync(DIR,{recursive:true});
  const bundle=esbuild.buildSync({entryPoints:[path.join(__dirname,'../public/builder/diamond-preview.mjs')],bundle:true,write:false,format:'iife',logLevel:'silent'}).outputFiles[0].contents;
  const server=http.createServer((req,res)=>{if(req.url==='/render.js'){res.setHeader('Content-Type','text/javascript');res.end(bundle);}else res.end('<!doctype html><style>body{margin:0;background:radial-gradient(ellipse at 50% 42%,#fff 10%,#f1f0ed 100%)}#preview{width:640px;height:520px}</style><div id="preview"></div><script src="/render.js"></script>');});

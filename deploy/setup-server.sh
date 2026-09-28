@@ -74,6 +74,12 @@ log "Telepítés és frontend fordítás"
 cd "$APP_DIR"
 sudo -u "$APP_USER" npm ci --include=dev --no-audit --no-fund
 sudo -u "$APP_USER" npm run build
+apt install -y python3-venv libgl1 libglu1-mesa
+sudo -u "$APP_USER" python3 -m venv .venv-cad
+sudo -u "$APP_USER" .venv-cad/bin/pip install -r server/cad/requirements.txt
+PLAYWRIGHT_BROWSERS_PATH="$APP_DIR/.cache/ms-playwright" npx playwright install-deps chromium
+sudo -u "$APP_USER" env PLAYWRIGHT_BROWSERS_PATH="$APP_DIR/.cache/ms-playwright" npx playwright install chromium
+sudo -u "$APP_USER" env PLAYWRIGHT_BROWSERS_PATH="$APP_DIR/.cache/ms-playwright" npm run build:previews
 sudo -u "$APP_USER" npm run build:ring-previews
 ok "public/app.js kész"
 
@@ -102,6 +108,7 @@ cp "$APP_DIR/deploy/brightal.service" /etc/systemd/system/brightal.service
 systemctl daemon-reload
 systemctl enable brightal
 warn "Indítás a .env kitöltése után: systemctl start brightal"
+warn "Előtte: sudo -u $APP_USER npm run check:production (a privát data/ adatokat is át kell másolni)"
 
 # ---------- 9. Caddy ----------
 log "Caddy telepítése (automatikus HTTPS)"

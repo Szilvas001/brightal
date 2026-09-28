@@ -49,6 +49,18 @@ def generate(p, out):
         slot=cq.Workplane('XZ').circle(r+t+2).circle(r-.1).extrude(w*.18,both=True).val()
         upper=cq.Workplane('XY').box(60,60,20).translate((0,0,r+4)).val()
         body=body.cut(slot.intersect(upper))
+    if style=='cathedral':
+        # Rising shoulders connect the upper shank to both sides of the basket.
+        center=r+t*.5
+        end_z=r+p['settingHeight']-p['stoneDepth']*.35
+        for sign in [-1,1]:
+            start_x=sign*center*.72; end_x=sign*p['stoneWidth']*.45
+            start_z=math.sqrt(center*center-start_x*start_x)
+            points=[cq.Vector(start_x,0,start_z),cq.Vector((start_x+end_x)*.5,0,(start_z+end_z)*.5+.35),cq.Vector(end_x,0,end_z)]
+            shoulder_path=cq.Wire.assembleEdges([cq.Edge.makeSpline(points)])
+            plane=cq.Plane(origin=points[0],xDir=(0,1,0),normal=(points[1]-points[0]).normalized())
+            shoulder=cq.Workplane(plane).ellipse(w*.46,max(minimum,t*.45)).sweep(shoulder_path,isFrenet=False).val()
+            body=body.fuse(shoulder)
     gem_tools=[]; anchors=[]
     for s in stones:
         length=s['length']; width=s['width']; depth=s['depth']; x=s.get('x',0); y=s.get('y',0)

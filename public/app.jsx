@@ -2480,7 +2480,7 @@ function SupplierAdmin(){
 function DiamondsPage() {
  const {user,isAdmin,setAuthModal,navigate,lang}=useA();const [data,setData]=useState(null),[error,setError]=useState(''),[q,setQ]=useState({}),[selected,setSelected]=useState(null),[cart,setCart]=useState(()=>store.get('brightal-diamond-cart',[])),[busy,setBusy]=useState(false),[terms,setTerms]=useState(false);
  const dialog=useRef(null),opener=useRef(null),orderKey=useRef(null);const money=x=>x==null?'Ár egyeztetés alatt':new Intl.NumberFormat(lang==='en'?'en-GB':'hu-HU',{style:'currency',currency:'HUF',maximumFractionDigits:0}).format(x);
- useEffect(()=>{let alive=true;api('/diamonds/offers').then(x=>{if(alive){setData(x);setError('');}}).catch(()=>{if(alive)setError('A katalógus nem elérhető. Próbáld újra.');});return()=>{alive=false;};},[]);
+ useEffect(()=>{let alive=true;const timer=setTimeout(()=>api('/diamonds/configured?'+new URLSearchParams(Object.entries(q).filter(([,v])=>v!==''))).then(x=>{if(alive){setData(x);setError('');}}).catch(()=>{if(alive)setError('A választott paraméterekhez nem tölthető be az ár. Ellenőrizd a karátot és az admin árfolyam-beállítását.');}),180);return()=>{alive=false;clearTimeout(timer);};},[q]);
  useEffect(()=>{store.set('brightal-diamond-cart',cart);},[cart]);
  const choose=(x,event)=>{opener.current=event.currentTarget;setSelected(x);orderKey.current=crypto.randomUUID();setTerms(false);dialog.current.showModal();};
  const close=()=>{dialog.current.close();setSelected(null);opener.current?.focus();};

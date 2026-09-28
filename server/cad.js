@@ -2,7 +2,7 @@
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),{spawn}=require('node:child_process');
 const ROOT=process.env.CAD_DATA_DIR||path.join(__dirname,'../data/cad');
 const PYTHON=process.env.CAD_PYTHON||path.join(__dirname,'../.venv-cad',process.platform==='win32'?'Scripts/python.exe':'bin/python');
-const STYLES=['solitaire','bezel','band','eastwest','contour','split','trilogy','duet','curvedoval','wavebezel','openpair'];
+const STYLES=['solitaire','cathedral','bezel','band','eastwest','contour','split','trilogy','duet','curvedoval','wavebezel','openpair'];
 const limits={innerDiameter:[14,24],width:[1.8,8],thickness:[1.2,3.5],stoneLength:[1,10],stoneWidth:[1,8],stoneDepth:[.6,6],bezelWall:[.6,1.5],prongDiameter:[.7,1.5],prongCount:[4,8],prongRotation:[0,360],underOpening:[.3,3],settingHeight:[2.5,10],sideSize:[1,4],sideCount:[0,7],minimumWall:[.5,1],allowance:[0,.3],tolerance:[.01,.15],sculpt:[0,2.5],gap:[1,4]};
 async function parameters(config,overrides={}){
  const {normalize}=await import('../public/builder/state.mjs');const s=normalize(config);

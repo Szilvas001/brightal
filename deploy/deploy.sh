@@ -88,12 +88,18 @@ ok "public/app.js legyártva"
 sudo -u "$APP_USER" npm run build:ring-previews
 
 # a mappák biztosan létezzenek és a megfelelő usert illessék
+sudo -u "$APP_USER" .venv-cad/bin/pip install -r server/cad/requirements.txt
+sudo -u "$APP_USER" env PLAYWRIGHT_BROWSERS_PATH="$APP_DIR/.cache/ms-playwright" npx playwright install chromium
+sudo -u "$APP_USER" env PLAYWRIGHT_BROWSERS_PATH="$APP_DIR/.cache/ms-playwright" npm run build:previews
+sudo -u "$APP_USER" npm run check:production
 mkdir -p "$APP_DIR/data" "$APP_DIR/public/uploads"
 chown -R "$APP_USER":"$APP_USER" "$APP_DIR/data" "$APP_DIR/public/uploads"
 chmod 600 "$APP_DIR/.env" 2>/dev/null || true
 
 # ---------- 4. újraindítás ----------
 log "Szolgáltatás újraindítása"
+cp "$APP_DIR/deploy/brightal.service" /etc/systemd/system/brightal.service
+systemctl daemon-reload
 systemctl restart "$SERVICE"
 
 # ---------- 5. ellenőrzés ----------

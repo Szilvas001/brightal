@@ -56,3 +56,21 @@ match. Actual catalogue purchases retain the 24-hour cost-freshness check.
 
 The local deployment still requires configured real stock and payment-provider
 credentials before it can accept real customer payments.
+
+## Configurable catalogue
+
+`GET /api/diamonds/configured` returns on-demand combinations with public retail
+model-based prices. Shape, color, clarity and carat are configurable; no enormous
+Cartesian product is stored. These are sourced-to-order specifications using the
+existing combination checkout, not claims of verified stock. A single cached illustration per shape serves every grade and
+weight; displayed dimensions are illustrative, not an IGI measurement claim.
+
+## Saved ring exports
+
+Admin reads the complete local `brightal-library-v2` collection into a dropdown.
+`POST /api/admin/cad/mesh-jobs` exports the saved model's actual geometry in a
+background process. OBJ and workshop ZIP are available for all valid designer
+configurations; STL is added only when metal mesh validation passes. It does not
+rename meshes to STEP. The separate analytic CAD generator now also supports
+cathedral shoulders. `GET /api/admin/cad/jobs` lists prior completed jobs after
+server restarts. All generation, listing and signed downloads require admin.

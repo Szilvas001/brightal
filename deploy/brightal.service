@@ -25,6 +25,10 @@ Group=brightal
 WorkingDirectory=/opt/brightal
 ExecStart=/usr/bin/node server/index.js
 Environment=NODE_ENV=production
+Environment=HOST=127.0.0.1
+Environment=PLAYWRIGHT_BROWSERS_PATH=/opt/brightal/.cache/ms-playwright
+Environment=CAD_PYTHON=/opt/brightal/.venv-cad/bin/python
+Environment=OMP_NUM_THREADS=2
 
 # újraindítás összeomlás esetén
 Restart=always
@@ -51,7 +55,7 @@ ReadWritePaths=/opt/brightal/data /opt/brightal/public/uploads
 
 # ---- erőforráskorlát ----
 LimitNOFILE=8192
-MemoryMax=1G
+MemoryMax=3G
 
 [Install]
 WantedBy=multi-user.target

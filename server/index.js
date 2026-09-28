@@ -12,6 +12,8 @@ const path = require('path');
 const fs = require('fs');
 const express = require('express');
 const cfg = require('./config');
+const productionProblems = require('./production-check').problems(cfg);
+if (productionProblems.length) throw Error('Éles indítás blokkolva:\n'+productionProblems.join('\n'));
 const authLib = require('./auth');
 const barion = require('./barion');
 const mailer = require('./mailer');
@@ -273,7 +275,7 @@ if (!fs.existsSync(path.join(PUBLIC, 'app.js'))) {
   console.warn('\n⚠  A public/app.js hiányzik. Futtasd:  npm install && npm run build\n');
 }
 
-app.listen(cfg.port, () => {
+app.listen(cfg.port, process.env.HOST || '127.0.0.1', () => {
   const line = '─'.repeat(64);
   console.log(`\n${line}`);
   console.log(`  ${cfg.shop.name} — elindult`);
