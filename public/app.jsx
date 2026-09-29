@@ -893,8 +893,8 @@ function Nav() {
   return <>
     <nav className={'nav' + (sc || mob || page !== 'home' ? ' scrolled' : '')}>
       <div className="nav-inner">
-        <button className="brand" onClick={() => navigate('home')}>
-          <BrandLockup />
+        <button className="brand" aria-label={lang==='en'?'BRIGHTAL — Home':'BRIGHTAL — Főoldal'} onClick={() => navigate('home')}>
+          <span className="nav-wordmark">BRIGHTAL</span>
         </button>
 
         <div className="nav-links">
@@ -906,7 +906,7 @@ function Nav() {
 
         <div className="nav-actions">
           <LangSwitch />
-          {user ? <div className="user-chip">
+          {user ? <div className="user-chip" tabIndex={0} aria-label={t('nav_account')}>
             {user.picture
               ? <img src={user.picture} alt="" referrerPolicy="no-referrer" />
               : <span className="avatar">{(user.name || '?')[0].toUpperCase()}</span>}
@@ -920,9 +920,9 @@ function Nav() {
               {isAdmin && <button onClick={() => navigate('admin')}>{t('nav_admin')}</button>}
               <button onClick={logout}>{t('nav_logout')}</button>
             </div>
-          </div> : <button className="btn btn-dark btn-sm hide-mob" onClick={() => setAuthModal('login')}>{t('nav_login')}</button>}
+          </div> : <button className="nav-profile" aria-label={t('nav_login')} title={t('nav_login')} onClick={() => setAuthModal('login')}><Ico.user s={22}/></button>}
           {!isAdmin && <button className="btn btn-gold btn-sm hide-mob" onClick={() => navigate('upload')}>{t('nav_upload')}</button>}
-          <button className="burger" aria-label="Menu" onClick={() => setMob(m => !m)}>
+          <button className="burger" aria-label={lang==='en'?'Menu':'Menü'} aria-expanded={mob} onClick={() => setMob(m => !m)}>
             <span style={mob ? { transform: 'rotate(45deg) translate(3px,4px)' } : null} />
             <span style={mob ? { opacity: 0 } : null} />
             <span style={mob ? { transform: 'rotate(-45deg) translate(3px,-4px)' } : null} />
@@ -1154,21 +1154,17 @@ function HomePage() {
     <section className="hero">
       <div className="hero-glow a" /><div className="hero-glow b" />
       <div className="hero-inner">
-        <div className="fade-in hero-logo">
-          <img src="/assets/brightal-logo.jpg" alt="BRIGHTAL" width="320" height="320" />
-        </div>
-        <p className="fade-in d1 eyebrow-gold" style={{ marginTop: 26 }}>{t('hero_eyebrow')}</p>
+        <p className="fade-in d1 eyebrow-gold">{t('hero_eyebrow')}</p>
         <h1 className="fade-in d1 h-display hero-title">
-          {t('hero_title_1')}<br /><em>{t('hero_title_2')}</em>
+          {lang==='en'?'Timeless beauty,':'Időtlen szépség,'}<br />{lang==='en'?'for every moment.':'minden pillanatra.'}
         </h1>
         <div className="fade-in d1 rule" />
-        <p className="fade-in d2 hero-sub" style={{ marginBottom: 10 }}>{t('hero_sub')}</p>
-        <p className="fade-in d2 brand-tagline" style={{ marginBottom: 34 }}>{t('brand_tagline')}</p>
+        <p className="fade-in d2 hero-sub">{lang==='en'?'Fine details, precious materials. Jewelry made to become part of your story.':'Finom részletek, prémium anyagok, az időtlen elegancia jegyében.'}</p>
         <div className="fade-in d3 hero-cta">
-          {!isAdmin && <button className="btn btn-gold btn-lg" onClick={() => navigate('upload')}>
-            <Ico.upload s={16} /> {t('hero_cta')}
-          </button>}
-          <button className="btn btn-dark btn-lg" onClick={() => navigate('builder')}><Ico.gem s={17}/>{lang === 'en' ? 'Design your ring in 3D' : 'Tervezd meg 3D-ben'}</button>
+          <button className="btn btn-dark btn-lg" onClick={() => navigate('builder')}>{lang==='en'?'Explore the collection':'Kollekció felfedezése'}</button>
+          <button className="btn btn-outline btn-lg" onClick={() => navigate('upload')}>
+            {lang==='en'?'Your own design':'Saját elképzelésem'}
+          </button>
         </div>
         <div className="fade-in d3 hero-trust">
           {[t('hero_trust_1'), t('hero_trust_2'), t('hero_trust_3')].map(x =>
