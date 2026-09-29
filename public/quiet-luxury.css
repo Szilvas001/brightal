@@ -8,6 +8,8 @@
   --border:rgba(90,77,68,.28);--border-soft:rgba(90,77,68,.16);--border-strong:#5A4D44;
   --surface:#FCFAF7;--sans:'Manrope',system-ui,-apple-system,sans-serif;--nav-h:110px;
 }
+/* Join the closing quote and footer without exposing the fixed photo between them. */
+body[data-page="home"] .quote-band + .footer{margin-top:0}
 .nav,.nav.scrolled{background:rgba(248,244,237,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--border-soft);box-shadow:none}
 .nav-inner{max-width:1920px;padding:0 clamp(28px,4.65vw,80px);display:grid;grid-template-columns:minmax(0,1fr) 220px minmax(0,1fr);gap:28px}
 .nav .brand{grid-column:2;grid-row:1;justify-self:center;align-items:center}

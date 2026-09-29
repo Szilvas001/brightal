@@ -8,6 +8,8 @@ Egyedi gyűrűkészítés webalkalmazás. A vásárló feltölti a képet az ál
 
 **Kétnyelvű (magyar / angol), mobilbarát, Barion-integrált.**
 
+**Helyi indítás Windows és Linux alatt:** [LOCAL-FUTTATAS.md](LOCAL-FUTTATAS.md).
+
 ### Arculat
 
 A dizájn a Facebook-oldal arculatát követi:

@@ -1,22 +1,54 @@
-# BRIGHTAL helyi futtatás – Windows / PowerShell
+# BRIGHTAL helyi futtatás – Windows és Linux
 
-Projekt ezen a gépen: `C:\Users\Lenovo\Documents\brightal`
+Az alábbi parancsokat a saját projektmappádban futtasd. Előfeltétel: Git,
+Node.js 22 vagy újabb, npm és WebGL-képes böngésző. Ellenőrzés: `node --version`, `npm --version`, `git --version`.
 
 GitHub: https://github.com/Szilvas001/brightal – `main` ág.
-Ellenőrzött helyi környezet: Node.js 24.18.0, npm 11.16.0.
 
-## Indítás
+## Windows: első telepítés és indítás
 
 PowerShellben:
 
 ```powershell
-Set-Location C:\Users\Lenovo\Documents\brightal
+Set-Location $HOME\Documents
+git clone https://github.com/Szilvas001/brightal.git
+Set-Location brightal
 npm ci
+if (!(Test-Path .env)) { Copy-Item .env.example .env }
 npx playwright install chromium
+npm run build:previews
 npm run local
 ```
 
-Az első két telepítési parancs új klónozáskor, illetve függőségfrissítéskor szükséges.
+Ha a repó már megvan, a klónozás helyett lépj be a meglévő `brightal` mappába.
+Privát repó esetén a GitHubhoz hozzáférő fiókkal kell hitelesítened a Gitet.
+
+## Linux: első telepítés és indítás
+
+A disztribúciód csomagkezelőjével telepíts Gitet és Node.js 22+ környezetet npm-mel.
+Ubuntu/Debian alatt a külön CAD-környezethez `python3-venv` is kell.
+
+```bash
+mkdir -p ~/Projects
+cd ~/Projects
+git clone https://github.com/Szilvas001/brightal.git
+cd brightal
+npm ci
+test -f .env || cp .env.example .env
+npx playwright install chromium
+npm run build:previews
+npm run local
+```
+
+Ha a Chromium hiányzó rendszerkönyvtárakra panaszkodik, támogatott Ubuntu/Debian
+rendszeren futtasd: `npx playwright install-deps chromium` (rendszergazdai jogosultságot kérhet).
+Más disztribúción a jelzett könyvtárakat a saját csomagkezelőjével telepítsd.
+
+## Mindennapi indítás (mindkét rendszeren)
+
+A projektmappában: `npm run local`. Böngészőben: **http://localhost:3000**.
+
+A függőségek telepítése új klónozáskor, illetve függőségfrissítéskor szükséges.
 A `npm run local` minden indítás előtt elkészíti a webshop, a tervező és a geometriai worker buildjét.
 Az első indításkor a hiányzó gyűrű-inspirációs képeket is legenerálja; ez több percig tarthat.
 Későbbi indításkor a meglévő képeket újra felhasználja.
@@ -50,8 +82,8 @@ A vásárló egyedileg beszerzendő követ rendel, a szerver az elfogadott árat
 Egy későbbi árfolyamváltozás a már rögzített rendelési árat nem módosítja.
 
 Az adatok privát fájlja: `data\supplier-model.json` (vagy `SUPPLIER_MODEL_FILE`).
-A Git-repó **nem tartalmazza** a beszállítói adatokat. A 2026-09-25-i helyi ellenőrzéskor
-ez a fájl hiányzott; valódi árat enélkül nem lehet megjeleníteni.
+A Git-repó **nem tartalmazza** a beszállítói adatokat; új klónozáskor ezek hiányoznak.
+Valódi beszállítói adatokon alapuló árat enélkül nem lehet megjeleníteni.
 
 Az eredeti környezetből biztonságosan másold át a fájlt, vagy az admin
 „DIPEN · beszerzési becslés és adatok” paneljén importáld a valódi megfigyeléseket.
@@ -79,6 +111,16 @@ py -3.11 -m venv .venv-cad
 npm run test:cad
 ```
 
+Linuxon (Python 3.11 vagy 3.12 és venv támogatás szükséges):
+
+```bash
+python3 -m venv .venv-cad
+.venv-cad/bin/python -m pip install -r server/cad/requirements.txt
+npm run test:cad
+```
+
+A szerver Linuxon automatikusan a `.venv-cad/bin/python` programot használja.
+
 Ehhez Python 3.11 telepítése szükséges. Windows alatt a szerver automatikusan a
 `.venv-cad\Scripts\python.exe` útvonalat használja. Más telepítésnél a `CAD_PYTHON` változóval állítható.
 A CAD környezet külön opcionális függőség; a webshop és a böngészős tervező Python nélkül indul.
@@ -101,6 +143,7 @@ A geometriai tesztek ezen a gépen több percig is futhatnak.
 
 - Foglalt 3000-es port: ugyanabban a PowerShellben `$env:LOCAL_PORT='3001'`, majd `npm run local`.
   Ekkor a cím http://localhost:3001. Ne állíts le ismeretlen folyamatot.
+  Linuxon: `LOCAL_PORT=3001 npm run local`.
 - Hiányzó/korábbi tervező: indítsd újra a `npm run local` paranccsal, majd Ctrl+F5.
 - Hiányzó termékkép: `npx playwright install chromium`, majd `npm run build:previews`.
 - Nincs ár: ellenőrizd a valódi DIPEN-adatokat és az adminban az árfolyam frissességét.
