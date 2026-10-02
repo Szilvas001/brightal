@@ -12,9 +12,17 @@ export const FASHION_STYLES = [
 export const isFashion = (s) => FASHION_STYLES.includes(s.style);
 export const DAILY_STYLES = ['bezelrow','scatter','chevron','ribbon','graduated','eastwest','alternating','crown','curvedoval','wavebezel','openpair','contour','asymmetric','fullcircle'];
 export const isDaily = s => DAILY_STYLES.includes(s.style);
+export const SQUARE_SHAPES = ['round','princess','asscher','cushion'];
+export const singleStone = s => ['band','eastwest','curvedoval','wavebezel'].includes(s.style) || isFashion(s);
+export const maxStoneWidth = s => s.style === 'openpair' ? 2.5 : 5;
+export const maxStoneLength = s => s.style === 'openpair' ? 3 : 6;
+export const maxStoneDepth = s => Math.min(s.style === 'openpair' ? 1.5 : 3.5, Math.floor(s.stoneWidth*.75*10+1e-8)/10);
+export const minBandThickness = s => Math.ceil(Math.max(1.4,s.stoneDepth*.72+.8)*10-1e-8)/10;
+export const minBandWidth = s => Math.ceil(Math.max(1.6,(s.orientation==='east'?s.stoneWidth:s.stoneLength)+2*s.bezelWall+.6,s.style==='stack'?s.layers*1.25+(s.layers-1)*s.gap:0)*10-1e-8)/10;
+export const maxAccentSize = s => Math.floor(Math.min(2,s.width*(['split','tension'].includes(s.style)?.55:1)/(s.accentRows+.4))*10+1e-8)/10;
 export const isModern = s => isDaily(s) || isFashion(s) || ['band','eternity'].includes(s.style);
 export function maxDailyStones(s) {
-  if(['eastwest','curvedoval','wavebezel'].includes(s.style)) return 1;
+  if(singleStone(s)) return 1;
   const r=s.size/(2*Math.PI)+Math.max(s.thickness,s.stoneDepth*.72+.8);
   const step=2*Math.asin(Math.min(.7,(Math.max(s.stoneLength,s.stoneWidth)+2*s.bezelWall+s.dailySpacing+.35)/(2*r)));
   return Math.max(1,Math.min(9,Math.floor(2.2/step)+1));
@@ -184,7 +192,7 @@ export function normalize(input = {}) {
     ['stoneLength',1.5,6,.1],
     ['stoneWidth',1.5,5,.1],
     ['stoneDepth',1,3.5,.1],
-    ['thickness',1.4,3,.1],
+    ['thickness',1.4,3.4,.1],
     ['bezelWall',.35,.7,.05],
     ['motifDepth',0,1.2,.1],
     ['motifOffset',-1,1,.1],
@@ -200,10 +208,8 @@ export function normalize(input = {}) {
     ? Number(input.prongs)
     : 4;
   s.accentRows = Number(input.accentRows) === 2 ? 2 : 1;
-  if(s.style==='split') s.accentRows=1;
-  s.accentSize =
-    Math.floor(Math.min(s.accentSize, s.width * (s.style==='split'?.55:1) / (s.accentRows + 0.4)) * 10) /
-    10;
+  if(s.style==='split'||s.style==='tension'&&s.width<2.7) s.accentRows=1;
+  s.accentSize = Math.min(s.accentSize,maxAccentSize(s));
   s.hiddenHalo =
     (input.hiddenHalo === true || input.accents === "hidden") && !isBand(s);
   s.engraving =
@@ -215,18 +221,22 @@ export function normalize(input = {}) {
   s.alternateGems = input.alternateGems === true;
   // Every sellable design includes diamonds, including older saved plain bands.
   s.fashionStone = true;
-  if(s.style==='hiddenhalo') s.hiddenHalo=true;
-  if(s.style==='bezel') s.setting='bezel';
-  if(s.style==='tension') {s.setting='bezel';s.headMetal='match';}
+  if(s.style==='hiddenhalo' && input.hiddenHalo===undefined) s.hiddenHalo=true;
+  if(['bezel','tension'].includes(s.style)&&input.setting===undefined) s.setting='bezel';
   if(!isModern(s)) s.width=Math.min(5,s.width);
   if(isModern(s)) {
     s.setting='bezel'; s.mixedMetal=false; s.inlay='metal'; s.headMetal='match';
-    if(['round','princess','asscher','cushion'].includes(s.shape)) s.stoneLength=s.stoneWidth;
-    else s.stoneWidth=Math.min(s.stoneWidth,s.stoneLength);
-    s.stoneDepth=Math.min(s.stoneDepth,Number((s.stoneWidth*.75).toFixed(1)));
     if(s.style==='eastwest') s.orientation='east';
   }
-  if(s.style==='openpair') {s.dailyCount=2;s.shape=['round','oval'].includes(s.shape)?s.shape:'round';s.stoneWidth=Math.min(2.5,s.stoneWidth);s.stoneLength=Math.min(3,s.stoneLength);s.stoneDepth=Math.min(1.5,s.stoneDepth);s.gap=Math.max(.5,s.gap);}
+  if(s.style==='openpair') {s.dailyCount=2;s.stoneWidth=Math.min(2.5,s.stoneWidth);s.stoneLength=Math.min(3,s.stoneLength);s.stoneDepth=Math.min(1.5,s.stoneDepth);s.gap=Math.max(.5,s.gap);}
+  if(isModern(s)) {
+    s.stoneWidth=Math.min(s.stoneWidth,maxStoneWidth(s));
+    s.stoneLength=SQUARE_SHAPES.includes(s.shape)?s.stoneWidth:Math.max(s.stoneWidth,Math.min(s.stoneLength,maxStoneLength(s)));
+    s.stoneDepth=Math.min(s.stoneDepth,maxStoneDepth(s));
+    s.thickness=Math.max(s.thickness,minBandThickness(s));
+    s.width=Math.max(s.width,minBandWidth(s));
+    if(s.style==='signet') s.faceSize=Math.max(s.faceSize,Math.ceil(minBandWidth(s)*2)/2);
+  }
   s.dailyCount=Math.min(s.dailyCount,maxDailyStones(s));
   if(isDaily(s)) {s.accents='none';s.sideMode='none';s.hiddenHalo=false;}
   if (["wave", "dome"].includes(s.style)) s.mixedMetal = false;
@@ -237,9 +247,9 @@ export function normalize(input = {}) {
   }
   if (isBand(s) && s.accents === "hidden") s.accents = "none";
   if (isBand(s)) s.sideMode = "none";
+  if(isModern(s)) s.accents='none';
   if (s.style === "eternity") {
     s.coverage = "full";
-    if (s.accents === "none") s.accents = "pave";
   }
   if (s.style === "trilogy" && s.sideMode === "none") s.sideMode = "pair";
   return s;

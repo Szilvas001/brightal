@@ -17,6 +17,9 @@ export function unifyLegacy(model) {
  model.group.updateMatrixWorld(true);
  model.group.traverse(o=>{if(o.isMesh)(o.userData.gem?gems:metals).push(o);});
  try {
+  const sourceMaterials=[...new Set(metals.map(o=>o.material))];
+  const materialIds=new Map(sourceMaterials.map(m=>[m,Manifold.reserveIDs(1)]));
+  const colorsById=new Map(sourceMaterials.map(m=>[materialIds.get(m),m.color]));
   const solids=metals.map(o=>{
    let geo=o.geometry.clone();geo.applyMatrix4(o.matrixWorld);geo.deleteAttribute('normal');geo.deleteAttribute('uv');
    // TubeGeometry has open ends. Seal each boundary loop before the Boolean union.
@@ -29,7 +32,7 @@ export function unifyLegacy(model) {
     loop.pop();const center=positions.length/3,mean=[0,0,0];for(const v of loop)for(let j=0;j<3;j++)mean[j]+=positions[v*3+j]/loop.length;positions.push(...mean);
     for(let j=0;j<loop.length;j++)indices.push(loop[(j+1)%loop.length],loop[j],center);
    }
-   const m=new Mesh({numProp:3,vertProperties:new Float32Array(positions),triVerts:new Uint32Array(indices)});m.merge();geo.dispose();
+   const m=new Mesh({numProp:3,vertProperties:new Float32Array(positions),triVerts:new Uint32Array(indices),runIndex:new Uint32Array([0,indices.length]),runOriginalID:new Uint32Array([materialIds.get(o.material)])});m.merge();geo.dispose();
    const solid=own(new Manifold(m));if(solid.status()!=='NoError')throw new Error(solid.status());return solid;
   });
   let body=own(Manifold.union(solids));
@@ -43,7 +46,28 @@ export function unifyLegacy(model) {
   const mesh=body.getMesh(),geo=new T.BufferGeometry(),xyz=[];for(let i=0;i<mesh.vertProperties.length;i+=mesh.numProp)xyz.push(...mesh.vertProperties.slice(i,i+3));
   geo.setAttribute('position',new T.Float32BufferAttribute(xyz,3));geo.setIndex(Array.from(mesh.triVerts));geo.computeVertexNormals();
   const checked=validateMesh(removeCollapsedTriangles(geo));if(!checked.valid){geo.dispose();throw new Error('Triangle validation failed: '+JSON.stringify(checked));}
-  const material=metals[0].material.clone();metals.forEach(o=>o.removeFromParent());const metal=new T.Mesh(geo,material);metal.userData.role='unified-metal';model.group.add(metal);
+  const material=metals[0].material.clone();
+  if(sourceMaterials.length>1) {
+   // Preserve the alloy of each original face through the Boolean union.
+   // Vertex colours keep one closed mesh and one physical finish/material.
+   const faceColors=new Map();
+   for(let run=0;run<mesh.runOriginalID.length;run++) {
+    const color=colorsById.get(mesh.runOriginalID[run])||sourceMaterials.at(-1).color;
+    for(let i=mesh.runIndex[run];i<mesh.runIndex[run+1];i+=3)faceColors.set(mesh.triVerts.slice(i,i+3).join(','),color);
+   }
+   const colors=[],index=geo.index.array;
+   for(let i=0;i<index.length;i+=3) {
+    const color=faceColors.get(Array.from(index.slice(i,i+3)).join(','))||sourceMaterials.at(-1).color;
+    for(let j=0;j<3;j++)colors.push(color.r,color.g,color.b);
+   }
+   const coloured=geo.toNonIndexed();geo.dispose();
+   coloured.setAttribute('color',new T.Float32BufferAttribute(colors,3));
+   material.color.set(0xffffff);material.vertexColors=true;
+   const metal=new T.Mesh(coloured,material);metal.userData.role='unified-metal';model.group.add(metal);
+  } else {
+   const metal=new T.Mesh(geo,material);metal.userData.role='unified-metal';model.group.add(metal);
+  }
+  metals.forEach(o=>o.removeFromParent());
   const geometry=new Set(metals.map(o=>o.geometry)),materials=new Set(metals.map(o=>o.material));geometry.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());
   model.engineering={status:'geometry_checked',metalSolids:1,volumeMm3:body.volume()/(.8**3),units:'mm',requiresWorkshopApproval:true};return checkModel(model);
  } catch(error){checkModel(model);model.engineering.status='requires_cad_repair';model.engineering.reason=error.message;return model;}

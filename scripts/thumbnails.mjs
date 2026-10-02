@@ -18,7 +18,7 @@ for(const [i,p] of PRESETS.entries()) {
  for(let j=0;j<count;j+=3){const v=[0,1,2].map(k=>new T.Vector3().fromBufferAttribute(pos,idx?idx.getX(j+k):j+k).applyMatrix4(o.matrixWorld));const norm=v[1].clone().sub(v[0]).cross(v[2].clone().sub(v[0])).normalize();if(norm.dot(camera.position.clone().sub(v[0]))<0)continue;
  const z=v.reduce((sum,x)=>sum+x.clone().applyMatrix4(camera.matrixWorldInverse).z,0)/3;
  const tone=o.userData.tone||'ice';
- const base=o.userData.gem?new T.Color(tone==='ice'?'#d6e6ed':(GEM_TONES[tone]||GEM_TONES.ice).color):o.material.color.clone();const shade=o.userData.gem?.75+.25*Math.abs(norm.dot(light)):.45+.55*Math.max(0,norm.dot(light));base.multiplyScalar(shade);
+ const base=o.userData.gem?new T.Color(tone==='ice'?'#d6e6ed':(GEM_TONES[tone]||GEM_TONES.ice).color):(g.attributes.color?new T.Color().fromBufferAttribute(g.attributes.color,idx?idx.getX(j):j):o.material.color.clone());const shade=o.userData.gem?.75+.25*Math.abs(norm.dot(light)):.45+.55*Math.max(0,norm.dot(light));base.multiplyScalar(shade);
  faces.push({z,path:v.map(x=>{x.project(camera);return `${((x.x+1)*150).toFixed(1)},${((1-x.y)*125).toFixed(1)}`;}).join(' '),fill:'#'+base.getHexString()});
  }});
  faces.sort((a,b)=>a.z-b.z);

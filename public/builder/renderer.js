@@ -173,8 +173,8 @@ export class RingRenderer {
       texture.colorSpace = T.SRGBColorSpace;
       const o = mesh(
         new T.CylinderGeometry(
-          radius - 0.66,
-          radius - 0.66,
+          s.size / (2 * Math.PI) * .8 + .015,
+          s.size / (2 * Math.PI) * .8 + .015,
           width * 0.85,
           96,
           1,

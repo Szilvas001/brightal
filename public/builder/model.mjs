@@ -225,6 +225,29 @@ export function buildRing(s, environment) {
     mountings.push({assembly,shape,scale,gallery});
     return assembly;
   };
+  const addHiddenHalo = (main, shape, size) => {
+    seat(shape, size * 0.78, main, -size * 0.36, 0.18);
+    for(let i=0;i<4;i++) {
+      const [x,z]=outline(shape,i*Math.PI/2);
+      tube([[x*size*.72,-size*.32,z*size*.72],[x*size*.78,-size*.36,z*size*.78]],.085,main,head);
+    }
+    for (let i = 0; i < 24; i++) {
+      const a = (i / 24) * Math.PI * 2,
+        [x, z] = outline(shape, a);
+      const o = gem(
+        "round",
+        0.18,
+        [x * size * 0.78, -size * 0.33, z * size * 0.78],
+        s.sideTone,
+        false,
+        main,
+      );
+      o.quaternion.setFromUnitVectors(
+        new T.Vector3(0, 1, 0),
+        new T.Vector3(x, 0, z).normalize(),
+      );
+    }
+  };
   const size = 2.4 * Math.cbrt(s.carat),
     top = radius + size * 0.7 + s.height * 0.45;
   const rotation = s.orientation === "east" ? Math.PI / 2 : 0;
@@ -245,8 +268,9 @@ export function buildRing(s, environment) {
     if (s.style === "duet") {
       const other = 2.4 * Math.cbrt(s.sideCarat),
         gap = (size + other) * 0.54;
-      setting(s.shape, size, [-gap, top, 0.65], s.gemTone, rotation - 0.23);
-      setting(s.sideShape, other, [gap, top - 0.35, -0.65], s.sideTone, 0.3);
+      const first=setting(s.shape, size, [-gap, top, 0.65], s.gemTone, rotation - 0.23);
+      const second=setting(s.sideShape, other, [gap, top - 0.35, -0.65], s.sideTone, 0.3);
+      if(s.hiddenHalo) {addHiddenHalo(first,s.shape,size);addHiddenHalo(second,s.sideShape,other);}
     } else {
       const main = setting(s.shape, size, [0, top, 0], s.gemTone, rotation);
       if (["halo", "vintage"].includes(s.style)) {
@@ -284,29 +308,7 @@ export function buildRing(s, environment) {
           }
         }
       }
-      if (s.hiddenHalo) {
-        seat(s.shape, size * 0.78, main, -size * 0.36, 0.18);
-        for(let i=0;i<4;i++) {
-          const [x,z]=outline(s.shape,i*Math.PI/2);
-          tube([[x*size*.72,-size*.32,z*size*.72],[x*size*.78,-size*.36,z*size*.78]],.085,main,head);
-        }
-        for (let i = 0; i < 24; i++) {
-          const a = (i / 24) * Math.PI * 2,
-            [x, z] = outline(s.shape, a);
-          const o = gem(
-            "round",
-            0.18,
-            [x * size * 0.78, -size * 0.33, z * size * 0.78],
-            s.sideTone,
-            false,
-            main,
-          );
-          o.quaternion.setFromUnitVectors(
-            new T.Vector3(0, 1, 0),
-            new T.Vector3(x, 0, z).normalize(),
-          );
-        }
-      }
+      if (s.hiddenHalo) addHiddenHalo(main,s.shape,size);
       if (s.sideMode !== "none") {
         const scale = 2.4 * Math.cbrt(s.sideCarat),
           extent = rotation
@@ -362,14 +364,14 @@ export function buildRing(s, environment) {
           : s.coverage === "half"
             ? Math.PI / 2
             : 1.15;
-    const spacing = (gemR * 2 + 0.11) / (radius + 0.65),
+    const spacing = (gemR * 2 + 0.11) / (radius + thick + .05),
       n = Math.floor(angleMax / spacing);
     const opening = isBand
       ? 0
       : Math.asin(
           Math.min(
             0.8,
-            (size + (s.style === "duet" ? size * 0.5 : 0)) / (radius + 0.65),
+            (size + (s.style === "duet" ? size * 0.5 : 0)) / (radius + thick + .05),
           ),
         );
     for (let i = -n; i <= n; i++) {
@@ -382,7 +384,7 @@ export function buildRing(s, environment) {
         const o = gem(
           s.accents === "channel" ? "princess" : "round",
           gemR,
-          [Math.sin(a) * (radius + 0.62), Math.cos(a) * (radius + 0.62), z],
+          [Math.sin(a) * (radius + thick + .02), Math.cos(a) * (radius + thick + .02), z],
           s.sideTone,
         );
         o.rotation.z = -a;
@@ -391,27 +393,27 @@ export function buildRing(s, environment) {
             bead(
               0.075,
               [
-                Math.sin(a + spacing * 0.46) * (radius + 0.65),
-                Math.cos(a + spacing * 0.46) * (radius + 0.65),
+                Math.sin(a + spacing * 0.46) * (radius + thick + .05),
+                Math.cos(a + spacing * 0.46) * (radius + thick + .05),
                 z + shift * gemR * 0.7,
               ],
               group,
               metal,
             );
-            tube([[Math.sin(a+spacing*.46)*radius,Math.cos(a+spacing*.46)*radius,track],[Math.sin(a+spacing*.46)*(radius+.65),Math.cos(a+spacing*.46)*(radius+.65),z+shift*gemR*.7]],.05,group,metal);
+            tube([[Math.sin(a+spacing*.46)*radius,Math.cos(a+spacing*.46)*radius,track],[Math.sin(a+spacing*.46)*(radius+thick+.05),Math.cos(a+spacing*.46)*(radius+thick+.05),z+shift*gemR*.7]],.05,group,metal);
           }
       }
     }
-    if (s.accents === "channel" && s.style!=='split')
+    if (s.accents === "channel" && !['split','tension'].includes(s.style))
       for (const z of [-width * 0.44, width * 0.44]) {
         const rail = mesh(
-          new T.TorusGeometry(radius + 0.55, 0.1, 8, 160),
+          new T.TorusGeometry(radius + thick - .05, 0.1, 8, 160),
           metal,
         );
         rail.position.z = z;
       }
-    if(s.accents==='channel'&&s.style==='split') for(const sign of [-1,1]) for(const edge of [-1,1])
-      tube(Array.from({length:128},(_,i)=>{const a=i/128*Math.PI*2;return [Math.sin(a)*(radius+.4),Math.cos(a)*(radius+.4),sign*(width*.65+.55)*Math.pow(Math.max(0,Math.cos(a)),2)+edge*width*.55*.44];}),.1,group,metal,true);
+    if(s.accents==='channel'&&['split','tension'].includes(s.style)) for(const sign of [-1,1]) for(const edge of [-1,1])
+      tube(Array.from({length:128},(_,i)=>{const a=i/128*Math.PI*2;return [Math.sin(a)*(radius+thick-.2),Math.cos(a)*(radius+thick-.2),sign*(width*.65+.55)*Math.pow(Math.max(0,Math.cos(a)),2)+edge*width*.55*.44];}),.1,group,metal,true);
   }
   if (s.style === "vintage")
     for (let i = 0; i < 100; i++) {
@@ -419,7 +421,7 @@ export function buildRing(s, environment) {
       for (const z of [-width * 0.44, width * 0.44])
         bead(
           0.085,
-          [Math.sin(a) * (radius + 0.35), Math.cos(a) * (radius + 0.35), z],
+          [Math.sin(a) * (radius + thick - .25), Math.cos(a) * (radius + thick - .25), z],
           group,
           metal,
         );

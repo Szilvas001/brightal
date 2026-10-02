@@ -1,5 +1,6 @@
 import {
   OPTIONS,
+  singleStone, maxStoneWidth, maxStoneLength, maxStoneDepth, minBandThickness, minBandWidth, maxAccentSize,
   DEFAULT,
   normalize,
   readDesign,
@@ -12,6 +13,7 @@ import {
   ATELIER_STYLES,
   DAILY_STYLES, isDaily, maxDailyStones,
 } from "./state.mjs";
+import { GeometryClient } from './geometry-client.mjs';
 import { RingRenderer } from "./renderer.js";
 import { previewModel, unpackModel } from './progressive.js';
 import { modernLayout } from './contemporary.mjs';
@@ -233,7 +235,10 @@ function download(data, name) {
   const a = document.createElement("a");
   a.href = data;
   a.download = name;
+  a.hidden = true;
+  document.body.appendChild(a);
   a.click();
+  a.remove();
 }
 
 function RingBuilder({ lang = "hu", onQuote, onUpload }) {
@@ -253,7 +258,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
     [busy, setBusy] = useState(false),
     [saved, setSaved] = useState(false);
   const thumbs = PRESETS.map(p=>thumbnailUrl(p.config));
-  const worker = useRef(null), job = useRef(0), queued = useRef(null), active = useRef(false);
+  const worker = useRef(null);
   const [refining,setRefining] = useState(true);
   const [family, setFamily] = useState("classic");
   useEffect(() => {
@@ -315,24 +320,16 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
   useEffect(() => {
     try {
       engine.current = new RingRenderer(host.current, () => setError(true));
-      worker.current = new Worker('/builder/geometry-worker.js', {type:'module'});
-      worker.current.onmessage = ({data}) => {
-        active.current=false;
-        if(data.id===job.current && engine.current) {
-          if(data.error) { console.error(data.error); setError(true); }
-          else {
-            engine.current.update(latest.current,unpackModel(data.packed,engine.current.studioTexture));
-            host.current.dataset.geometryMs=data.packed.buildMs.toFixed(1);
-            host.current.dataset.quality='detailed';
-            host.current.dataset.renderedStyle=latest.current.style;
-            setRefining(false);setError(false);setReady(true);
-          }
-        }
-        if(queued.current) {const next=queued.current;queued.current=null;active.current=true;worker.current.postMessage(next);}
-      };
-      worker.current.onerror = () => {setError(true);setRefining(false);};
+      worker.current = new GeometryClient(packed => {
+        if(!engine.current)return;
+        engine.current.update(latest.current,unpackModel(packed,engine.current.studioTexture));
+        host.current.dataset.geometryMs=packed.buildMs.toFixed(1);
+        host.current.dataset.quality='detailed';
+        host.current.dataset.renderedStyle=latest.current.style;
+        setRefining(false);setError(false);setReady(true);
+      }, error => {console.error(error);setError(true);setRefining(false);});
     } catch(e) {console.error(e);setError(true);}
-    return () => {worker.current?.terminate();engine.current?.dispose();engine.current=null;clearTimeout(timer.current);};
+    return () => {worker.current?.dispose();engine.current?.dispose();engine.current=null;clearTimeout(timer.current);};
   }, []);
   useEffect(() => {
     if(!engine.current||!worker.current)return;
@@ -345,9 +342,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
       host.current.dataset.previewMs=(performance.now()-start).toFixed(1);
       host.current.dataset.quality='preview';setReady(false);setRefining(true);setError(false);
       host.current.dataset.renderedStyle=s.style;
-      const request={id:++job.current,config:s};
-      if(active.current)queued.current=request;
-      else {active.current=true;worker.current.postMessage(request);}
+      worker.current.request(s);
     } catch(e){console.error(e);setError(true);}
   }, [s]);
   useEffect(() => {
@@ -362,8 +357,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
       {OPTIONS[key]
         .filter(
           (value) =>
-            key !== "style" ||
-            inCategory(value, family),
+            key !== "style" || inCategory(value, family),
         )
         .map((value) => (
           <button
@@ -571,6 +565,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
           "",
         )}
       {["rope","fluted","petal","twist","ripple",...ATELIER_STYLES].includes(s.style) &&
+        (!["aurora","orbit","shield"].includes(s.style)||s.motifDepth>0) &&
         slider("rhythm", L("Forma ritmusa", "Pattern rhythm"), 2, 8, 1, "")}
       {s.style === "stack" &&
         slider("layers", L("Gyűrűsorok száma", "Number of bands"), 2, 4, 1, "")}
@@ -588,19 +583,19 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
           {slider(
             "faceSize",
             L("Pecsét mérete", "Signet face size"),
-            5,
+            Math.max(5,Math.ceil(minBandWidth(s)*2)/2),
             11,
             0.5,
             "mm",
           )}
         </>
       )}
-      {slider("width", L("Sín szélessége", "Band width"), 1.6, 10, 0.1, "mm")}
+      {slider("width", L("Sín szélessége", "Band width"), minBandWidth(s), 10, 0.1, "mm")}
       {ATELIER_STYLES.includes(s.style)&&<>
         {slider('motifDepth',L('Domborminta magassága','Relief height'),0,1.2,.1,'mm')}
         {slider('motifOffset',L('Mintázat eltolása','Pattern offset'),-1,1,.1,'')}
         {slider('edgeSoftness',L('Profil kerekítése','Profile rounding'),.35,1.2,.05,'')}
-        {slider('thickness',L('Alapvastagság','Base thickness'),1.4,3,.1,'mm')}
+        {slider('thickness',L('Alapvastagság','Base thickness'),minBandThickness(s),3.4,.1,'mm')}
       </>}
     </div>
   );
@@ -608,14 +603,14 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
     {['band',...FASHION_STYLES].includes(s.style)&&<p>{L('A gyémánt minden modell része. Méretét és formáját szabadon alakíthatod.','Every design includes a diamond. Customize its size and shape.')}</p>}
     {modernLayout(s).stones.length>0&&<>
       <h3>{L('Csiszolás és szín','Cut and colour')}</h3>{choices('shape',true)}{tones('gemTone')}
-      {s.style!=='eastwest'&&select('orientation',L('Kő tájolása','Stone orientation'))}
+      {s.style!=='eastwest'&&!['round','princess','asscher','cushion'].includes(s.shape)&&select('orientation',L('Kő tájolása','Stone orientation'))}
       <h3>{L('Kőméretek milliméterben','Stone dimensions in millimetres')}</h3>
-      {slider('stoneWidth',L('Kő szélessége','Stone width'),1.5,5,.1,'mm')}
-      {!['round','cushion','princess','asscher'].includes(s.shape)&&slider('stoneLength',L('Kő hossza','Stone length'),s.stoneWidth,6,.1,'mm')}
-      {slider('stoneDepth',L('Kő teljes mélysége','Total stone depth'),1,Math.min(3.5,Math.round(s.stoneWidth*.75*10)/10),.1,'mm')}
-      {!['eastwest','curvedoval','wavebezel','openpair','fullcircle',...FASHION_STYLES].includes(s.style)&&slider('dailyCount',L('Kövek száma','Number of stones'),1,maxDailyStones(s),1,'')}
-      {s.style==='alternating'&&select('sideShape',L('Váltakozó csiszolás','Alternating cut'))}
-      {slider('dailySpacing',L('Kősor térköze','Stone spacing'),0,.5,.05,'mm')}
+      {slider('stoneWidth',L('Kő szélessége','Stone width'),1.5,maxStoneWidth(s),.1,'mm')}
+      {!['round','cushion','princess','asscher'].includes(s.shape)&&slider('stoneLength',L('Kő hossza','Stone length'),s.stoneWidth,maxStoneLength(s),.1,'mm')}
+      {slider('stoneDepth',L('Kő teljes mélysége','Total stone depth'),1,maxStoneDepth(s),.1,'mm')}
+      {!singleStone(s)&&!['openpair','fullcircle'].includes(s.style)&&slider('dailyCount',L('Kövek száma','Number of stones'),1,maxDailyStones(s),1,'')}
+      {s.style==='alternating'&&modernLayout(s).stones.length>1&&select('sideShape',L('Váltakozó csiszolás','Alternating cut'))}
+      {modernLayout(s).stones.length>1&&s.style!=='fullcircle'&&slider('dailySpacing',L('Kősor térköze','Stone spacing'),0,.5,.05,'mm')}
       <p className="rb-fine">{L('A méreteket a kiválasztott kövekhez lehet igazítani. A végleges követ és a foglalást az ötvös ellenőrzi.','Match these dimensions to the selected stones. The goldsmith verifies the actual stones and setting.')}</p>
     </>}
   </>;
@@ -961,7 +956,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                     <h3>{L("A kő foglalata", "Stone setting")}</h3>
                     {choices("setting")}
                     <div className="rb-select-row">
-                      {select(
+                      {!["round","princess","asscher","cushion"].includes(s.shape) && select(
                         "orientation",
                         L("Kő tájolása", "Stone orientation"),
                       )}
@@ -1013,7 +1008,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                   {isDaily(s)?<>
                     {slider('dailyCarat',L('Egy gyémánt súlya','Weight per diamond'),.05,.3,.01,'ct')}
                     {slider('dailyCount',L('Gyémántok száma','Diamond count'),3,maxDailyStones(s),1,'')}
-                    {s.style==='alternating'&&select('sideShape',L('Váltakozó kőforma','Alternating cut'))}
+                    {s.style==='alternating'&&modernLayout(s).stones.length>1&&select('sideShape',L('Váltakozó kőforma','Alternating cut'))}
                     {slider('dailySpacing',L('Kövek közötti ráhagyás','Stone spacing'),0,.5,.05,'')}
                     {['chevron','ribbon','crown','contour','curvedoval','wavebezel','asymmetric'].includes(s.style)&&slider('sculpt',L('Ív mélysége','Curve depth'),.4,2.5,.1,'')}
                     <p className="rb-fine">{L('A kőszám a látványterv arányaihoz igazodik; a tényleges kőméreteket a műhely ellenőrzi.','Maximum count adapts to the preview proportions; actual stone dimensions require workshop verification.')}</p>
@@ -1079,11 +1074,11 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
             )}
             {step === 3 && isModern(s) && <>
               <h3>{L('Arányok és foglalat','Proportions and setting')}</h3>
-              {slider('thickness',L('Alap falvastagsága','Base metal thickness'),1.4,3,.1,'mm')}
+              {slider('thickness',L('Alap falvastagsága','Base metal thickness'),minBandThickness(s),3.4,.1,'mm')}
               {modernLayout(s).stones.length>0&&slider('bezelWall',L('Foglalat pereme','Bezel wall'),.35,.7,.05,'mm')}
               {['chevron','ribbon','crown','contour','curvedoval','wavebezel','asymmetric'].includes(s.style)&&slider('sculpt',L('Ív mélysége','Curve depth'),.4,2.5,.1,'mm')}
               {modernLayout(s).stones.length>1&&<label className="rb-toggle"><input type="checkbox" checked={s.alternateGems} onChange={e=>change({alternateGems:e.target.checked})}/>{L('Váltakozó kőszínek','Alternating stone colours')}</label>}
-              {s.alternateGems&&tones('sideTone')}
+              {s.alternateGems&&modernLayout(s).stones.length>1&&tones('sideTone')}
               <p className="rb-fine">{L('Az ívek és a foglalatok egyetlen összefüggő fémtestet alkotnak. A szükséges szélesség a kőméretekhez igazodik.','The curves and settings form one continuous metal body. The required width adapts to the stone dimensions.')}</p>
             </>}
             {step === 3 && !isModern(s) && (
@@ -1139,13 +1134,10 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                     )}
                   </>
                 )}
-                <h3>
-                  {L(
-                    "Oldalkövek és berakások színe",
-                    "Side stone & accent palette",
-                  )}
-                </h3>
-                {tones("sideTone")}
+                {(s.sideMode!=="none"||s.style==="duet"||s.hiddenHalo||s.accents!=="none"||["halo","vintage"].includes(s.style)) && <>
+                  <h3>{L("Oldalkövek és berakások színe", "Side stone & accent palette")}</h3>
+                  {tones("sideTone")}
+                </>}
                 <h3>{L("Sín berakása", "Band accents")}</h3>
                 <div className="rb-choices">
                   {OPTIONS.accents
@@ -1178,16 +1170,13 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                     </span>
                   </label>
                 )}
-                {(["pave", "channel"].includes(s.accents) ||
-                  ["pave", "vintage", "eternity"].includes(s.style)) && (
+                {["pave", "channel"].includes(s.accents) && (
                   <>
                     {slider(
                       "accentSize",
                       L("Berakott kövek átmérője", "Accent stone diameter"),
                       0.6,
-                      Number(
-                        Math.min(2, s.width / (s.accentRows + 0.4)).toFixed(2),
-                      ),
+                      maxAccentSize(s),
                       0.1,
                       "mm",
                     )}
@@ -1206,7 +1195,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                           }
                         >
                           <option value="1">1</option>
-                          {s.style!=='split'&&<option value="2">2</option>}
+                          {s.style!=='split'&&(s.style!=='tension'||s.width>=2.7)&&<option value="2">2</option>}
                         </select>
                       </label>
                     </div>
@@ -1240,7 +1229,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                 {slider(
                   "width",
                   L("Sín szélessége", "Band width"),
-                  1.6,
+                  isModern(s)?minBandWidth(s):1.6,
                   isModern(s)?10:5,
                   0.1,
                   "mm",
@@ -1302,7 +1291,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                         )}
                       </small>
                     </label>
-                    {select(
+                    {s.engraving && select(
                       "engravingFont",
                       L("Gravírozás betűje", "Engraving lettering"),
                     )}
@@ -1326,12 +1315,12 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                           {L("Szobrászi paraméterek", "Sculptural parameters")}
                         </dt>
                         <dd>
-                          {["wave", "rope"].includes(s.style)
+                          {s.style === "rope"
                             ? `${L("Ritmus", "Rhythm")}: ${s.rhythm}`
                             : s.style === "stack"
                               ? `${s.layers} ${L("sor", "bands")}`
                               : s.style === "signet"
-                                ? `${s.faceSize} mm · ${label(s.face)} · ${label(s.inlay)}`
+                                ? `${s.faceSize} mm`
                                 : `${L("Intenzitás", "Intensity")}: ${s.sculpt}`}
                         </dd>
                       </div>

@@ -19,7 +19,7 @@ export function previewModel(s,environment) {
     }
   }
   const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(positions,3));geo.setIndex(indices);geo.computeVertexNormals();
-  const metal=new T.MeshPhysicalMaterial({color:METAL_COLORS[s.metal],metalness:1,roughness:s.finish==='polished'?.13:.32});
+  const metal=new T.MeshPhysicalMaterial({color:METAL_COLORS[s.metal],metalness:1,roughness:s.finish==='polished'?.13:s.finish==='satin'?.3:.4});
   group.add(new T.Mesh(geo,metal));
   for(const stone of layout.stones) {
     const {geometry,planes}=gemGeometry(stone.shape);geometry.computeBoundingBox();
