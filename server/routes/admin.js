@@ -12,6 +12,7 @@ const R = require('../requests');
 const mailer = require('../mailer');
 const xport = require('../export');
 const designs = require('../designs');
+const offers = require('../offers');
 
 const router = express.Router();
 router.use(auth.requireAdmin);
@@ -70,6 +71,10 @@ router.post('/requests/:requestNumber/approve', async (req, res) => {
     return res.status(409).json({ error: 'INVALID_TRANSITION', from: r.status });
   }
 
+  if(r.acceptance) return res.status(409).json({error:'ORDER_ALREADY_ACCEPTED'});
+  if(r.paymentId && !['Failed','Canceled','Expired'].includes(r.paymentStatus)) return res.status(409).json({error:'PAYMENT_IN_PROGRESS'});
+  let finalOffer;
+  try {finalOffer=offers.create({...req.body,price},r);} catch(e){return res.status(400).json({error:e.message});}
   const adminNote = String((req.body || {}).adminNote || '').trim().slice(0, 600);
   const now = new Date().toISOString();
 
@@ -77,6 +82,7 @@ router.post('/requests/:requestNumber/approve', async (req, res) => {
     ...x,
     status: R.STATUS.APPROVED,
     price,
+    finalOffer, acceptance:null, contractAcceptedAt:null,
     adminNote: adminNote || null,
     approvedAt: x.approvedAt || now,
     updatedAt: now,
@@ -87,6 +93,19 @@ router.post('/requests/:requestNumber/approve', async (req, res) => {
   console.log(`[admin] ✔ Jóváhagyva: ${updated.requestNumber} — ${price} ${cfg.currency.code}`);
 
   res.json({ request: R.toPublic(updated, { includeInternal: true }) });
+});
+
+// Human review remains a separate action; payment alone cannot start production.
+router.post('/requests/:requestNumber/fulfilment-review',async(req,res)=>{
+ const r=db.requests.find(x=>x.requestNumber===req.params.requestNumber);
+ if(!r)return res.status(404).json({error:'NOT_FOUND'});
+ if(r.contractAcceptedAt)return res.json({request:R.toPublic(r,{includeInternal:true})});
+ if(!offers.accepted(r)||!r.paidAt)return res.status(409).json({error:'APPROVAL_REQUIRED'});
+ if(req.body.sanctionsChecked!==true||req.body.dueDiligenceCompleted!==true||req.body.contractAccepted!==true||!String(req.body.reviewReference||'').trim())return res.status(400).json({error:'FULFILMENT_REVIEW_REQUIRED'});
+ const now=new Date().toISOString();
+ const updated=await db.requests.update(x=>x.id===r.id,x=>({...x,contractAcceptedAt:now,compliance:{cleared:true,reviewedAt:now,reviewedBy:req.user.id,reference:String(req.body.reviewReference).slice(0,250)},history:[...x.history,{at:now,event:'fulfilment_review_completed',by:req.user.id}]}));
+ mailer.contractAccepted(updated,updated.lang).catch(e=>console.error('[mail]',e.message));
+ res.json({request:R.toPublic(updated,{includeInternal:true})});
 });
 
 /* ---------- elutasítás ---------- */
@@ -114,6 +133,7 @@ router.post('/requests/:requestNumber/status', async (req, res) => {
   if (!(R.ADMIN_TRANSITIONS[r.status] || []).includes(target)) {
     return res.status(409).json({ error: 'INVALID_TRANSITION', from: r.status, to: target });
   }
+  if(offers.custom(r)&&!offers.readyForProduction(r))return res.status(409).json({error:'FULFILMENT_REVIEW_REQUIRED'});
   const now = new Date().toISOString();
   const updated = await db.requests.update(x => x.id === r.id, x => ({
     ...x, status: target, updatedAt: now,

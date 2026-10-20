@@ -15,6 +15,7 @@
 
 const crypto = require('crypto');
 const cfg = require('./config');
+const offers = require('./offers');
 
 const STATUS = {
   SUBMITTED: 'submitted',
@@ -82,8 +83,11 @@ function toPublic(r, { includeInternal = false } = {}) {
     vat: r.accounting ? Number(r.accounting.vatHuf) : r.price ? vatBreakdown(r.price).vat : null,
     accounting: r.accounting || null,
     adminNote: r.adminNote || null,
+    finalOffer:r.finalOffer||null,
+    acceptance:r.acceptance||null,
+    contractAcceptedAt:r.contractAcceptedAt||null,
     paymentStatus: r.paymentStatus || null,
-    payable: PAYABLE.includes(r.status) && r.price > 0,
+    payable: PAYABLE.includes(r.status) && r.price > 0 && (!offers.custom(r)||!!r.finalOffer),
     productionDays: [cfg.shop.productionDaysMin, cfg.shop.productionDaysMax]
   };
   if (includeInternal) {
@@ -92,6 +96,7 @@ function toPublic(r, { includeInternal = false } = {}) {
     out.paymentId = r.paymentId || null;
     out.history = r.history;
     out.lang = r.lang;
+    out.compliance=r.compliance||null;
   }
   return out;
 }

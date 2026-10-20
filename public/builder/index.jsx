@@ -1,6 +1,6 @@
 import {
   OPTIONS,
-  singleStone, maxStoneWidth, maxStoneLength, maxStoneDepth, minBandThickness, minBandWidth, maxAccentSize,
+  singleStone, applyDesignPatch, minStoneLength, maxStoneWidth, maxStoneLength, maxStoneDepth, minBandThickness, minBandWidth, maxAccentSize,
   DEFAULT,
   normalize,
   readDesign,
@@ -15,7 +15,7 @@ import {
 } from "./state.mjs";
 import { GeometryClient } from './geometry-client.mjs';
 import { RingRenderer } from "./renderer.js";
-import { previewModel, unpackModel } from './progressive.js';
+import { previewModel, unpackModel } from './progressive.mjs';
 import { modernLayout } from './contemporary.mjs';
 import { COLLECTION } from './collection.mjs';
 import { CATEGORIES, inCategory } from './categories.mjs';
@@ -292,7 +292,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
   const change = (patch) => {
     setHistory((h) => ({
       past: [...h.past.slice(-39), h.present],
-      present: normalize({ ...h.present, ...patch }),
+      present: applyDesignPatch(h.present, patch),
       future: [],
     }));
     setSaved(false);
@@ -606,7 +606,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
       {s.style!=='eastwest'&&!['round','princess','asscher','cushion'].includes(s.shape)&&select('orientation',L('Kő tájolása','Stone orientation'))}
       <h3>{L('Kőméretek milliméterben','Stone dimensions in millimetres')}</h3>
       {slider('stoneWidth',L('Kő szélessége','Stone width'),1.5,maxStoneWidth(s),.1,'mm')}
-      {!['round','cushion','princess','asscher'].includes(s.shape)&&slider('stoneLength',L('Kő hossza','Stone length'),s.stoneWidth,maxStoneLength(s),.1,'mm')}
+      {!['round','cushion','princess','asscher'].includes(s.shape)&&slider('stoneLength',L('Kő hossza','Stone length'),minStoneLength(s),maxStoneLength(s),.1,'mm')}
       {slider('stoneDepth',L('Kő teljes mélysége','Total stone depth'),1,maxStoneDepth(s),.1,'mm')}
       {!singleStone(s)&&!['openpair','fullcircle'].includes(s.style)&&slider('dailyCount',L('Kövek száma','Number of stones'),1,maxDailyStones(s),1,'')}
       {s.style==='alternating'&&modernLayout(s).stones.length>1&&select('sideShape',L('Váltakozó csiszolás','Alternating cut'))}
@@ -908,8 +908,8 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                     ),
                     isFashion(s)
                       ? L(
-                          "Kombináld a fémeket. Pecsétgyűrűnél próbálj színes betétet is.",
-                          "Mix metals. Explore colored inlays on your signet.",
+                          "Alakítsd a falvastagságot és a kő foglalatának peremét.",
+                          "Adjust the band thickness and the stone’s bezel wall.",
                         )
                       : L(
                           "Állítsd külön az oldalkövek formáját, méretét és színét. Rajzold körbe fénnyel a gyűrűd.",

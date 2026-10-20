@@ -76,11 +76,11 @@ module.exports = {
 
   shop: {
     name: env('SHOP_NAME', 'BRIGHTAL'),
-    email: env('SHOP_EMAIL', 'hello@brightal.hu'),
-    phone: env('SHOP_PHONE', '+36 1 234 5678'),
-    address: env('SHOP_ADDRESS', 'Budapest, Váci utca 1., 1052'),
+    email: env('SHOP_EMAIL', ''),
+    phone: env('SHOP_PHONE', ''),
+    address: env('SHOP_ADDRESS', '1024 Budapest, Káplár utca 11–13. 4. em. 13. ajtó'),
     vatRate: Number(env('VAT_RATE', 0.27)),
-    reviewHours: Number(env('REVIEW_HOURS', 1)),
+    reviewHours: Number(env('REVIEW_HOURS', 72)),
     productionDaysMin: Number(env('PRODUCTION_DAYS_MIN', 10)),
     productionDaysMax: Number(env('PRODUCTION_DAYS_MAX', 14))
   },
@@ -94,29 +94,43 @@ module.exports = {
      „[KITÖLTENDŐ]" jelölés jelenik meg.
      ══════════════════════════════════════════════════════════════ */
   company: {
-    name: env('COMPANY_NAME', ''),
+    name: env('COMPANY_NAME', 'Dezső Diána Ditta egyéni vállalkozó'),
     shortName: env('COMPANY_SHORT_NAME', env('SHOP_NAME', 'BRIGHTAL')),
-    address: env('COMPANY_ADDRESS', ''),
-    mailingAddress: env('COMPANY_MAILING_ADDRESS', ''),
-    taxNumber: env('COMPANY_TAX_NUMBER', ''),
+    address: env('COMPANY_ADDRESS', '1024 Budapest, Káplár utca 11–13. 4. em. 13. ajtó'),
+    mailingAddress: env('COMPANY_MAILING_ADDRESS', '1024 Budapest, Káplár utca 11–13. 4. em. 13. ajtó'),
+    taxNumber: env('COMPANY_TAX_NUMBER', '92030239-1-41'),
+    statisticalNumber: '92030239477723101',
+    activityCode: '477701',
+    preciousMetalAuthority: 'Budapest Főváros Kormányhivatala',
+    preciousMetalRegNumber: env('PRECIOUS_METAL_REG_NUMBER',''),
+    invoiceProvider: env('INVOICE_PROVIDER_NAME',''),
+    accountant: env('ACCOUNTANT_NAME',''),
+    paymentProvider: 'Barion Payment Zrt.',
+    shippingProvider: env('SHIPPING_PROVIDER',''),
+    shippingArea: env('SHIPPING_AREA',''),
+    mailProvider: env('MAIL_PROVIDER_NAME',''),
+    webProvider: env('WEB_PROVIDER_NAME',''),
+    newsletterProvider: env('NEWSLETTER_PROVIDER','Nincs hírlevélküldés.'),
+    analyticsProviders: env('ANALYTICS_PROVIDERS',env('BARION_PIXEL_ID','')?'Barion Pixel, kizárólag marketing-hozzájárulással.':'Nincs analitikai vagy marketing szolgáltatás bekapcsolva.'),
+    transferSafeguards: env('TRANSFER_SAFEGUARDS',''),
     euTaxNumber: env('COMPANY_EU_TAX_NUMBER', ''),
-    regNumber: env('COMPANY_REG_NUMBER', ''),
+    regNumber: env('COMPANY_REG_NUMBER', '62270803'),
     regAuthority: env('COMPANY_REG_AUTHORITY', ''),
-    representative: env('COMPANY_REPRESENTATIVE', ''),
+    representative: env('COMPANY_REPRESENTATIVE', 'Dezső Diána Ditta'),
     bankName: env('COMPANY_BANK_NAME', ''),
     bankAccount: env('COMPANY_BANK_ACCOUNT', ''),
     email: env('COMPANY_EMAIL', env('SHOP_EMAIL', '')),
     phone: env('COMPANY_PHONE', env('SHOP_PHONE', '')),
     /* tárhelyszolgáltató — az Ekertv. 4. § alapján kötelező adat */
-    hostingName: env('HOSTING_NAME', 'Hetzner Online GmbH'),
-    hostingAddress: env('HOSTING_ADDRESS', 'Industriestr. 25, 91710 Gunzenhausen, Németország'),
-    hostingEmail: env('HOSTING_EMAIL', 'info@hetzner.com'),
+    hostingName: env('HOSTING_NAME', ''),
+    hostingAddress: env('HOSTING_ADDRESS', ''),
+    hostingEmail: env('HOSTING_EMAIL', ''),
     /* fogyasztóvédelem / békéltető testület */
     arbitrationBoard: env('ARBITRATION_BOARD', 'Budapesti Békéltető Testület'),
-    arbitrationAddress: env('ARBITRATION_ADDRESS', '1016 Budapest, Krisztina krt. 99. III. em. 310.'),
+    arbitrationAddress: env('ARBITRATION_ADDRESS', '1016 Budapest, Krisztina krt. 99. I. em. 111.'),
     arbitrationEmail: env('ARBITRATION_EMAIL', 'bekelteto.testulet@bkik.hu'),
     /* mikortól hatályosak a jogi szövegek */
-    legalEffectiveFrom: env('LEGAL_EFFECTIVE_FROM', new Date().toISOString().slice(0, 10))
+    legalEffectiveFrom: env('LEGAL_EFFECTIVE_FROM', '2026-10-20')
   },
 
   currency,
@@ -140,7 +154,7 @@ module.exports = {
     /* Ha ez ki van töltve, a nyílt szöveges ADMIN_PASSWORD-öt a rendszer
        FIGYELMEN KÍVÜL hagyja. Előállítás:  npm run hash-password    */
     passwordHash: env('ADMIN_PASSWORD_HASH', '').trim(),
-    email: env('ADMIN_EMAIL', env('SHOP_EMAIL', 'hello@brightal.hu')),
+    email: env('ADMIN_EMAIL', env('SHOP_EMAIL', '')),
     name: env('ADMIN_NAME', 'Admin')
   },
 
@@ -173,7 +187,7 @@ module.exports = {
     secure: bool('SMTP_SECURE', false),
     user: env('SMTP_USER', ''),
     pass: env('SMTP_PASS', ''),
-    from: env('MAIL_FROM', `BRIGHTAL <${env('SHOP_EMAIL', 'hello@brightal.hu')}>`)
+    from: env('MAIL_FROM', `BRIGHTAL <${env('SHOP_EMAIL', '')}>`)
   },
 
   /* ══════════════════════════════════════════════════════════════
@@ -206,7 +220,7 @@ module.exports = {
   /* ---------- cookie / hozzájárulás ---------- */
   cookies: {
     /* a Barion Pixel csak marketing-hozzájárulás után töltődik be */
-    pixelRequiresConsent: bool('PIXEL_REQUIRES_CONSENT', true)
+    pixelRequiresConsent: true
   },
 
   /* ---------- Pinterest inspiráció ---------- */

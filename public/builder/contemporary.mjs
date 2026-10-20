@@ -1,21 +1,21 @@
 import * as T from 'three';
 import { getKernel } from './kernel.mjs';
-import { gemGeometry, gemstoneMaterial } from './optics.mjs';
-import { FASHION_STYLES, ATELIER_STYLES } from './state.mjs';
+import { gemGeometry, gemstoneMaterial, gemFootprint } from './optics.mjs';
+import { FASHION_STYLES, ATELIER_STYLES, stoneDimensions, longestStone } from './state.mjs';
 
 export const MODERN_STYLES = ['bezelrow','scatter','chevron','ribbon','graduated','eastwest','alternating','crown','wave','rope','dome','signet','open','stack','band','eternity','curvedoval','wavebezel','openpair','contour','asymmetric','fullcircle'];
 export const SCALE = .8;
 MODERN_STYLES.push(...FASHION_STYLES.filter(s=>!MODERN_STYLES.includes(s)));
-export const MODEL_REVISION = 'diamond-only-8';
+export const MODEL_REVISION = 'cut-seats-9';
 const single = s => ['band','eastwest','curvedoval','wavebezel'].includes(s.style) || FASHION_STYLES.includes(s.style);
 export function modernLayout(s) {
   const inner = s.size / (2*Math.PI);
   let count = single(s) ? 1 : Math.max(1,s.dailyCount);
   const east = s.style === 'eastwest' || s.orientation === 'east';
-  const maxDimension = Math.max(s.stoneLength,s.stoneWidth);
+  const maxDimension = Math.max(longestStone(s),s.stoneWidth);
   const spacing = maxDimension + 2*s.bezelWall + s.dailySpacing + .35;
   const thickness = Math.max(s.thickness, count ? s.stoneDepth*.72 + .8 : 0);
-  const width = Math.max(s.width, count ? (east?s.stoneWidth:s.stoneLength) + 2*s.bezelWall + .6 : 0,
+  const width = Math.max(s.width, count ? (east?s.stoneWidth:longestStone(s)) + 2*s.bezelWall + .6 : 0,
     s.style==='stack'?s.layers*1.25+(s.layers-1)*s.gap:0);
   const top = a => Math.pow(Math.max(0,Math.cos(a)),4);
   const atelier=ATELIER_STYLES.includes(s.style),phase=s.motifOffset*Math.PI;
@@ -80,7 +80,7 @@ export function modernLayout(s) {
     const shape=s.style==='alternating'&&i%2?s.sideShape:s.shape;
     const z=shift(angle)+(['scatter','asymmetric'].includes(s.style)?(i%2?1:-1)*Math.max(0,(widthAt(angle)-s.stoneLength-2*s.bezelWall)/2)*.6:0);
     const surface=inner+thicknessAt(angle);
-    stones.push({ id:`S${i+1}`, shape, length:(['round','princess','asscher','cushion'].includes(shape)?s.stoneWidth:s.stoneLength)*factor,width:s.stoneWidth*factor,depth:s.stoneDepth*factor,
+    stones.push({ id:`S${i+1}`, shape, length:stoneDimensions(s,shape).length*factor,width:s.stoneWidth*factor,depth:s.stoneDepth*factor,
       angle,rotation:east?Math.PI/2:s.style==='crown'?angle*.25:0,z,
       girdleRadius:surface+.1, tone:s.alternateGems&&i%2?s.sideTone:s.gemTone });
   }
@@ -90,7 +90,7 @@ export function modernLayout(s) {
 // Exact shared millimetre geometry: the browser and the workshop exporter use
 // this same solid, including the Boolean-cut stone seats and access bores.
 export function buildContemporary(s, environment, colors) {
-  const {Manifold, Mesh}=getKernel(), owned=[];
+  const {Manifold, Mesh, CrossSection}=getKernel(), owned=[];
   const own=x=>(owned.push(x),x);
   const layout=modernLayout(s), {inner,width,thicknessAt,widthAt,shift,stones}=layout;
   const group=new T.Group(), gems=[];
@@ -141,17 +141,13 @@ export function buildContemporary(s, environment, colors) {
       const matrix=new T.Matrix4().makeRotationZ(-stone.angle)
         .multiply(new T.Matrix4().makeTranslation(0,stone.girdleRadius,stone.z))
         .multiply(new T.Matrix4().makeRotationY(stone.rotation));
-      // A rounded bezel collar intersects the underlying ring deeply enough to
-      // form one solid. Its bore is smaller than the girdle: a real seating ledge.
-      const perimeter=[];
-      const N=64;
-      for(let k=0;k<N;k++) {
-        const a=2*Math.PI*k/N, x=Math.cos(a),z=Math.sin(a);
-        const power=['emerald','asscher','princess','radiant'].includes(stone.shape)?.32:stone.shape==='cushion'?.55:1;
-        perimeter.push([Math.sign(x)*Math.pow(Math.abs(x),power)*(stone.width/2+s.bezelWall),Math.sign(z)*Math.pow(Math.abs(z),power)*(stone.length/2+s.bezelWall)]);
-      }
+      // Derive both the collar and the aperture from the actual faceted girdle.
+      // A generic ellipse both erased pointed cuts and intersected their crowns.
+      const footprint=gemFootprint(geometry,scale);
+      const section=own(new CrossSection([footprint]));
+      const perimeter=own(section.offset(s.bezelWall,'Round',2,64));
       const collarHeight=stone.depth*.72+.6;
-      const collarRaw=own(Manifold.extrude([perimeter],collarHeight));
+      const collarRaw=own(perimeter.extrude(collarHeight));
       const collarTurned=own(collarRaw.rotate([90,0,0]));
       const collarMoved=own(collarTurned.translate([0,.18,0]));
       const collar=own(collarMoved.transform(matrix.elements));
@@ -164,9 +160,9 @@ export function buildContemporary(s, environment, colors) {
       body=own(body.subtract(cavity));
       // Open the top of the seat above the girdle to allow insertion. Final lip
       // burnishing and allowance are workshop operations, not simulated claims.
-      const opening=perimeter.map(([x,z])=>[x*(stone.width/(stone.width+2*s.bezelWall)),z*(stone.length/(stone.length+2*s.bezelWall))]);
-      const openRaw=own(Manifold.extrude([opening],4));
-      const openTurned=own(openRaw.rotate([-90,0,0]));
+      const openRaw=own(section.extrude(4));
+      const openRotated=own(openRaw.rotate([90,0,0]));
+      const openTurned=own(openRotated.translate([0,4,0]));
       const openCut=own(openTurned.transform(matrix.elements));
       body=own(body.subtract(openCut));
       const boreRaw=own(Manifold.cylinder(stone.depth+thicknessAt(stone.angle)+4,Math.min(stone.width,stone.length)*.19,Math.min(stone.width,stone.length)*.19,32));

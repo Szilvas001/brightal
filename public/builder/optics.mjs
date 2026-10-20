@@ -53,7 +53,7 @@ export function outline(shape, a) {
   if(shape==='heart') {x=Math.sin(a)**3;z=(13*Math.cos(a)-5*Math.cos(2*a)-2*Math.cos(3*a)-Math.cos(4*a))/16;}
   if (shape === "oval") z *= 1.35;
   if (shape === "marquise") {
-    x *= 0.78 * (0.68 + 0.32 * Math.abs(x));
+    x = Math.sign(x) * 0.78 * (1 - Math.abs(z)**1.5);
     z *= 1.65;
   }
   if (shape === "pear") {
@@ -151,6 +151,18 @@ export function gemGeometry(shape) {
   if (planes.length > 128)
     throw new Error("Cut exceeds the optical shader plane budget");
   return { geometry, planes };
+}
+
+// Convex projection of the actual gem vertices, in millimetres. This also
+// preserves asymmetric pear tips when the seat is extruded along the Y axis.
+export function gemFootprint(geometry, scale) {
+  const p=geometry.attributes.position, points=[];
+  for(let i=0;i<p.count;i++) points.push([p.getX(i)*scale.x,p.getZ(i)*scale.z]);
+  points.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+  const unique=points.filter((p,i)=>!i||Math.abs(p[0]-points[i-1][0])+Math.abs(p[1]-points[i-1][1])>1e-8);
+  const cross=(a,b,c)=>(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
+  const half=values=>{const hull=[];for(const p of values){while(hull.length>1&&cross(hull.at(-2),hull.at(-1),p)<=1e-8)hull.pop();hull.push(p);}return hull.slice(0,-1);};
+  return [...half(unique),...half([...unique].reverse())];
 }
 
 // Original HDR light rig: photographic softboxes plus small high-intensity sources.

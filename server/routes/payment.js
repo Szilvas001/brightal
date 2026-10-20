@@ -7,6 +7,7 @@ const auth = require('../auth');
 const R = require('../requests');
 const mailer = require('../mailer');
 const invoice = require('../invoice');
+const offers = require('../offers');
 
 const router = express.Router();
 
@@ -14,10 +15,10 @@ const findByNumber = n => db.requests.find(r => r.requestNumber === n);
 
 /** Barion státusz → belső státusz. */
 function mapStatus(barionStatus, current) {
-  if (barion.SUCCESS_STATES.includes(barionStatus)) return R.STATUS.PAID;
+  if (barion.SUCCESS_STATES.includes(barionStatus)) return [R.STATUS.IN_PRODUCTION,R.STATUS.COMPLETED].includes(current)?current:R.STATUS.PAID;
   if ([barion.STATUS.CANCELED, barion.STATUS.FAILED, barion.STATUS.EXPIRED].includes(barionStatus)) {
     /* sikertelen fizetés után a kérés fizethető marad — újra lehet próbálni */
-    return current === R.STATUS.PAID ? R.STATUS.PAID : R.STATUS.APPROVED;
+    return [R.STATUS.PAID,R.STATUS.IN_PRODUCTION,R.STATUS.COMPLETED].includes(current) ? current : R.STATUS.APPROVED;
   }
   return current;
 }
@@ -35,6 +36,11 @@ router.post('/payment/start', auth.requireUser, async (req, res) => {
   if (!R.PAYABLE.includes(request.status)) return res.status(409).json({ error: 'NOT_PAYABLE' });
   if (!request.price || request.price <= 0) return res.status(409).json({ error: 'NO_PRICE' });
 
+  let acceptance=request.acceptance;
+  if(offers.custom(request)) {
+    try {acceptance=offers.acceptance(request,req.body,req.user.id);}catch(e){return res.status(409).json({error:e.message});}
+    await db.requests.update(r=>r.id===request.id,r=>({...r,acceptance,billing:acceptance.billing,history:[...r.history,{at:acceptance.at,event:'customer_ordered',offerId:acceptance.offerId}]}));
+  }
   if(request.combinationOffer){
     const offer=request.combinationOffer;
     if(offer.price!==request.price||request.currency!=='HUF'||!request.sourcing||!Object.keys(offer.combination).every(k=>offer.combination[k]===request.sourcing[k]))return res.status(409).json({error:'PRICE_CHANGED'});
@@ -43,9 +49,11 @@ router.post('/payment/start', auth.requireUser, async (req, res) => {
     catch(e){return res.status(409).json({error:e.message});}
   }
 
+  if(offers.custom(request)&&request.paymentId&&request.gatewayUrl&&!['Failed','Canceled','Expired'].includes(request.paymentStatus))return res.json({gatewayUrl:request.gatewayUrl,paymentId:request.paymentId,simulated:barion.isSimulated()});
+
   try {
     const paymentRequestId = `${request.requestNumber}-${Date.now().toString(36)}`;
-    const started = await barion.startPayment({ ...request, paymentRequestId });
+    const started = await barion.startPayment({ ...request, acceptance, paymentRequestId });
 
     await db.requests.update(r => r.id === request.id, r => ({
       ...r,
@@ -87,7 +95,7 @@ async function syncPayment(paymentId) {
 
   const state = await barion.getPaymentState(paymentId);
   const next = mapStatus(state.Status, request.status);
-  const wasPaid = request.status === R.STATUS.PAID;
+  const wasPaid = !!request.paidAt;
 
   const updated = await db.requests.update(r => r.id === request.id, r => ({
     ...r,

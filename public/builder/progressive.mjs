@@ -5,7 +5,7 @@ import { METAL_COLORS, buildRing } from './model.mjs';
 // Preview uses the same dimensional layout, but omits expensive Boolean seats.
 // Never exported or accepted as an engineering-checked model.
 export function previewModel(s,environment) {
-  if(!MODERN_STYLES.includes(s.style)) return buildRing(s,environment);
+  if(!MODERN_STYLES.includes(s.style)||['open','stack','signet'].includes(s.style)) return buildRing(s,environment);
   const layout=modernLayout(s),group=new T.Group(),gems=[];
   const positions=[],indices=[],n=80,m=16;
   for(let i=0;i<n;i++) {

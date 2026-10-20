@@ -122,4 +122,18 @@ router.get('/requests/:requestNumber', auth.requireUser, (req, res) => {
   res.json({ request: R.toPublic(r, { includeInternal: isAdmin }) });
 });
 
+// A buyer may ask for corrections before placing the final order.
+router.post('/requests/:requestNumber/revision',auth.requireUser,async(req,res)=>{
+ const r=db.requests.find(x=>x.requestNumber===req.params.requestNumber);
+ if(!r)return res.status(404).json({error:'NOT_FOUND'});
+ if(r.userId!==req.user.id)return res.status(403).json({error:'FORBIDDEN'});
+ if(r.acceptance||r.paidAt||!['submitted','approved'].includes(r.status))return res.status(409).json({error:'NOT_PAYABLE'});
+ const note=String(req.body.note||'').trim().slice(0,2000);
+ if(note.length<3)return res.status(400).json({error:'REVISION_REQUIRED'});
+ const now=new Date().toISOString();
+ const updated=await db.requests.update(x=>x.id===r.id,x=>({...x,status:'submitted',finalOffer:null,price:null,note:(x.note||'')+'\nMódosítási kérés: '+note,updatedAt:now,history:[...x.history,{at:now,event:'revision_requested',note}]}));
+ mailer.adminNewRequest(updated).catch(e=>console.error('[mail]',e.message));
+ res.json({request:R.toPublic(updated)});
+});
+
 module.exports = router;

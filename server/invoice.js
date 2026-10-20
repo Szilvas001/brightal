@@ -66,12 +66,9 @@ function buildInvoiceData(request) {
     paymentMethod: cfg.invoice.paymentMethod,
     lang: request.lang === 'en' ? 'en' : 'hu',
     customer: {
-      name: c.name || 'Vásárló',
+      name: request.billing?.name || c.name || 'Vásárló',
       email: c.email || '',
       phone: c.phone || '',
-      /* A rendszer nem kér számlázási címet — ha az ügyfél megadta a
-         fiókjában, az onnan jön. Enélkül a szolgáltató az e-mail
-         alapján rögzíti, és a hiányzó címet kézzel kell pótolni. */
       country: (request.billing && request.billing.country) || 'Magyarország',
       zip: (request.billing && request.billing.zip) || '',
       city: (request.billing && request.billing.city) || '',

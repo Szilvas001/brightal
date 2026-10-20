@@ -82,63 +82,17 @@ const money = v => new Intl.NumberFormat('hu-HU').format(v) + ' ' + cfg.currency
    KONKRÉT ÉRTESÍTÉSEK
    ══════════════════════════════════════════════════════════════════ */
 
-/** 1) Kérés beérkezett — a vőlegénynek */
-function requestReceived(req_, lang = 'hu') {
-  const hu = lang === 'hu';
-  const subject = hu
-    ? `Megkaptuk a képet — ${req_.requestNumber}`
-    : `We received your photo — ${req_.requestNumber}`;
-  const url = `${cfg.publicUrl}/orders`;
-  const text = hu
-    ? `Kedves ${req_.customer.name}!\n\nMegkaptuk a feltöltött gyűrűképet. Azonosító: ${req_.requestNumber}\n\n`
-    + `Ötvösünk kb. ${cfg.shop.reviewHours} órán belül átnézi, és egyedi árajánlatot készít.\n`
-    + `Amint kész, a fiókodban a "Rendeléseim" menüpontban megjelenik az ár, és ott tudsz fizetni.\n\n${url}\n\nÜdvözlettel,\n${cfg.shop.name}`
-    : `Dear ${req_.customer.name},\n\nWe have received your ring photo. Reference: ${req_.requestNumber}\n\n`
-    + `Our goldsmith will review it within approximately ${cfg.shop.reviewHours} hour(s) and prepare a personal quote.\n`
-    + `Once ready, the price will appear under "My orders" in your account, where you can pay.\n\n${url}\n\nWarm regards,\n${cfg.shop.name}`;
-  const html = wrap(hu ? 'Megkaptuk a képet' : 'We received your photo', `
-    <p style="color:#4A2C1F;line-height:1.75;font-size:15px">${hu ? 'Kedves' : 'Dear'} ${req_.customer.name},</p>
-    <p style="color:#4A2C1F;line-height:1.75;font-size:15px">${hu
-      ? `Megkaptuk a feltöltött gyűrűképet. Ötvösünk kb. <strong>${cfg.shop.reviewHours} órán belül</strong> átnézi, és egyedi árajánlatot készít.`
-      : `We have received your ring photo. Our goldsmith will review it within approximately <strong>${cfg.shop.reviewHours} hour(s)</strong> and prepare a personal quote.`}</p>
-    <div style="background:#FDF2EC;border-radius:8px;padding:14px 18px;margin:20px 0;font-family:Helvetica,Arial,sans-serif;font-size:13px;color:#3B2119">
-      ${hu ? 'Azonosító' : 'Reference'}: <strong>${req_.requestNumber}</strong>
-    </div>
-    <a href="${url}" style="display:inline-block;background:#3B2119;color:#E3B79F;padding:13px 28px;border-radius:6px;text-decoration:none;font-family:Helvetica,Arial,sans-serif;font-size:12px;letter-spacing:2px">
-      ${hu ? 'RENDELÉSEIM' : 'MY ORDERS'}</a>`);
-  return send(req_.customer.email, subject, text, html);
+const escapeHtml=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function notice(r,subject,text){return send(r.customer.email,subject,text,wrap(subject,`<div style="white-space:pre-wrap;line-height:1.7">${escapeHtml(text)}</div>`));}
+function offerText(r){const o=r.finalOffer;if(!o)return `Azonosító: ${r.requestNumber}\nÁr: ${money(r.price)}`;return `Azonosító: ${r.requestNumber}\n${o.specification}\n\nÉkszer: ${money(o.productPrice)}\nSzállítás: ${money(o.shippingFee)}\nFizetendő végösszeg: ${money(o.total)}\nGyártási idő: ${o.productionTime}\nÁtadás / feladás: ${o.deliveryTime}\nSzállítás: ${o.shippingMethod}\nFizetési feltételek: ${o.paymentTerms}\nÉrvényesség: ${o.validUntil}\nLátványterv: ${o.previewUrl.startsWith('/')?cfg.publicUrl:''}${o.previewUrl}\nAjánlat azonosítója: ${o.id}`;}
+function requestReceived(r,lang='hu'){
+ const hu=lang==='hu';
+ return notice(r,`${hu?'Megkaptuk elképzelését':'Your request has arrived'} — ${r.requestNumber}`,hu?`Kedves ${r.customer.name}!\n\nKöszönjük, hogy megosztotta elképzelését a Brightal csapatával. A személyre szabott látványtervet 3 napon belül megküldjük Önnek, a végleges specifikációval, pontos vételárral és várható elkészítési idővel együtt.\n\nEz az üzenet az ajánlatkérés technikai beérkezését igazolja, nem megrendelés-elfogadás és nem keletkeztet fizetési kötelezettséget. A gyártás a végleges terv és ajánlat kifejezett jóváhagyása, a megrendelés elfogadása és az előírt fizetés után indulhat.\n\n${cfg.publicUrl}/orders\n\nBrightal csapata\n${cfg.shop.email}`:`Dear ${r.customer.name},\n\nWe received your request. Within 3 days we will send your personal design, final specification, price and expected delivery time. This receipt is not acceptance of an order and creates no payment obligation.\n\n${cfg.publicUrl}/orders`);
 }
-
-/** 2) Árajánlat elkészült / jóváhagyva — a vőlegénynek */
-function requestApproved(req_, lang = 'hu') {
-  const hu = lang === 'hu';
-  const subject = hu
-    ? `Elkészült az árajánlat — ${req_.requestNumber}`
-    : `Your quote is ready — ${req_.requestNumber}`;
-  const url = `${cfg.publicUrl}/orders`;
-  const text = hu
-    ? `Kedves ${req_.customer.name}!\n\nÖtvösünk elfogadta a kérésed, és elkészítette az árajánlatot.\n\n`
-    + `Azonosító: ${req_.requestNumber}\nÁr: ${money(req_.price)}\n\n`
-    + (req_.adminNote ? `Megjegyzés: ${req_.adminNote}\n\n` : '')
-    + `A fizetéshez lépj be a fiókodba:\n${url}\n\nA gyártás a fizetés beérkezése után ${cfg.shop.productionDaysMin}–${cfg.shop.productionDaysMax} munkanap.\n\nÜdvözlettel,\n${cfg.shop.name}`
-    : `Dear ${req_.customer.name},\n\nOur goldsmith has approved your request and prepared a quote.\n\n`
-    + `Reference: ${req_.requestNumber}\nPrice: ${money(req_.price)}\n\n`
-    + (req_.adminNote ? `Note: ${req_.adminNote}\n\n` : '')
-    + `Sign in to pay:\n${url}\n\nProduction takes ${cfg.shop.productionDaysMin}–${cfg.shop.productionDaysMax} working days after payment.\n\nWarm regards,\n${cfg.shop.name}`;
-  const html = wrap(hu ? 'Elkészült az árajánlat' : 'Your quote is ready', `
-    <p style="color:#4A2C1F;line-height:1.75;font-size:15px">${hu ? 'Kedves' : 'Dear'} ${req_.customer.name},</p>
-    <p style="color:#4A2C1F;line-height:1.75;font-size:15px">${hu
-      ? 'Ötvösünk elfogadta a kérésed, és elkészítette az egyedi árajánlatot.'
-      : 'Our goldsmith has approved your request and prepared a personal quote.'}</p>
-    <div style="background:#FDF2EC;border-radius:8px;padding:18px;margin:20px 0;font-family:Helvetica,Arial,sans-serif;color:#3B2119">
-      <div style="font-size:12px;color:#AA8B7B">${hu ? 'Azonosító' : 'Reference'}: ${req_.requestNumber}</div>
-      <div style="font-size:28px;margin-top:8px">${money(req_.price)}</div>
-    </div>
-    ${req_.adminNote ? `<p style="color:#4A2C1F;line-height:1.7;font-size:14px;font-style:italic">"${req_.adminNote}"</p>` : ''}
-    <a href="${url}" style="display:inline-block;background:#E3B79F;color:#3B2119;padding:13px 28px;border-radius:6px;text-decoration:none;font-family:Helvetica,Arial,sans-serif;font-size:12px;letter-spacing:2px">
-      ${hu ? 'FIZETÉS' : 'PAY NOW'}</a>`);
-  return send(req_.customer.email, subject, text, html);
+function requestApproved(r,lang='hu'){
+ return notice(r,`${lang==='hu'?'Látványterv és végleges ajánlat':'Final design and offer'} — ${r.requestNumber}`,`Kedves ${r.customer.name}!\n\n${offerText(r)}\n\nA tervet és a végleges rendelési összesítőt a fiókjában ellenőrizheti és hagyhatja jóvá: ${cfg.publicUrl}/orders\n\nMódosítási igényét a jóváhagyás előtt jelezheti: ${cfg.shop.email}\nA gyártás nem indul el az ajánlat megküldésével.\nÁSZF: ${cfg.publicUrl}/aszf\nAdatkezelés: ${cfg.publicUrl}/adatkezeles`);
 }
+function contractAccepted(r){return notice(r,`Megrendelés elfogadva — ${r.requestNumber}`,`Kedves ${r.customer.name}!\n\nMegrendelését elfogadtuk. Fizetése beérkezett, a teljesítés előtti ellenőrzések lezárultak.\n\n${offerText(r)}\n\nJóváhagyás: ${r.acceptance?.at}\nSzállítási cím: ${r.acceptance?.shippingAddress}\nA gyártás és a kiszállítás állapotát fiókjában követheti: ${cfg.publicUrl}/orders`);}
 
 /** 3) Elutasítva */
 function requestRejected(req_, lang = 'hu') {
@@ -155,24 +109,8 @@ function requestRejected(req_, lang = 'hu') {
     `<p style="color:#4A2C1F;line-height:1.75;font-size:15px">${text.split('\n\n').slice(1).join('<br><br>')}</p>`));
 }
 
-/** 4) Fizetés beérkezett */
-function paymentReceived(req_, lang = 'hu') {
-  const hu = lang === 'hu';
-  const subject = hu ? `Fizetés megérkezett — ${req_.requestNumber}` : `Payment received — ${req_.requestNumber}`;
-  const text = hu
-    ? `Kedves ${req_.customer.name}!\n\nA fizetés megérkezett. Köszönjük!\n\nAzonosító: ${req_.requestNumber}\nÖsszeg: ${money(req_.price)}\n\n`
-    + `A gyártás elkezdődött, ${cfg.shop.productionDaysMin}–${cfg.shop.productionDaysMax} munkanapot vesz igénybe.\n\nÜdvözlettel,\n${cfg.shop.name}`
-    : `Dear ${req_.customer.name},\n\nYour payment has been received. Thank you!\n\nReference: ${req_.requestNumber}\nAmount: ${money(req_.price)}\n\n`
-    + `Production has started and takes ${cfg.shop.productionDaysMin}–${cfg.shop.productionDaysMax} working days.\n\nWarm regards,\n${cfg.shop.name}`;
-  return send(req_.customer.email, subject, text, wrap(hu ? 'Fizetés megérkezett' : 'Payment received', `
-    <p style="color:#4A2C1F;line-height:1.75;font-size:15px">${hu ? 'A fizetés megérkezett. Köszönjük!' : 'Your payment has been received. Thank you!'}</p>
-    <div style="background:#FDF2EC;border-radius:8px;padding:18px;margin:20px 0;font-family:Helvetica,Arial,sans-serif">
-      <div style="font-size:12px;color:#AA8B7B">${req_.requestNumber}</div>
-      <div style="font-size:26px;color:#3B2119;margin-top:6px">${money(req_.price)}</div>
-    </div>
-    <p style="color:#4A2C1F;line-height:1.75;font-size:15px">${hu
-      ? `A gyártás elkezdődött, <strong>${cfg.shop.productionDaysMin}–${cfg.shop.productionDaysMax} munkanapot</strong> vesz igénybe.`
-      : `Production has started and takes <strong>${cfg.shop.productionDaysMin}–${cfg.shop.productionDaysMax} working days</strong>.`}</p>`));
+function paymentReceived(r,lang='hu') {
+ return notice(r,`${lang==='hu'?'Fizetés beérkezett':'Payment received'} — ${r.requestNumber}`,`Kedves ${r.customer.name}!\n\nFizetése beérkezett. Köszönjük!\n\n${offerText(r)}\n\nA fizetés visszaigazolása önmagában nem jelenti a gyártás megkezdését. A megrendelés elfogadásáról és teljesítéséről külön értesítjük. A számlát a számlázási szolgáltatón keresztül küldjük meg.\n\n${cfg.publicUrl}/orders`);
 }
 
 /** 5) Admin értesítés új kérésről */
@@ -188,6 +126,6 @@ function adminNewRequest(req_) {
 }
 
 module.exports = {
-  send, requestReceived, requestApproved, requestRejected, paymentReceived, adminNewRequest,
+  send, contractAccepted, requestReceived, requestApproved, requestRejected, paymentReceived, adminNewRequest,
   isSimulated: () => !transporter
 };

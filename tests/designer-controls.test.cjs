@@ -1,16 +1,14 @@
 const test=require('node:test'),assert=require('node:assert/strict'),{createHash}=require('node:crypto');
 let modules;
-async function setup(){if(!modules)modules=(async()=>{const S=await import('../public/builder/state.mjs');const C=await import('../public/builder/catalog.mjs');const M=await import('../public/builder/model.mjs');const L=await import('../public/builder/contemporary.mjs');const F=await import('../public/builder/finished-model.mjs');await (await import('../public/builder/kernel.mjs')).initKernel();return {...S,...C,...M,...L,...F};})();return modules;}
+async function setup(){if(!modules)modules=(async()=>{const S=await import('../public/builder/state.mjs');const C=await import('../public/builder/catalog.mjs');const M=await import('../public/builder/model.mjs');const L=await import('../public/builder/contemporary.mjs');const F=await import('../public/builder/finished-model.mjs');const P=await import('../public/builder/progressive.mjs');await (await import('../public/builder/kernel.mjs')).initKernel();return {...S,...C,...M,...L,...F,...P};})();return modules;}
 function dispose(model){const geometries=new Set(),materials=new Set();model.group.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)materials.add(o.material);});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());}
 function meshSignature(model){const h=createHash('sha256');model.group.updateMatrixWorld(true);model.group.traverse(o=>{if(!o.isMesh)return;const a=o.geometry.attributes.position.array;assert.ok(a.every(Number.isFinite));h.update(Buffer.from(a.buffer,a.byteOffset,a.byteLength));h.update(JSON.stringify(o.matrixWorld.elements));});const result=h.digest('hex');dispose(model);return result;}
-function layoutSignature(s,modernLayout){const l=modernLayout(s);return JSON.stringify({inner:l.inner,stones:l.stones,profile:l.profileExponent,body:Array.from({length:61},(_,i)=>{const a=i*Math.PI*2/61;return [l.widthAt(a),l.thicknessAt(a),l.shift(a),...Array.from({length:19},(_,j)=>l.relief(a,j*Math.PI*2/19))];}),// Collar dimensions and groove cuts are constructed separately from the band sweep.
-collars:l.stones.map(stone=>[stone.width+2*s.bezelWall,stone.length+2*s.bezelWall]),grooves:['open','stack','openpair'].includes(s.style)?[s.gap,s.layers,s.sculpt]:null});}
 const ticks=(min,max,step)=>Array.from({length:Math.floor((max-min)/step+1e-7)+1},(_,i)=>Number((min+i*step).toFixed(2)));
 function ranges(s,A){const {isModern,isFashion,ATELIER_STYLES,SQUARE_SHAPES,modernLayout}=A;
  const r={size:ticks(44,72,1),width:ticks(isModern(s)?A.minBandWidth(s):1.6,isModern(s)?10:5,.1),thickness:ticks(isModern(s)?A.minBandThickness(s):1.4,isModern(s)?3.4:3,.1)};
  if(isModern(s)){
   Object.assign(r,{stoneWidth:ticks(1.5,A.maxStoneWidth(s),.1),stoneDepth:ticks(1,A.maxStoneDepth(s),.1),bezelWall:ticks(.35,.7,.05)});
-  if(!SQUARE_SHAPES.includes(s.shape))r.stoneLength=ticks(s.stoneWidth,A.maxStoneLength(s),.1);
+  if(!SQUARE_SHAPES.includes(s.shape))r.stoneLength=ticks(A.minStoneLength(s),A.maxStoneLength(s),.1);
   if(!A.singleStone(s)&&!['openpair','fullcircle'].includes(s.style))r.dailyCount=ticks(1,A.maxDailyStones(s),1);
   if(modernLayout(s).stones.length>1&&s.style!=='fullcircle')r.dailySpacing=ticks(0,.5,.05);
   if(isFashion(s)&&s.style!=='stack'||['chevron','ribbon','crown','contour','curvedoval','wavebezel','asymmetric'].includes(s.style))r.sculpt=ticks(.4,2.5,.1);
@@ -30,7 +28,7 @@ function ranges(s,A){const {isModern,isFashion,ATELIER_STYLES,SQUARE_SHAPES,mode
 }
 test('every available slider tick changes its requested parameter and ring geometry for all 44 presets',async()=>{
  const A=await setup();let checks=0;
- for(const {config:s}of A.PRESETS){for(const [key,values]of Object.entries(ranges(s,A))){let previous;for(const value of values){const next=A.normalize({...s,[key]:value});assert.equal(next[key],value,`${s.style}/${key}: ${value} must be retained`);assert.deepEqual(A.normalize(next),next,`${s.style}/${key}: normalization must be stable`);const sig=A.isModern(next)?layoutSignature(next,A.modernLayout):meshSignature(A.buildRing(next,null));assert.notEqual(sig,previous,`${s.style}/${key}: adjacent slider steps must affect the model`);previous=sig;checks++;}}}
+ for(const {config:s}of A.PRESETS){for(const [key,values]of Object.entries(ranges(s,A))){let previous;for(const value of values){const next=A.normalize({...s,[key]:value});assert.equal(next[key],value,`${s.style}/${key}: ${value} must be retained`);assert.deepEqual(A.normalize(next),next,`${s.style}/${key}: normalization must be stable`);const sig=meshSignature(A.isModern(next)&&!['bezelWall','gap','layers'].includes(key)?A.previewModel(next,null):A.buildRing(next,null));assert.notEqual(sig,previous,`${s.style}/${key}: adjacent slider steps must affect the model`);previous=sig;checks++;}}}
  console.log(`Slider checks: ${checks}`);
 });
 test('every cut and orientation renders finite geometry from every starting style, including dimensional limits',async()=>{
@@ -56,7 +54,16 @@ test('all metal, finish, gemstone palette and light options reach the finished m
  // Detailed finish/material checks for every starting style; the expensive
  // Boolean geometry is shared across material-only specifications.
  for(const {config:s}of A.PRESETS){for(const finish of A.OPTIONS.finish){const m=A.buildFinishedRing(A.normalize({...s,finish}));const metals=[];m.group.traverse(o=>{if(o.isMesh&&!o.userData.gem)metals.push(o.material);});assert.ok(metals.every(m=>m.roughness===(A.isModern(s)?{polished:.13,satin:.3,brushed:.4}:{polished:.105,satin:.29,brushed:.4})[finish]),s.style+'/'+finish);dispose(m);checks++;}
-  for(const key of ['metal','gemTone','light','color','clarity','origin','certificate'])for(const value of A.OPTIONS[key]){const c=A.normalize({...s,[key]:value});assert.equal(c[key],value,s.style+'/'+key);assert.deepEqual(A.normalize(JSON.parse(JSON.stringify(c))),c);checks++;}
+  for(const key of ['metal','gemTone','light','color','clarity','origin','certificate'])for(const value of A.OPTIONS[key]){const c=A.normalize({...s,[key]:value});assert.equal(c[key],value,s.style+'/'+key);assert.deepEqual(A.normalize(JSON.parse(JSON.stringify(c))),c);
+   if(['metal','gemTone','light','color'].includes(key)){
+    const model=A.previewModel(c,null),T=await import('three');
+    if(key==='metal'){let found=false;model.group.traverse(o=>{if(o.isMesh&&!o.userData.gem&&o.material.color.equals(new T.Color(A.METAL_COLORS[value])))found=true;});assert.ok(found,s.style+'/'+value);}
+    const {GEM_TONES}=await import('../public/builder/optics.mjs'),u=model.gems[0].material.uniforms,data=GEM_TONES[c.gemTone];
+    assert.equal(u.ior.value,data.ior);assert.equal(u.dispersion.value,data.dispersion*c.fire);
+    const expected=new T.Vector3(...data.absorption);if(c.gemTone==='ice')expected.add(new T.Vector3(0,(c.color.charCodeAt(0)-68)*.003,(c.color.charCodeAt(0)-68)*.012));assert.ok(u.absorption.value.distanceTo(expected)<1e-9);
+    assert.equal(u.lightAngle.value,c.light==='evening'?.7:c.light==='daylight'?-.5:0);dispose(model);
+   }
+   checks++;}
  }
  for(const {config:s}of A.PRESETS.filter(p=>!A.isModern(p.config)))for(const headMetal of A.OPTIONS.headMetal){const c=A.normalize({...s,metal:'rose14',headMetal}),m=A.buildFinishedRing(c);const desired=A.METAL_COLORS[headMetal==='match'?c.metal:headMetal];const T=await import('three'),expected=new T.Color(desired);let found=false;m.group.traverse(o=>{if(!o.isMesh||o.userData.gem)return;const attr=o.geometry.attributes.color;if(attr){for(let i=0;i<attr.count;i++)if(Math.abs(attr.getX(i)-expected.r)<1e-6&&Math.abs(attr.getY(i)-expected.g)<1e-6&&Math.abs(attr.getZ(i)-expected.b)<1e-6)found=true;}else if(o.material.color.equals(expected))found=true;});assert.ok(found,`${s.style}/${headMetal}: detailed model must preserve head alloy`);dispose(m);checks++;}
  console.log(`Material/specification checks: ${checks}`);

@@ -14,17 +14,35 @@ export const DAILY_STYLES = ['bezelrow','scatter','chevron','ribbon','graduated'
 export const isDaily = s => DAILY_STYLES.includes(s.style);
 export const SQUARE_SHAPES = ['round','princess','asscher','cushion'];
 export const singleStone = s => ['band','eastwest','curvedoval','wavebezel'].includes(s.style) || isFashion(s);
-export const maxStoneWidth = s => s.style === 'openpair' ? 2.5 : 5;
+export const CUT_RATIO = {round:1, oval:1.35, cushion:1, emerald:1.32, pear:1.5, princess:1, marquise:1.8, radiant:1.4, asscher:1};
+export const minCutRatio = shape => SQUARE_SHAPES.includes(shape) ? 1 : shape==='marquise' ? 1.5 : 1.1;
+export const maxStoneWidth = s => Math.min(s.style === 'openpair' ? 2.5 : 5, Math.floor(maxStoneLength(s)/Math.max(minCutRatio(s.shape),s.style==='alternating'&&s.dailyCount>1?minCutRatio(s.sideShape):1)*10+1e-8)/10);
+export const minStoneLength = s => Math.ceil(s.stoneWidth*minCutRatio(s.shape)*10-1e-8)/10;
+export function stoneDimensions(s, shape=s.shape) {
+  const length=shape===s.shape?s.stoneLength:SQUARE_SHAPES.includes(shape)?s.stoneWidth:Math.min(maxStoneLength(s),s.stoneWidth*CUT_RATIO[shape]);
+  return {width:s.stoneWidth,length,depth:s.stoneDepth};
+}
+export const longestStone = s => Math.max(s.stoneLength,s.style==='alternating'&&s.dailyCount>1?stoneDimensions(s,s.sideShape).length:0);
+// A cut click must set the cut's proportions; merging a round stone's equal
+// dimensions into an oval used to cancel the outline's elongation completely.
+export function applyDesignPatch(current, patch) {
+  const next={...current,...patch};
+  if(isModern(next)&&patch.shape&&patch.shape!==current.shape&&patch.stoneLength===undefined){
+    next.stoneWidth=Math.min(next.stoneWidth,maxStoneWidth(next));
+    next.stoneLength=Math.min(maxStoneLength(next),next.stoneWidth*CUT_RATIO[patch.shape]);
+  }
+  return normalize(next);
+}
 export const maxStoneLength = s => s.style === 'openpair' ? 3 : 6;
 export const maxStoneDepth = s => Math.min(s.style === 'openpair' ? 1.5 : 3.5, Math.floor(s.stoneWidth*.75*10+1e-8)/10);
 export const minBandThickness = s => Math.ceil(Math.max(1.4,s.stoneDepth*.72+.8)*10-1e-8)/10;
-export const minBandWidth = s => Math.ceil(Math.max(1.6,(s.orientation==='east'?s.stoneWidth:s.stoneLength)+2*s.bezelWall+.6,s.style==='stack'?s.layers*1.25+(s.layers-1)*s.gap:0)*10-1e-8)/10;
+export const minBandWidth = s => Math.ceil(Math.max(1.6,(s.orientation==='east'?s.stoneWidth:longestStone(s))+2*s.bezelWall+.6,s.style==='stack'?s.layers*1.25+(s.layers-1)*s.gap:0)*10-1e-8)/10;
 export const maxAccentSize = s => Math.floor(Math.min(2,s.width*(['split','tension'].includes(s.style)?.55:1)/(s.accentRows+.4))*10+1e-8)/10;
 export const isModern = s => isDaily(s) || isFashion(s) || ['band','eternity'].includes(s.style);
 export function maxDailyStones(s) {
   if(singleStone(s)) return 1;
   const r=s.size/(2*Math.PI)+Math.max(s.thickness,s.stoneDepth*.72+.8);
-  const step=2*Math.asin(Math.min(.7,(Math.max(s.stoneLength,s.stoneWidth)+2*s.bezelWall+s.dailySpacing+.35)/(2*r)));
+  const step=2*Math.asin(Math.min(.7,(Math.max(longestStone(s),s.stoneWidth)+2*s.bezelWall+s.dailySpacing+.35)/(2*r)));
   return Math.max(1,Math.min(9,Math.floor(2.2/step)+1));
 }
 export const OPTIONS = {
@@ -231,7 +249,9 @@ export function normalize(input = {}) {
   if(s.style==='openpair') {s.dailyCount=2;s.stoneWidth=Math.min(2.5,s.stoneWidth);s.stoneLength=Math.min(3,s.stoneLength);s.stoneDepth=Math.min(1.5,s.stoneDepth);s.gap=Math.max(.5,s.gap);}
   if(isModern(s)) {
     s.stoneWidth=Math.min(s.stoneWidth,maxStoneWidth(s));
-    s.stoneLength=SQUARE_SHAPES.includes(s.shape)?s.stoneWidth:Math.max(s.stoneWidth,Math.min(s.stoneLength,maxStoneLength(s)));
+    // Repair older saved elongated cuts whose two axes were accidentally equal.
+    if(!SQUARE_SHAPES.includes(s.shape)&&s.stoneLength<=s.stoneWidth) s.stoneLength=Math.round(s.stoneWidth*CUT_RATIO[s.shape]*10)/10;
+    s.stoneLength=SQUARE_SHAPES.includes(s.shape)?s.stoneWidth:Math.max(minStoneLength(s),Math.min(s.stoneLength,maxStoneLength(s)));
     s.stoneDepth=Math.min(s.stoneDepth,maxStoneDepth(s));
     s.thickness=Math.max(s.thickness,minBandThickness(s));
     s.width=Math.max(s.width,minBandWidth(s));
