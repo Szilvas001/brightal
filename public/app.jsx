@@ -896,7 +896,7 @@ function Nav() {
   useEffect(() => { setMob(false); }, [page]);
   useEffect(() => { document.body.style.overflow = mob ? 'hidden' : ''; }, [mob]);
 
-  const items = [...(isAdmin ? [['admin',t('nav_admin')]] : []), ['builder',lang==='en'?'Ring designer':'Gyűrűtervező'], ['upload',lang==='en'?'Upload a photo':'Képfeltöltés'], ['diamonds',lang==='en'?'Lab-grown diamonds':'Laboratóriumi gyémántok']];
+  const items = [['diamonds','SHOP'], ['builder',lang==='en'?'COLLECTIONS':'KOLLEKCIÓK'], ['about',lang==='en'?'ABOUT':'RÓLUNK'], ['inspiration',lang==='en'?'INSPIRATION':'INSPIRÁCIÓ']];
 
   const LangSwitch = ({ block }) => <div className={'lang-switch' + (block ? ' block' : '')}>
     <Ico.globe s={13} />
@@ -914,12 +914,12 @@ function Nav() {
         <div className="nav-links">
           {items.map(([id, label]) =>
             <button key={id} className={'nav-link' + (id === 'builder' ? ' nav-designer' : '') + (page === id ? ' active' : '')} onClick={() => navigate(id)}>{id === 'builder' && <Ico.gem s={16}/>} {label}</button>)}
-          {user && !isAdmin &&
-            <button className={'nav-link' + (page === 'orders' ? ' active' : '')} onClick={() => navigate('orders')}>{t('nav_orders')}</button>}
+
         </div>
 
         <div className="nav-actions">
-          <LangSwitch />
+          <div className="nav-language"><LangSwitch /></div>
+          <a className="nav-icon" href="/diamonds#diamond-search" aria-label={lang==='en'?'Search':'Keresés'}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></a>
           {user ? <div className="user-chip" tabIndex={0} aria-label={t('nav_account')}>
             {user.picture
               ? <img src={user.picture} alt="" referrerPolicy="no-referrer" />
@@ -935,7 +935,7 @@ function Nav() {
               <button onClick={logout}>{t('nav_logout')}</button>
             </div>
           </div> : <button className="nav-profile" aria-label={t('nav_login')} title={t('nav_login')} onClick={() => setAuthModal('login')}><Ico.user s={22}/></button>}
-          {!isAdmin && <button className="btn btn-gold btn-sm hide-mob" onClick={() => navigate('upload')}>{t('nav_upload')}</button>}
+          <a className="nav-icon" href="/diamonds#diamond-cart" aria-label={lang==='en'?'Cart':'Kosár'}><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"><path d="M3 4h2l2.5 12h11l2-9H6"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg></a>
           <button className="burger" aria-label={lang==='en'?'Menu':'Menü'} aria-expanded={mob} onClick={() => setMob(m => !m)}>
             <span style={mob ? { transform: 'rotate(45deg) translate(3px,4px)' } : null} />
             <span style={mob ? { opacity: 0 } : null} />
@@ -946,7 +946,7 @@ function Nav() {
     </nav>
 
     {mob && <div className="mobile-menu">
-      {items.map(([id, label]) => <button key={id} className={id === 'builder' ? 'nav-designer' : undefined} onClick={() => navigate(id)}>{id === 'builder' && <Ico.gem s={16}/>} {label}</button>)}
+      {[...items,['upload',t('nav_upload')],...(isAdmin?[['admin',t('nav_admin')]]:[])].map(([id, label]) => <button key={id} className={id === 'builder' ? 'nav-designer' : undefined} onClick={() => navigate(id)}>{id === 'builder' && <Ico.gem s={16}/>} {label}</button>)}
       {user && !isAdmin && <button onClick={() => navigate('orders')}>{t('nav_orders')}</button>}
       {user && !isAdmin && <button onClick={() => navigate('account')}>{t('nav_account')}</button>}
       <div style={{ marginTop: 22, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -963,7 +963,7 @@ function Nav() {
 /* ═══════════ LÁBLÉC ═══════════ */
 
 function Footer() {
-  const { t, navigate, config, isAdmin, setConsent } = useA();
+  const { t, navigate, config, isAdmin, setConsent, lang, setLang } = useA();
   const shop = (config && config.shop) || {};
   const company = (config && config.company) || {};
   return <footer className="footer">
@@ -1005,6 +1005,7 @@ function Footer() {
       {company.taxNumber ? ` · ${t('lg_tax')}: ${company.taxNumber}` : ''}
     </div>}
     <div className="footer-bottom">
+      <div className="lang-switch">{['hu','en'].map(l=><button key={l} className={lang===l?'on':''} onClick={()=>setLang(l)} aria-label={l==='hu'?'Magyar':'English'}>{l.toUpperCase()}</button>)}</div>
       <span>© {new Date().getFullYear()} BRIGHTAL — {t('footer_rights')}</span>
       <div className="pay-badges">
         <span className="pay-badge">BARION</span>
@@ -1173,11 +1174,11 @@ function HomePage() {
           {lang==='en'?'Timeless beauty,':'Időtlen szépség,'}<br />{lang==='en'?'for every moment.':'minden pillanatra.'}
         </h1>
         <div className="fade-in d1 rule" />
-        <p className="fade-in d2 hero-sub">{lang==='en'?'Fine details, precious materials. Jewelry made to become part of your story.':'Finom részletek, prémium anyagok, az időtlen elegancia jegyében.'}</p>
+        <p className="fade-in d2 hero-sub">{lang==='en'?<>Fine details, premium materials,<br /> in the spirit of timeless elegance.</>:<>Finom részletek, prémium anyagok,<br /> az időtlen elegancia jegyében.</>}</p>
         <div className="fade-in d3 hero-cta">
           <button className="btn btn-dark btn-lg" onClick={() => navigate('builder')}>{lang==='en'?'Explore the collection':'Kollekció felfedezése'}</button>
-          <button className="btn btn-outline btn-lg" onClick={() => navigate('upload')}>
-            {lang==='en'?'Your own design':'Saját elképzelésem'}
+          <button className="btn btn-outline btn-lg" onClick={() => navigate('builder')}>
+            {lang==='en'?'New collection':'Új kollekció'}
           </button>
         </div>
         <div className="fade-in d3 hero-trust">
@@ -2514,6 +2515,7 @@ function DiamondsPage() {
  const dialog=useRef(null),opener=useRef(null),orderKey=useRef(null);const money=x=>x==null?'Ár egyeztetés alatt':new Intl.NumberFormat(lang==='en'?'en-GB':'hu-HU',{style:'currency',currency:'HUF',maximumFractionDigits:0}).format(x);
  useEffect(()=>{let alive=true;const timer=setTimeout(()=>api('/diamonds/configured?'+new URLSearchParams(Object.entries(q).filter(([,v])=>v!==''))).then(x=>{if(alive){setData(x);setError('');}}).catch(()=>{if(alive)setError('A választott paraméterekhez nem tölthető be az ár. Ellenőrizd a karátot és az admin árfolyam-beállítását.');}),180);return()=>{alive=false;clearTimeout(timer);};},[q]);
  useEffect(()=>{store.set('brightal-diamond-cart',cart);},[cart]);
+ useEffect(()=>{const focus=()=>{const id=location.hash.slice(1);if(['diamond-search','diamond-cart'].includes(id)){const el=document.getElementById(id);el?.scrollIntoView({block:'start'});el?.focus({preventScroll:true});}};focus();window.addEventListener('hashchange',focus);return()=>window.removeEventListener('hashchange',focus);},[]);
  const choose=(x,event)=>{opener.current=event.currentTarget;setSelected(x);orderKey.current=crypto.randomUUID();setTerms(false);dialog.current.showModal();};
  const close=()=>{dialog.current.close();setSelected(null);opener.current?.focus();};
  const filtered=(data?.items||[]).filter(x=>{
@@ -2525,9 +2527,9 @@ function DiamondsPage() {
  const labels={shape:'Forma',color:'Szín',clarity:'Tisztaság',cut:'Csiszolás',polish:'Polírozás',symmetry:'Szimmetria',fluorescence:'Fluoreszcencia',carat:'Karát',price:'Ár (Ft)',ratio:'Méretarány',depth:'Depth (%)',table:'Table (%)'};
  return <div className="page diamond-page"><div className="wrap"><span className="eyebrow">BRIGHTAL / LOOSE DIAMONDS</span><h1 className="h-display">Laboratóriumi gyémántok</h1><p className="lead-sm">Egyetlen kő. Végtelen lehetőség.</p>{data?.items.some(x=>x.demo)&&<p className="diamond-demo" role="status">Fejlesztési mintakatalógus. A mintákhoz nem tartozik IGI-tanúsítvány, és nem vásárolhatók meg.</p>}
  {error&&<p role="alert">{error} <button onClick={()=>location.reload()}>Újrapróbálás</button></p>}
- {cart.length>0&&<aside className="diamond-cart"><strong>Kosár · {cart.length} kő</strong>{cart.map(id=>{const x=data?.items.find(x=>x.id===id);return <div key={id}><button onClick={e=>x&&choose(x,e)} disabled={!x}>{x?`${x.shape} · ${x.carat} ct · ${money(x.price)}`:id}</button><button onClick={()=>setCart(cart.filter(y=>y!==id))}>Eltávolítás</button></div>;})}<small>A kosár nem foglalja le a követ. A kövek egyenként fizethetők ki.</small></aside>}
+ <aside id="diamond-cart" tabIndex={-1} className="diamond-cart"><strong>Kosár · {cart.length} kő</strong>{!cart.length&&<p>A kosarad még üres.</p>}{cart.map(id=>{const x=data?.items.find(x=>x.id===id);return <div key={id}><button onClick={e=>x&&choose(x,e)} disabled={!x}>{x?`${x.shape} · ${x.carat} ct · ${money(x.price)}`:id}</button><button onClick={()=>setCart(cart.filter(y=>y!==id))}>Eltávolítás</button></div>;})}<small>A kosár nem foglalja le a követ. A kövek egyenként fizethetők ki.</small></aside>
  <DiamondSourcing/>
- <div className="diamond-layout"><aside className="diamond-filters" aria-label="Gyémántszűrők"><h2>Találd meg a sajátodat</h2>{['shape','color','clarity'].map(key=><label key={key}>{labels[key]}<select value={q[key]||''} onChange={e=>setQ({...q,[key]:e.target.value})}><option value="">Mind</option>{data?.facets[key].map(v=><option key={v}>{v}</option>)}</select></label>)}{['carat','price'].map(key=><fieldset key={key}><legend>{labels[key]}</legend>{['Min','Max'].map((end,i)=><input key={end} type="number" min="0" step="any" placeholder={i?'Maximum':'Minimum'} aria-label={labels[key]+(i?' maximum':' minimum')} value={q[key+end]||''} onChange={e=>setQ({...q,[key+end]:e.target.value})}/>)}</fieldset>)}
+ <div className="diamond-layout"><aside id="diamond-search" tabIndex={-1} className="diamond-filters" aria-label="Gyémántszűrők"><h2>Találd meg a sajátodat</h2>{['shape','color','clarity'].map(key=><label key={key}>{labels[key]}<select value={q[key]||''} onChange={e=>setQ({...q,[key]:e.target.value})}><option value="">Mind</option>{data?.facets[key].map(v=><option key={v}>{v}</option>)}</select></label>)}{['carat','price'].map(key=><fieldset key={key}><legend>{labels[key]}</legend>{['Min','Max'].map((end,i)=><input key={end} type="number" min="0" step="any" placeholder={i?'Maximum':'Minimum'} aria-label={labels[key]+(i?' maximum':' minimum')} value={q[key+end]||''} onChange={e=>setQ({...q,[key+end]:e.target.value})}/>)}</fieldset>)}
  <details><summary>Részletes szűrők</summary>{['cut','polish','symmetry','fluorescence'].map(key=><label key={key}>{labels[key]}<select value={q[key]||''} onChange={e=>setQ({...q,[key]:e.target.value})}><option value="">Mind</option>{data?.facets[key].map(v=><option key={v}>{v}</option>)}</select></label>)}{['ratio','depth','table'].map(key=><fieldset key={key}><legend>{labels[key]}</legend>{['Min','Max'].map((end,i)=><input key={end} type="number" min="0" step="any" placeholder={i?'Maximum':'Minimum'} aria-label={labels[key]+end} value={q[key+end]||''} onChange={e=>setQ({...q,[key+end]:e.target.value})}/>)}</fieldset>)}<label>IGI-azonosító<input value={q.certificate||''} onChange={e=>setQ({...q,certificate:e.target.value})}/></label></details><button className="btn btn-ghost" onClick={()=>setQ({})}>Szűrők törlése</button></aside>
  <section><div className="diamond-results"><span role="status">{data?`${filtered.length} gyémánt`:'Betöltés…'}</span><label>Rendezés <select value={q.sort||'asc'} onChange={e=>setQ({...q,sort:e.target.value})}><option value="asc">Ár szerint növekvő</option><option value="desc">Ár szerint csökkenő</option></select></label></div><div className="diamond-grid">{!data&&!error&&Array.from({length:6},(_,i)=><div className="diamond-skeleton" key={i}/>)}{filtered.map(x=><button className="diamond-card" key={x.id} onClick={e=>choose(x,e)}><DiamondArtwork stone={x}/><span>{x.fulfilment==='sourced'?'Egyedileg beszerzendő':x.demo?'Fejlesztési minta':'IGI · '+x.certificate?.number}</span><h2>{x.carat.toFixed(2)} ct · {x.shape}</h2><p>{x.color} · {x.clarity} · {x.cut}</p><strong>{money(x.price)}</strong><small>Részletek és 360° nézet ↗</small></button>)}</div>{data&&!filtered.length&&<p>Nincs a szűrésnek megfelelő kő. Módosítsd a feltételeket.</p>}</section></div>
  <dialog ref={dialog} className="diamond-dialog" onCancel={close} aria-label="Gyémánt adatlap"><button className="diamond-close" onClick={close} aria-label="Bezárás">×</button>{selected&&<><h2>{selected.carat} ct · {selected.shape}</h2><div className="diamond-detail"><DiamondScene stone={selected}/><section><p>{selected.illustrative?'Paraméterek alapján beszerzendő gyémánt. A 3D kép és a méretek szemléltető adatok; a tényleges méreteket és tanúsítványt a beszerzéskor adjuk meg.':'Parametrikus szemléltetés; a tényleges követ a tanúsítvány írja le.'}</p><dl>{['shape','carat','color','clarity','cut','polish','symmetry','fluorescence','depth','table','ratio'].map(key=><div key={key}><dt>{labels[key]}</dt><dd>{selected[key]}</dd></div>)}<div><dt>Méretek</dt><dd>{selected.length} × {selected.width} × {selected.height} mm</dd></div></dl>{selected.certificate&&<a href={selected.certificate.url} target="_blank" rel="noopener noreferrer">IGI {selected.certificate.number} ↗</a>}<h3>Bruttó ár: {money(selected.price)}</h3><p>A szállítás egyeztetése külön történik.</p>{selected.purchasable&&!isAdmin?<><button className="btn btn-ghost" onClick={()=>setCart([...new Set([...cart,selected.id])])}>{cart.includes(selected.id)?'Kosárban':'Kosárba'}</button><label><input type="checkbox" checked={terms} onChange={e=>setTerms(e.target.checked)}/> Elfogadom az <a href="/aszf" target="_blank" rel="noopener noreferrer">ÁSZF-et</a>, és tudomásul veszem, hogy egyedileg beszerzendő követ rendelek.</label><button className="btn btn-dark" disabled={!terms||busy} onClick={order}>{busy?'Fizetés indítása…':user?'Vásárlás':'Belépés és vásárlás'}</button></>:<p>{isAdmin&&selected.purchasable?'Vásárláshoz vásárlói fiókkal jelentkezz be.':'Ez a kombináció jelenleg nem vásárolható meg.'}</p>}{error&&<p role="alert">{error}</p>}</section></div></>}</dialog>
