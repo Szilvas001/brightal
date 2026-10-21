@@ -260,7 +260,10 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
   const thumbs = PRESETS.map(p=>thumbnailUrl(p.config));
   const worker = useRef(null);
   const [refining,setRefining] = useState(true);
-  const [family, setFamily] = useState("classic");
+  const [family, setFamily] = useState("all");
+  const [styleSearch, setStyleSearch] = useState("");
+  const controls = useRef(null);
+  useEffect(() => { controls.current?.scrollTo({top:0}); }, [step]);
   useEffect(() => {
     setFamily(current=>inCategory(s.style,current)?current:(CATEGORIES.find(c=>c.styles.includes(s.style))?.id||'all'));
   }, [s.style]);
@@ -357,7 +360,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
       {OPTIONS[key]
         .filter(
           (value) =>
-            key !== "style" || inCategory(value, family),
+            key !== "style" || (inCategory(value, family) && (label(value)+" "+value).toLocaleLowerCase().includes(styleSearch.trim().toLocaleLowerCase())),
         )
         .map((value) => (
           <button
@@ -419,7 +422,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
     </label>
   );
   const slider = (key, title, min, max, increment, unit) => (
-    <label className="rb-slider">
+    <div className="rb-slider">
       <span>
         {title}
         <strong>
@@ -429,12 +432,17 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
       </span>
       <input
         type="range"
+        aria-label={title}
         min={min}
         max={max}
         step={increment}
         value={s[key]}
         onChange={(e) => change({ [key]: Number(e.target.value) })}
       />
+      <input className="rb-exact-value" type="number" aria-label={title + L(' pontos értéke', ' exact value')}
+        min={min} max={max} step={increment} key={key + ':' + s[key]} defaultValue={s[key]}
+        onBlur={e => { const n=Number(e.target.value); if(e.target.value!=='' && Number.isFinite(n)) change({[key]:Math.min(max,Math.max(min,Math.round(n/increment)*increment))}); else e.target.value=s[key]; }}
+        onKeyDown={e => {if(e.key==='Enter')e.currentTarget.blur();}} />
       <small>
         <span>
           {min} {unit}
@@ -443,7 +451,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
           {max} {unit}
         </span>
       </small>
-    </label>
+    </div>
   );
   const save = () => {
     try {
@@ -615,29 +623,25 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
     </>}
   </>;
   const remix = () => {
-    const pick = (values) => values[Math.floor(Math.random() * values.length)];
-    change({
-      ...s,
-      style: pick(FASHION_STYLES),
-      metal: pick(OPTIONS.metal),
-      secondaryMetal: pick(OPTIONS.secondaryMetal),
-      mixedMetal: Math.random() > 0.4,
-      sculpt: pick([0.7, 1.2, 1.8, 2.3]),
-      rhythm: pick([3, 4, 6]),
-      layers: pick([2, 3, 4]),
-      inlay: pick(OPTIONS.inlay),
-      width: pick([1.8, 2.4, 3.2, 4.2]),
-      faceSize: pick([6, 8, 10]),
-    });
-    setStep(0);
-    setFamily("fashion");
-    notify(
-      L(
-        "Új variáció — egy kattintással visszavonható.",
-        "New variation — undo is always available.",
-      ),
-    );
+    const pick = values => values[Math.floor(Math.random()*values.length)];
+    change({metal:pick(OPTIONS.metal.filter(v=>v!==s.metal)), finish:pick(OPTIONS.finish),
+      gemTone:pick(OPTIONS.gemTone), shape:pick(OPTIONS.shape)});
+    notify(L('Új szín- és kővariáció. Az alapforma megmaradt; a ↶ gombbal visszaléphetsz.',
+      'New colour and stone variation. Your base style is unchanged; use ↶ to undo.'));
   };
+  const palettes = [
+    {name:L('Meleg klasszikus','Warm classic'), hint:L('Sárgaarany · fehér kő · tükörfény','Yellow gold · white stone · polished'),patch:{metal:'yellow18',gemTone:'ice',finish:'polished'}},
+    {name:L('Lágy romantika','Soft romance'),hint:L('Rozéarany · rózsaszín kő · selyemfény','Rose gold · pink stone · satin'),patch:{metal:'rose18',gemTone:'blush',finish:'satin'}},
+    {name:L('Hűvös karakter','Cool character'),hint:L('Platina · zafír · tükörfény','Platinum · sapphire · polished'),patch:{metal:'platinum',gemTone:'sapphire',finish:'polished'}}
+  ];
+  const guides = [
+    L('Kezdd egy sziluettel. A 44 alapforma közül választhatsz; a következő lépésekben a részleteket te alakítod.', 'Start with a silhouette. Choose from 44 base styles, then make the details yours.'),
+    L('A csiszolás a kő alakja, a foglalat tartja a követ. Próbálj több formát, és figyeld a változást a 3D nézetben.', 'The cut is the stone’s shape; the setting holds it. Try different shapes and watch the 3D preview.'),
+    L('Először válassz fémszínt, utána felületet. A matt és fényes változatot különböző fényben is megnézheted.', 'Choose a metal colour, then its finish. Explore matte and polished surfaces under different lights.'),
+    L('Finomítsd a modellhez elérhető részleteket. A csúszkák határait a választott gyűrű és kövek szabják meg.', 'Refine the details available for your model. Slider limits follow your chosen ring and stones.'),
+    L('Az EU méret a belső kerület milliméterben. A sín a gyűrű ujj körüli része; szélessége a megjelenést is alakítja.', 'EU size is the inner circumference in millimetres. The band wraps around your finger; its width changes the look.'),
+    L('Adj nevet az alkotásodnak, mentsd el, és nézd át az összesítőt. Az ajánlatkérés előtt még bármit módosíthatsz.', 'Name your creation, save it and review the details. You can still change anything before requesting a quote.')
+  ];
   const steps = [
     L("Stílus", "Style"),
     isFashion(s) ? L("Sziluett", "Silhouette") : L("Gyémánt", "Diamond"),
@@ -671,8 +675,8 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
           </h1>
           <p>
             {L(
-              "Eljegyzésre. Minden napra. számtalan forma és személyes részlet.",
-              "For a proposal. For every day. countless forms and personal details.",
+              "44 alapforma. Hat egyszerű lépés. A részleteket te álmodod meg.",
+              "44 base styles. Six simple steps. Every detail is your decision.",
             )}
           </p>
         </div>
@@ -697,7 +701,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
         </span>
         <div>
           <button onClick={remix}>
-            ✧ {L("Lepj meg egy variációval", "Surprise me")}
+            ✧ {L("Új variáció ebből a gyűrűből", "A variation of this ring")}
           </button>
           <button aria-pressed={focus} onClick={() => setFocus(!focus)}>
             {focus
@@ -705,6 +709,14 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
               : L("Nagy munkatér ↗", "Focus canvas ↗")}
           </button>
         </div>
+      </div>
+      <section className="rb-palette-section" aria-label={L('Színvilágok kipróbálása','Explore colour palettes')}>
+        <div><h2>{L('Ugyanaz a forma. Más személyiség.','Same shape. Different personality.')}</h2><p>{L('Próbálj ki egy színvilágot, majd finomítsd a saját ízlésedre. Az alapformád és a méreted megmarad.','Try a palette, then fine-tune it your way. Your base style and ring size stay the same.')}</p></div>
+        <div className="rb-palette-grid">{palettes.map(p=><button key={p.name} aria-pressed={Object.entries(p.patch).every(([k,v])=>s[k]===v)} onClick={()=>{change(p.patch);notify(L('Színvilág alkalmazva. Minden részlet tovább alakítható.','Palette applied. Every detail is still yours to change.'));}}><span className="rb-palette-swatches" aria-hidden="true"><i style={{background:p.patch.metal==='yellow18'?'#d1ad62':p.patch.metal==='rose18'?'#c88e7d':'#c7cbd0'}}/><i style={{background:GEM_TONES[p.patch.gemTone].color}}/></span><strong>{p.name}</strong><small>{p.hint}</small></button>)}</div>
+      </section>
+      <div className="rb-design-passport" aria-label={L('A terved röviden','Your design at a glance')}>
+        <span>{L('TE TERVEZED','DESIGNED BY YOU')}</span>
+        {[[0,label(s.style)],[2,label(s.metal)],[1,label(s.shape)],[4,`EU ${s.size}`]].map(([target,title],i)=><button key={i} onClick={()=>setStep(target)}>{title} <span aria-hidden="true">↗</span></button>)}
       </div>
       <div className="rb-workspace">
         <section
@@ -856,7 +868,8 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
               </button>
             ))}
           </nav>
-          <div className="rb-controls">
+          <div className="rb-controls" ref={controls}>
+            <aside className="rb-step-guide"><strong>{L('Így lesz a tiéd','Make it yours')} · {step+1}/6</strong><p>{guides[step]}</p><small>{L('Bátran kísérletezz: minden változtatás visszavonható a ↶ gombbal.','Experiment freely: undo any change with ↶.')}</small></aside>
             <div className="rb-section-title">
               <span>
                 {L("ALKOTÓELEM", "DESIGN ELEMENT")} {step + 1} / 6
@@ -935,6 +948,8 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
             {step === 0 && (
               <>
                 <h3>{L("Gyűrű stílusa", "Ring style")}</h3>
+                <label className="rb-style-search">{L('Találd meg az alapformád','Find your starting shape')}<input type="search" value={styleSearch} onChange={e=>{setStyleSearch(e.target.value);setFamily('all');}} placeholder={L('pl. szoliter, hullám, korona…','e.g. solitaire, wave, crown…')}/></label>
+                <p className="rb-search-count" role="status">{OPTIONS.style.filter(v=>inCategory(v,family)&&(label(v)+' '+v).toLocaleLowerCase().includes(styleSearch.trim().toLocaleLowerCase())).length} / 44 {L('alapforma','base styles')}{styleSearch&&<button onClick={()=>setStyleSearch('')}>{L('Keresés törlése','Clear search')}</button>}</p>
                 <div className="rb-family">
                   {[
                     ...CATEGORIES.map(c=>[c.id,L(...c.name)]),
@@ -1430,6 +1445,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
             )}
           </div>
           <div className="rb-panel-footer">
+            {step>0&&<button className="rb-back" onClick={()=>setStep(step-1)} aria-label={L('Előző lépés','Previous step')}>← {L('Vissza','Back')}</button>}
             <div>
               <span>{L("KIFEJEZETTEN NEKED", "MADE JUST FOR YOU")}</span>
               <p>
@@ -1450,7 +1466,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                 ? busy
                   ? L("Mentés…", "Saving…")
                   : L("Ajánlatot kérek", "Request a quote")
-                : L("Tovább", "Continue")}
+                : L("Következő: ", "Next: ") + steps[step+1]}
               <Icon type="arrow" size={18} />
             </button>
           </div>
