@@ -60,9 +60,10 @@ A terminált hagyd nyitva; leállítás: Ctrl+C.
 - Képfeltöltés: http://localhost:3000/upload
 - Admin: http://localhost:3000/admin
 
-A helyi indító kifejezetten szimulált fizetést, e-mailt és számlázást állít be.
-Nem szükséges Barion-kulcs, SMTP vagy adatbázis-szerver. A rendeléseket a `data` mappába menti.
-A `.env` egyéb beállításait betölti, de a fenti külső szolgáltatásokat helyi futtatásnál kikapcsolja.
+A rendelés banki átutalással fizethető; a beérkezést az admin igazolja vissza.
+A helyi indító tiszteletben tartja a MAIL_ENABLED és SMTP beállításokat.
+Barion-kulcs és adatbázis-szerver nem szükséges. Valódi e-mailhez SMTP-hozzáférés kell. A rendeléseket a `data` mappába menti.
+A `.env` egyéb beállításait betölti, az e-mailt nem kapcsolja ki. SMTP nélkül a rendelési levelek tartós küldési sorban várakoznak.
 A `npm start` ezzel szemben a `.env` szerinti beállításokkal indul, build nélkül.
 
 ## Admin és vásárlói fiók
@@ -166,3 +167,5 @@ A teljes forrás, a függőségek rögzített verziói és ez az útmutató a re
 ## Éles webszerver
 
 A VPS telepítését, HTTPS-t, systemd szolgáltatást, naplókat, mentést és frissítést a [WEBSZERVER-INDITAS.md](WEBSZERVER-INDITAS.md) írja le.
+
+A rendelési e-mailek, Google-belépés és átutalás beállítása: [docs/order-workflow.md](docs/order-workflow.md).

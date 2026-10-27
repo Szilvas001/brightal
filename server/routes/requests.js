@@ -96,7 +96,7 @@ router.post('/requests', auth.requireUser, handleUpload, async (req, res) => {
   }
 
   /* e-mail: az ügyfélnek visszaigazolás, az adminnak értesítés */
-  mailer.requestReceived(request, request.lang).catch(e => console.error('[mail]', e.message));
+  await mailer.requestReceived(request, request.lang).catch(e => console.error('[mail]', e.message));
   mailer.adminNewRequest(request).catch(e => console.error('[mail]', e.message));
 
   console.log(`[request] ⬆ Új kérés: ${request.requestNumber} — ${request.customer.email} (${request.images.length} kép)`);

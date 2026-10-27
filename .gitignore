@@ -26,3 +26,5 @@ __pycache__/
 data/cad/
 data/diamond-previews/
 public/diamond-previews/
+
+data/order-previews/

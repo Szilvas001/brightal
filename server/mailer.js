@@ -19,6 +19,7 @@ if (cfg.mail.enabled && cfg.mail.host) {
       host: cfg.mail.host,
       port: cfg.mail.port,
       secure: cfg.mail.secure,
+      connectionTimeout: 15000, greetingTimeout: 15000, socketTimeout: 30000,
       auth: cfg.mail.user ? { user: cfg.mail.user, pass: cfg.mail.pass } : undefined
     });
     console.log(`[mail] SMTP beállítva: ${cfg.mail.host}:${cfg.mail.port}`);
@@ -63,16 +64,15 @@ function wrap(title, bodyHtml) {
 </div></body></html>`;
 }
 
-async function send(to, subject, text, html) {
+async function send(to, subject, text, html, attachments = []) {
   if (!transporter) { logToOutbox(to, subject, text); return { simulated: true }; }
   try {
-    await transporter.sendMail({ from: cfg.mail.from, to, subject, text, html: html || undefined });
+    await transporter.sendMail({ from: cfg.mail.from, to, subject, text, html: html || undefined, attachments });
     console.log(`[mail] ✔ elküldve: ${to} — ${subject}`);
     return { simulated: false };
   } catch (e) {
     console.error(`[mail] ✖ küldés sikertelen (${to}):`, e.message);
-    logToOutbox(to, subject, text);
-    return { simulated: true, error: e.message };
+    throw e;
   }
 }
 
@@ -85,13 +85,8 @@ const money = v => new Intl.NumberFormat('hu-HU').format(v) + ' ' + cfg.currency
 const escapeHtml=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function notice(r,subject,text){return send(r.customer.email,subject,text,wrap(subject,`<div style="white-space:pre-wrap;line-height:1.7">${escapeHtml(text)}</div>`));}
 function offerText(r){const o=r.finalOffer;if(!o)return `Azonosító: ${r.requestNumber}\nÁr: ${money(r.price)}`;return `Azonosító: ${r.requestNumber}\n${o.specification}\n\nÉkszer: ${money(o.productPrice)}\nSzállítás: ${money(o.shippingFee)}\nFizetendő végösszeg: ${money(o.total)}\nGyártási idő: ${o.productionTime}\nÁtadás / feladás: ${o.deliveryTime}\nSzállítás: ${o.shippingMethod}\nFizetési feltételek: ${o.paymentTerms}\nÉrvényesség: ${o.validUntil}\nLátványterv: ${o.previewUrl.startsWith('/')?cfg.publicUrl:''}${o.previewUrl}\nAjánlat azonosítója: ${o.id}`;}
-function requestReceived(r,lang='hu'){
- const hu=lang==='hu';
- return notice(r,`${hu?'Megkaptuk elképzelését':'Your request has arrived'} — ${r.requestNumber}`,hu?`Kedves ${r.customer.name}!\n\nKöszönjük, hogy megosztotta elképzelését a Brightal csapatával. A személyre szabott látványtervet 3 napon belül megküldjük Önnek, a végleges specifikációval, pontos vételárral és várható elkészítési idővel együtt.\n\nEz az üzenet az ajánlatkérés technikai beérkezését igazolja, nem megrendelés-elfogadás és nem keletkeztet fizetési kötelezettséget. A gyártás a végleges terv és ajánlat kifejezett jóváhagyása, a megrendelés elfogadása és az előírt fizetés után indulhat.\n\n${cfg.publicUrl}/orders\n\nBrightal csapata\n${cfg.shop.email}`:`Dear ${r.customer.name},\n\nWe received your request. Within 3 days we will send your personal design, final specification, price and expected delivery time. This receipt is not acceptance of an order and creates no payment obligation.\n\n${cfg.publicUrl}/orders`);
-}
-function requestApproved(r,lang='hu'){
- return notice(r,`${lang==='hu'?'Látványterv és végleges ajánlat':'Final design and offer'} — ${r.requestNumber}`,`Kedves ${r.customer.name}!\n\n${offerText(r)}\n\nA tervet és a végleges rendelési összesítőt a fiókjában ellenőrizheti és hagyhatja jóvá: ${cfg.publicUrl}/orders\n\nMódosítási igényét a jóváhagyás előtt jelezheti: ${cfg.shop.email}\nA gyártás nem indul el az ajánlat megküldésével.\nÁSZF: ${cfg.publicUrl}/aszf\nAdatkezelés: ${cfg.publicUrl}/adatkezeles`);
-}
+function requestReceived(r){return require('./order-mail-queue').enqueue(r,'received');}
+function requestApproved(r){return require('./order-mail-queue').enqueue(r,'approved');}
 function contractAccepted(r){return notice(r,`Megrendelés elfogadva — ${r.requestNumber}`,`Kedves ${r.customer.name}!\n\nMegrendelését elfogadtuk. Fizetése beérkezett, a teljesítés előtti ellenőrzések lezárultak.\n\n${offerText(r)}\n\nJóváhagyás: ${r.acceptance?.at}\nSzállítási cím: ${r.acceptance?.shippingAddress}\nA gyártás és a kiszállítás állapotát fiókjában követheti: ${cfg.publicUrl}/orders`);}
 
 /** 3) Elutasítva */
@@ -127,5 +122,6 @@ function adminNewRequest(req_) {
 
 module.exports = {
   send, contractAccepted, requestReceived, requestApproved, requestRejected, paymentReceived, adminNewRequest,
+  startWorker: () => require('./order-mail-queue').start().catch(e=>console.error('[mail queue]',e.message)),
   isSimulated: () => !transporter
 };

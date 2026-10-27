@@ -49,6 +49,11 @@ router.post('/payment/start', auth.requireUser, async (req, res) => {
     catch(e){return res.status(409).json({error:e.message});}
   }
 
+  if (cfg.payment.method === 'bank_transfer') {
+    const updated = await db.requests.update(r => r.id === request.id, r => ({...r, acceptance, paymentMethod:'bank_transfer', paymentStatus:'AwaitingTransfer', updatedAt:new Date().toISOString()}));
+    return res.json({request:R.toPublic(updated), bankTransfer:require('../order-workflow').bankDetails(updated)});
+  }
+
   if(offers.custom(request)&&request.paymentId&&request.gatewayUrl&&!['Failed','Canceled','Expired'].includes(request.paymentStatus))return res.json({gatewayUrl:request.gatewayUrl,paymentId:request.paymentId,simulated:barion.isSimulated()});
 
   try {

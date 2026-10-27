@@ -20,7 +20,7 @@ router.post('/sourcing',auth.requireUser,async(req,res)=>{try{
  request.note=`Laboratóriumi kő beszerzési igény · ${c.shape} · ${c.carat} ct · ${c.color}/${c.clarity}. Készlet, IGI és végleges ár egyeztetendő.`;
  request.details.metal='Loose diamond';request.sourcing=c;
  try{const estimate=supplier.estimate(c);request.estimatedPrice=estimate.retailGrossHuf;request.note+=` Tájékoztató becsült bruttó ár: ${estimate.retailGrossHuf} Ft.`;}catch{}
- await db.requests.insert(request);res.json({request:R.toPublic(request)});
+ await db.requests.insert(request);await require('../mailer').requestReceived(request);res.json({request:R.toPublic(request)});
 }catch(e){res.status(400).json({error:e.message});}});
 router.get('/',(req,res)=>{try{
  const items=D.filter(D.catalogue().map(D.publicStone),req.query);
@@ -52,11 +52,11 @@ router.post('/combination/order',auth.requireUser,(req,res)=>{
   const request=R.build({user:req.user,body:{},files:[],lang:req.body.lang});
   request.sourcing=c;request.combinationOffer=offer;request.combinationOrderKey=req.body.orderKey;
   request.price=offer.price;request.currency='HUF';request.accounting=offer.accounting;
-  request.status='approved';request.approvedAt=offer.acceptedAt;
+  if(require('../config').payment.method!=='bank_transfer'){request.status='approved';request.approvedAt=offer.acceptedAt;}
   request.details.metal='Loose diamond';
   request.note=`Egyedileg beszerzendő laboratóriumi gyémánt · ${c.shape} · ${c.carat} ct · ${c.color}/${c.clarity}. A megrendelésben rögzített bruttó ár: ${offer.price} Ft. Tanúsítvány a beszerzéskor.`;
   request.history.push({at:offer.acceptedAt,event:'combination_order',price:offer.price});
-  await db.requests.insert(request);res.json({request:R.toPublic(request)});
+  await db.requests.insert(request);await require('../mailer').requestReceived(request);res.json({request:R.toPublic(request)});
  };
  ordering=ordering.then(run,run).catch(e=>{if(!res.headersSent)res.status(409).json({error:['INVALID_COMBINATION','PRICE_CHANGED','NO_SUPPLIER_OBSERVATIONS','PRICE_UNAVAILABLE'].includes(e.message)?e.message:'ORDER_FAILED'});});
 });
@@ -70,8 +70,9 @@ router.post('/sourcing/:number/confirm',auth.requireAdmin,(req,res)=>{
   if(!stone||!Object.keys(r.sourcing).every(k=>stone[k]===r.sourcing[k]))return res.status(409).json({error:'EXACT_STONE_MATCH_REQUIRED'});
   const checked=require('../diamond-pricing').checkout(stone,D.publicStone(stone).price);
   if(db.requests.find(x=>x.id!==r.id&&x.diamond?.id===stone.id&&!['canceled','rejected'].includes(x.status)))return res.status(409).json({error:'STONE_RESERVED'});
+  const productionDays=require('../order-workflow').productionRange(req.body.productionRange);
   const now=new Date().toISOString();
-  const updated=await db.requests.update(x=>x.id===r.id,x=>({...x,diamond:D.publicStone(stone),price:checked.price,accounting:checked.accounting,status:'approved',approvedAt:now,updatedAt:now,adminNote:String(req.body.adminNote||'').slice(0,600),history:[...x.history,{at:now,event:'supplier_stone_confirmed',by:req.user.id,stoneId:stone.id,price:checked.price}]}));
+  const updated=await db.requests.update(x=>x.id===r.id,x=>({...x,diamond:D.publicStone(stone),price:checked.price,accounting:checked.accounting,status:'approved',productionDays,approvedAt:now,updatedAt:now,adminNote:String(req.body.adminNote||'').slice(0,600),history:[...x.history,{at:now,event:'supplier_stone_confirmed',by:req.user.id,stoneId:stone.id,price:checked.price}]}));
   require('../mailer').requestApproved(updated,updated.lang).catch(()=>{});
   res.json({request:R.toPublic(updated,{includeInternal:true})});
  };
@@ -87,10 +88,10 @@ router.post('/order',auth.requireUser,(req,res)=>{
   const held=db.requests.find(x=>x.diamond?.id===stone.id&&!['canceled','rejected'].includes(x.status));
   if(held){if(held.userId===req.user.id&&held.status==='approved'){if(held.price!==checked.price)return res.status(409).json({error:'PRICE_CHANGED'});return res.json({request:R.toPublic(held)});}return res.status(409).json({error:'STONE_RESERVED'});}
   const request=R.build({user:req.user,body:{},files:[],lang:req.body.lang});
-  request.diamond=D.publicStone(stone);request.price=checked.price;request.accounting=checked.accounting;request.status='approved';request.approvedAt=new Date().toISOString();
+  request.diamond=D.publicStone(stone);request.price=checked.price;request.accounting=checked.accounting;if(require('../config').payment.method!=='bank_transfer'){request.status='approved';request.approvedAt=new Date().toISOString();}
   request.note=`Laboratóriumi gyémánt · ${stone.shape} · ${stone.carat} ct · ${stone.color}/${stone.clarity} · IGI ${stone.certificate.number}`;
   request.details.metal='Loose diamond';request.history.push({at:request.approvedAt,event:'diamond_order'});
-  await db.requests.insert(request);res.json({request:R.toPublic(request)});
+  await db.requests.insert(request);await require('../mailer').requestReceived(request);res.json({request:R.toPublic(request)});
  };
  ordering=ordering.then(run,run).catch(e=>{console.error('Diamond order:',e.message);if(!res.headersSent)res.status(500).json({error:'SERVER_ERROR'});});
 });

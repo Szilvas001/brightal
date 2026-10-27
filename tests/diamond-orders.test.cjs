@@ -1,3 +1,5 @@
+require('../server/mailer').requestReceived=async()=>{};
+require('../server/config').payment.method='barion';
 const test=require('node:test'),assert=require('node:assert/strict'),express=require('express');
 const D=require('../server/diamonds'),db=require('../server/db');
 test('authenticated order, price tampering, ownership and concurrent reservation',async()=>{

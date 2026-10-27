@@ -27,7 +27,7 @@ const I18N = {
     hero_sub: 'Küldj egy képet, vagy írd körbe az álomgyűrűt — mi megalkotjuk. Kézzel készítve, magyar ötvösműhelyben, a te történetedre szabva.',
     hero_cta: 'Töltsd fel a gyűrűt',
     hero_cta2: 'Hogyan működik?',
-    hero_trust_1: 'Látványterv és ajánlat 3 napon belül',
+    hero_trust_1: 'Ötvösi visszajelzés 1 órán belül',
     hero_trust_2: 'Fizetés csak elfogadás után',
     hero_trust_3: 'Gyártási idő a végleges ajánlatban',
 
@@ -37,9 +37,9 @@ const I18N = {
     step1_t: 'Töltsd fel a képet',
     step1_d: 'Screenshot Pinterestről, Instagramról, vagy egy fotó — bármi, amin látszik az álomgyűrű. JPG vagy PNG.',
     step2_t: 'Megvárod az elfogadást',
-    step2_d: 'Ötvösünk 3 napon belül átnézi, és egyedi árajánlatot küld. Semmire nem kötelez.',
+    step2_d: '1 órán belül e-mailben visszajelzünk, hány munkanapon belül készül el az ékszered.',
     step3_t: 'Fizetsz',
-    step3_d: 'Ha rendben az ár, biztonságosan fizetsz bankkártyával a Barion rendszerén keresztül.',
+    step3_d: 'Jóváhagyás után a Rendeléseim menüpontban található adatokkal, banki átutalással fizetsz.',
     step4_t: 'Megvárod az elkészítést',
     step4_d: 'Kézzel készítjük el, a végleges ajánlatban vállalt határidővel. Végig követheted a fiókodban.',
 
@@ -77,9 +77,9 @@ const I18N = {
 
     /* --- siker --- */
     ok_title: 'Megkaptuk!',
-    ok_sub: 'Elküldtük a visszaigazolást a {email} címre. Ötvösünk kb. {h} órán belül átnézi, és megküldi az árajánlatot.',
+    ok_sub: 'Rendelésedet rögzítettük. A visszaigazolást a {email} címre küldjük. 1 órán belül egy második e-mailben jelezzük az ötvös által vállalt elkészítési időt.',
     ok_ref: 'Azonosító',
-    ok_next: 'Amint elkészül az ajánlat, a Rendeléseim menüpontban látod az árat, és ott tudsz fizetni.',
+    ok_next: 'A rendelés már megjelent a Rendeléseim menüpontban. Jóváhagyás után ott látod a munkanaptartományt, a végösszeget és az átutalási adatokat.',
     ok_orders: 'Rendeléseim',
     ok_another: 'Másik gyűrű feltöltése',
 
@@ -92,8 +92,8 @@ const I18N = {
     ord_submitted: 'Beküldve',
     ord_price: 'Ár',
     ord_waiting: 'Árajánlatra vár',
-    ord_waiting_d: 'Ötvösünk átnézi a képet. Kb. {h} órán belül értesítünk.',
-    ord_approved_d: 'Elfogadva! Az ár elkészült, most már fizethetsz.',
+    ord_waiting_d: '1 órán belül e-mailben visszajelzünk az elkészítési időről. Az ötvös visszaigazolását követően itt jelenik meg a Jóváhagyva állapot és a vállalt munkanaptartomány.',
+    ord_approved_d: 'Jóváhagyva. Az ötvös visszaigazolta az elkészítési időt. A végleges összesítő elfogadása után banki átutalással rendezheted a rendelést.',
     ord_rejected_d: 'Sajnos ezt a gyűrűt nem tudjuk elkészíteni.',
     ord_paid_d: 'A fizetés megérkezett. A megrendelés elfogadásáról külön visszaigazolást küldünk.',
     ord_production_d: 'Gyártás alatt, a végleges ajánlatban egyeztetett határidővel.',
@@ -106,7 +106,7 @@ const I18N = {
 
     /* --- státuszok --- */
     st_submitted: 'Elbírálás alatt',
-    st_approved: 'Elfogadva · fizethető',
+    st_approved: 'Jóváhagyva · átutalás',
     st_rejected: 'Elutasítva',
     st_paid: 'Kifizetve',
     st_in_production: 'Gyártás alatt',
@@ -149,7 +149,7 @@ const I18N = {
     ad_setprice: 'Ár megadása',
     ad_price_ph: 'pl. 250000',
     ad_note_ph: 'Megjegyzés az ügyfélnek (opcionális)',
-    ad_approve: 'Jóváhagyás és árazás',
+    ad_approve: 'Elfogad',
     ad_reject: 'Elutasítás',
     ad_toproduction: 'Gyártásba',
     ad_complete: 'Elkészült',
@@ -191,7 +191,7 @@ const I18N = {
     g_loading: 'Betöltés',
     g_required: 'kötelező',
     footer_rights: 'Minden jog fenntartva',
-    footer_secure: 'Biztonságos fizetés a Barion rendszerében',
+    footer_secure: 'Fizetés banki átutalással',
 
     /* --- rólunk / kapcsolat --- */
     ab_title: 'Rólunk',
@@ -297,7 +297,7 @@ const I18N = {
     hero_sub: 'Send us a photo or describe your dream ring — we bring it to life. Handcrafted in a Hungarian goldsmith workshop, as unique as your story.',
     hero_cta: 'Upload the ring',
     hero_cta2: 'How it works',
-    hero_trust_1: 'Design and quote within 3 days',
+    hero_trust_1: 'Goldsmith confirmation within 1 hour',
     hero_trust_2: 'Pay only after approval',
     hero_trust_3: 'Production time confirmed in your final offer',
 
@@ -306,9 +306,9 @@ const I18N = {
     step1_t: 'Upload the photo',
     step1_d: 'A screenshot from Pinterest or Instagram, or a photo — anything that shows the dream ring. JPG or PNG.',
     step2_t: 'Wait for approval',
-    step2_d: 'Our goldsmith reviews it within about an hour and sends a personal quote. No obligation.',
+    step2_d: 'Within 1 hour we email you the confirmed production time in working days.',
     step3_t: 'Pay',
-    step3_d: 'If the price works for you, pay securely by card through Barion.',
+    step3_d: 'After approval, pay by bank transfer using the details under My orders.',
     step4_t: 'Wait for the making',
     step4_d: 'We craft it by hand within the agreed production time. Follow progress in your account.',
 
@@ -344,9 +344,9 @@ const I18N = {
     up_custom_note: 'The ring is made specifically to your request with individual parameters, therefore the 14-day right of withdrawal does not apply under Section 29(1)(c) of Government Decree 45/2014 (II. 26.). You only pay when you accept the quote — until then you can step back at any time.',
 
     ok_title: 'We got it!',
-    ok_sub: 'A confirmation is on its way to {email}. Our goldsmith will review it within about {h} hour(s) and send you a quote.',
+    ok_sub: 'Your order is saved. We will send confirmation to {email} and a second email within 1 hour with the production schedule.',
     ok_ref: 'Reference',
-    ok_next: 'Once the quote is ready, you will see the price under My orders and can pay there.',
+    ok_next: 'Your order is listed under My orders. After approval you will see the working-day range, final total and bank details.',
     ok_orders: 'My orders',
     ok_another: 'Upload another ring',
 
@@ -358,8 +358,8 @@ const I18N = {
     ord_submitted: 'Submitted',
     ord_price: 'Price',
     ord_waiting: 'Awaiting quote',
-    ord_waiting_d: 'Our goldsmith is reviewing your photo. We will notify you within about {h} hour(s).',
-    ord_approved_d: 'Approved! Your quote is ready — you can pay now.',
+    ord_waiting_d: 'Within 1 hour we will email the production schedule. My orders will show Approved once the goldsmith confirms it.',
+    ord_approved_d: 'Approved. Your production schedule is confirmed. Review your final summary, then pay by bank transfer.',
     ord_rejected_d: 'Unfortunately we cannot craft this particular ring.',
     ord_paid_d: 'Payment received. Acceptance of your order is confirmed separately.',
     ord_production_d: 'In production, according to the schedule in your final offer.',
@@ -371,7 +371,7 @@ const I18N = {
     ord_vat: 'incl. VAT',
 
     st_submitted: 'Under review',
-    st_approved: 'Approved · payable',
+    st_approved: 'Approved · bank transfer',
     st_rejected: 'Declined',
     st_paid: 'Paid',
     st_in_production: 'In production',
@@ -451,7 +451,7 @@ const I18N = {
     g_loading: 'Loading',
     g_required: 'required',
     footer_rights: 'All rights reserved',
-    footer_secure: 'Secure payment via Barion',
+    footer_secure: 'Payment by bank transfer',
 
     ab_title: 'About us',
     ab_lead: 'A ring as unique as your story. Your vision, our craftsmanship.',
@@ -618,6 +618,7 @@ const ROUTES = [
   ['admin', /^\/admin\/?$/, () => '/admin'],
   ['payment-return', /^\/payment-return\/?$/, () => '/payment-return'],
   /* jogi oldalak */
+  ['ordering', /^\/(rendeles-menete|ordering)\/?$/, () => (LANG === 'en' ? '/ordering' : '/rendeles-menete')],
   ['terms', /^\/(aszf|terms)\/?$/, () => (LANG === 'en' ? '/terms' : '/aszf')],
   ['privacy', /^\/(adatkezeles|privacy)\/?$/, () => (LANG === 'en' ? '/privacy' : '/adatkezeles')],
   ['impressum', /^\/(impresszum|impressum)\/?$/, () => (LANG === 'en' ? '/impressum' : '/impresszum')],
@@ -992,6 +993,7 @@ function Footer() {
       <div>
         <h4>{t('lg_legal')}</h4>
         <button onClick={() => navigate('terms')}>{t('lg_terms')}</button>
+        <button onClick={() => navigate('ordering')}>{LANG === 'en' ? 'How ordering works' : 'A rendelés menete'}</button>
         <button onClick={() => navigate('privacy')}>{t('lg_privacy')}</button>
         <button onClick={() => navigate('refund')}>{t('lg_refund')}</button>
         <button onClick={() => navigate('impressum')}>{t('lg_impressum')}</button>
@@ -1007,13 +1009,7 @@ function Footer() {
     <div className="footer-bottom">
       <div className="lang-switch">{['hu','en'].map(l=><button key={l} className={lang===l?'on':''} onClick={()=>setLang(l)} aria-label={l==='hu'?'Magyar':'English'}>{l.toUpperCase()}</button>)}</div>
       <span>© {new Date().getFullYear()} BRIGHTAL — {t('footer_rights')}</span>
-      <div className="pay-badges">
-        <span className="pay-badge">BARION</span>
-        <span className="pay-badge">VISA</span>
-        <span className="pay-badge">MASTERCARD</span>
-        {config && config.barion && config.barion.environment === 'test' &&
-          <span className="pay-badge gold">{config.barion.simulated ? 'SZIMULÁLT FIZETÉS' : 'BARION SANDBOX'}</span>}
-      </div>
+      <div className="pay-badges"><span className="pay-badge">{LANG==='en'?'BANK TRANSFER':'BANKI ÁTUTALÁS'}</span><span className="pay-badge">OTP Bank Nyrt.</span></div>
     </div>
   </footer>;
 }
@@ -1102,6 +1098,7 @@ function AuthModal() {
       <p className="lead-sm">{t(mode === 'login' ? 'au_login_sub' : 'au_register_sub')}</p>
 
       {googleOn && <>
+        <p className="fine-print">{LANG==='en'?'Continue with Google — no separate registration. Your orders stay in this account.':'Belépés Google-fiókkal, külön regisztráció nélkül. Rendeléseid ehhez a fiókhoz kapcsolódnak.'}</p>
         <GoogleButton onDone={u => { setUser(u); close(); toast('Google ✓'); }} onError={c => setErr(te(c))} />
         <div className="or-line"><span /><em>{t('au_or')}</em><span /></div>
       </>}
@@ -1213,7 +1210,7 @@ function HomePage() {
 
 function HowPage() {
   const { t, navigate, config, isAdmin } = useA();
-  const h = (config && config.shop && config.shop.reviewHours) || 72;
+  const h = (config && config.shop && config.shop.reviewHours) || 1;
   const days = (config && config.shop && config.shop.productionDays) || [10, 14];
 
   const faq = LANG === 'hu' ? [
@@ -1543,7 +1540,8 @@ function LegalPage({ doc }) {
 function LegalNav({ current }) {
   const { t, navigate } = useA();
   const docs = [
-    ['terms', 'lg_terms_long'], ['privacy', 'lg_privacy_long'],
+    ['ordering', /^\/(rendeles-menete|ordering)\/?$/, () => (LANG === 'en' ? '/ordering' : '/rendeles-menete')],
+  ['terms', 'lg_terms_long'], ['privacy', 'lg_privacy_long'],
     ['impressum', 'lg_impressum'], ['refund', 'lg_refund_long'], ['cookies', 'lg_cookies']
   ];
   return <div className="legal-nav">
@@ -1710,7 +1708,7 @@ function UploadPage() {
 
   /* --- siker --- */
   if (done) {
-    const h = (config && config.shop && config.shop.reviewHours) || 72;
+    const h = (config && config.shop && config.shop.reviewHours) || 1;
     return <div className="page">
       <div className="wrap-s" style={{ paddingBottom: 70 }}>
         <div className="panel success-panel">
@@ -1857,6 +1855,35 @@ function UploadPage() {
 
 /* ═══════════ RENDELÉSEIM ═══════════ */
 
+function BankTransfer({req}) {
+  const {lang}=useA(); const bank=req.bankTransfer;
+  if(!bank)return null;
+  return <section className="bank-transfer note-box"><h3>{lang==='en'?'Bank transfer':'Banki átutalás'}</h3><dl className="kv">{[[lang==='en'?'Beneficiary':'Kedvezményezett',bank.beneficiary],['Bank',bank.bank],[lang==='en'?'Account number':'Számlaszám',bank.account],[lang==='en'?'Reference':'Közlemény',bank.reference],[lang==='en'?'Amount':'Összeg',money(bank.amount)]].map(([key,value])=><React.Fragment key={key}><dt>{key}</dt><dd>{value}</dd></React.Fragment>)}</dl><p>{lang==='en'?'Use the exact order number as the payment reference. Production time starts when the transfer arrives.':'A közleménybe pontosan a rendelésazonosítót írd. Az elkészítési idő az átutalás beérkezésétől indul.'}</p>{!bank.configured&&<p role="status">{lang==='en'?'Bank details are being completed. Please wait for the final account number before paying.':'A számlaszám kitöltés alatt áll. A végleges számlaszám megadásáig ne indíts átutalást.'}</p>}</section>;
+}
+function OrderCad({req}) {
+  const [job,setJob]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[styles,setStyles]=useState([]);
+  useEffect(()=>{api('/admin/cad/schema').then(s=>setStyles(s.styles)).catch(()=>{});},[]);
+  useEffect(()=>{if(!job||!['queued','running'].includes(job.status))return;const timer=setInterval(()=>api('/admin/cad/jobs/'+job.id).then(setJob).catch(()=>setError('Az export állapota nem tölthető be.')),2000);return()=>clearInterval(timer);},[job?.id,job?.status]);
+  const create=async mode=>{setBusy(true);setError('');try{setJob(await api('/admin/cad/'+(mode==='mesh'?'mesh-jobs':'jobs'),{method:'POST',body:{requestId:req.id,name:req.requestNumber}}));}catch(e){setError(e.message);}finally{setBusy(false);}};
+  const download=async format=>{try{const r=await api('/admin/cad/jobs/'+job.id+'/download',{method:'POST',body:{format}});location.href=r.url;}catch(e){setError(e.message);}};
+  return <div><div className="btn-row"><a className="btn btn-dark btn-sm" href={`/api/admin/requests/${encodeURIComponent(req.requestNumber)}/design.zip`} download>Teljes 3D fájl és műhelylap letöltése (ZIP / OBJ)</a><button className="btn btn-outline btn-sm" disabled={busy||['queued','running'].includes(job?.status)} onClick={()=>create('mesh')}>3D CAD letöltése · export előkészítése</button>{styles.includes(req.design.config.style)&&<button className="btn btn-outline btn-sm" disabled={busy||['queued','running'].includes(job?.status)} onClick={()=>create('cad')}>Parametrikus STEP előkészítése</button>}</div>{job&&<p role="status">{({queued:'Export várakozik…',running:'3D export készül…',ready:'A teljes 3D fájl letölthető.',failed:'Az export nem készült el: '})[job.status]} {job.error}</p>}{job?.status==='ready'&&<div className="btn-row">{job.formats?.map(format=><button className="btn btn-dark btn-sm" key={format} onClick={()=>download(format)}>{format.toUpperCase()} letöltése</button>)}</div>}{error&&<p role="alert">{error}</p>}</div>;
+}
+function OrderingPage() {
+  const {lang,config,navigate}=useA();const hu=lang==='hu';
+  const steps=hu?[
+    ['01','Leadod a rendelést','Tervezd meg az ékszeredet a 3D gyűrűtervezővel, vagy tölts fel referenciafotót. Lépj be a fiókodba; Google-belépésnél nincs szükség külön regisztrációra. A rendelés egyedi azonosítóval azonnal megjelenik a Rendeléseim menüpontban.'],
+    ['02','Megérkezik az első e-mail','Visszaigazoljuk a rendelésedet az azonosítóval és a beküldött termék részleteivel. A 3D tervezőből érkező rendeléshez forgó GIF-et, képfeltöltésnél a referenciafotódat mellékeljük.'],
+    ['03','1 órán belül visszajelzünk','Az ékszer elkészítését vállaljuk; az ötvössel az elkészítés legkorábbi időpontját egyeztetjük. Visszaigazolása után rendelésed Jóváhagyva állapotba kerül. Második e-mailt küldünk, benne a vállalt munkanaptartománnyal – például 2–5 vagy 8–11 munkanap. Ugyanezt a Rendeléseim menüpontban is látod. A jóváhagyást munkatársunk rögzíti az ötvös válasza alapján.'],
+    ['04','Banki átutalással fizetsz','Jóváhagyás után ellenőrizd és fogadd el a végleges rendelési összesítőt a fiókodban. A feltüntetett végösszeget banki átutalással rendezheted. Közleményként a rendelésazonosítót add meg. Az elkészítési idő az összeg beérkezésétől számít, munkanapokban.'],
+  ]:[
+    ['01','Place your order','Create your jewellery in the 3D ring designer or upload a reference photo. Sign in; Google sign-in creates your account automatically. Your order immediately appears under My orders with its unique order number.'],
+    ['02','Receive your first email','We confirm the order number and item details, with a rotating GIF for a 3D design or your reference photo for a photo upload.'],
+    ['03','Confirmation within 1 hour','We undertake to make your jewellery. Our goldsmith confirms the earliest production schedule, then our team marks your order Approved. Our second email and My orders show the working-day range, such as 2–5 or 8–11 working days.'],
+    ['04','Pay by bank transfer','Review and accept the final order summary after approval. Pay the displayed total by bank transfer using your order number as the reference. Production time starts when payment arrives and is measured in working days.'],
+  ];
+  return <div className="page"><div className="wrap-n" style={{paddingBottom:70}}><p className="eyebrow-gold">BRIGHTAL · {hu?'RENDELÉS':'ORDERING'}</p><h1 className="h-display page-title">{hu?'Az elképzeléstől az ékszerig':'From your idea to your jewellery'}</h1><p className="lead-sm">{hu?'Egy rendelés, egy azonosító. Minden visszajelzés a fiókodban és e-mailben.':'One order, one number. Every update in your account and by email.'}</p>{steps.map(([number,title,body])=><section key={number} className="panel" style={{marginTop:20,padding:28}}><p className="eyebrow-gold">{number}</p><h2>{title}</h2><p style={{lineHeight:1.9}}>{body}</p></section>)}<section className="panel" style={{padding:28,marginTop:20}}><h2>{hu?'Átutalási adatok':'Bank details'}</h2><p>{config?.company?.name}<br/>OTP Bank Nyrt.<br/>{hu?'Számlaszám':'Account'}: {config?.company?.bankAccount||'[]'}</p><p>{hu?'A pontos, fizetendő összeget és a közleményt mindig a jóváhagyott rendelésnél találod. A számlaszám végleges kitöltéséig ne indíts átutalást.':'Find the exact total and payment reference on your approved order. Wait until final account details are provided before paying.'}</p></section><div className="btn-row" style={{marginTop:24}}><button className="btn btn-dark" onClick={()=>navigate('orders')}>{hu?'Rendeléseim':'My orders'}</button><button className="btn btn-ghost" onClick={()=>navigate('terms')}>{hu?'ÁSZF':'Terms'}</button></div></div><Footer/></div>;
+}
+
 function OrderCard({ req, onPay, onRevise, paying }) {
   const [approval,setApproval]=useState({});
   const [revision,setRevision]=useState('');
@@ -1864,8 +1891,8 @@ function OrderCard({ req, onPay, onRevise, paying }) {
   useEffect(()=>setApproval({}),[req.finalOffer?.digest]);
   const needsApproval=req.source!=='diamond';
   const approved=['designApproved','priceAccepted','termsAccepted','privacyRead','withdrawalAcknowledged','paymentObligation'].every(k=>approval[k]===true)&&['name','country','zip','city','street'].every(k=>String(approval.billing?.[k]||'').trim().length>=2)&&String(approval.shippingAddress||'').trim().length>=10;
-  const days = req.productionDays || [10, 14];
-  const h = (config && config.shop && config.shop.reviewHours) || 72;
+  const days = req.productionDays || [];
+  const h = (config && config.shop && config.shop.reviewHours) || 1;
 
   const desc = {
     submitted: t('ord_waiting_d', { h }),
@@ -1892,7 +1919,10 @@ function OrderCard({ req, onPay, onRevise, paying }) {
       </a>)}
     </div>}
 
-    <p className="order-desc">{desc}</p>
+    <p className="order-desc">{desc}</p><p style={{whiteSpace:'pre-wrap'}}>{req.productSummary}</p>
+    {req.productionDays && <div className="note-box"><strong>{lang==='en'?'Production time':'Elkészülési idő'}: {req.productionDays.join('–')} {lang==='en'?'working days after payment arrives':'munkanap az átutalás beérkezésétől'}</strong></div>}
+    {req.status==='approved' && <BankTransfer req={req}/>}
+
 
     {req.adminNote && <div className="note-box">
       <span>{t('ord_note')}</span>
@@ -1905,7 +1935,7 @@ function OrderCard({ req, onPay, onRevise, paying }) {
       <p style={{whiteSpace:'pre-wrap'}}>{req.finalOffer.specification}</p>
       <dl className="kv">{[['Ékszer ára',money(req.finalOffer.productPrice)],['Szállítási díj',money(req.finalOffer.shippingFee)],['Gyártási idő',req.finalOffer.productionTime],['Átadás / feladás',req.finalOffer.deliveryTime],['Szállítás módja',req.finalOffer.shippingMethod],['Fizetési feltételek',req.finalOffer.paymentTerms],['Ajánlat érvényessége',fmtDate(req.finalOffer.validUntil)]].map(([k,v])=><React.Fragment key={k}><dt>{k}</dt><dd>{v}</dd></React.Fragment>)}</dl>
       {!req.acceptance&&req.payable&&<details><summary>{lang==='en'?'Request a correction before approval':'Módosítást kérek a jóváhagyás előtt'}</summary><label className="field">{lang==='en'?'Requested changes':'Kért módosítások'}<textarea className="input" maxLength={2000} value={revision} onChange={e=>setRevision(e.target.value)}/></label><button className="btn btn-outline" disabled={revision.trim().length<3||paying} onClick={()=>onRevise(req,revision)}>{lang==='en'?'Send correction request':'Módosítási kérés elküldése'}</button></details>}
-      {req.payable&&<>
+      {req.payable&&!req.acceptance&&<>
         <fieldset><legend>{lang==='en'?'Billing details':'Számlázási adatok'}</legend>{[['name','Név','Name'],['country','Ország','Country'],['zip','Irányítószám','Postal code'],['city','Település','City'],['street','Utca, házszám','Street and house number']].map(([key,hu,en])=><label className="field" key={key}>{lang==='en'?en:hu}<input className="input" maxLength={250} value={approval.billing?.[key]||''} onChange={e=>setApproval(a=>({...a,billing:{...a.billing,[key]:e.target.value}}))}/></label>)}</fieldset>
         <label className="field">{lang==='en'?'Recipient and complete delivery address':'Címzett és teljes szállítási cím'}<textarea className="input" maxLength={1000} value={approval.shippingAddress||''} onChange={e=>setApproval(a=>({...a,shippingAddress:e.target.value}))}/></label>
         {[['designApproved','A végleges látványtervet és valamennyi termékparamétert – méret, anyag, finomság, kövek és gravírozás – ellenőriztem és jóváhagyom.'],['priceAccepted','A feltüntetett teljes, szállítási díjat is tartalmazó végleges árat elfogadom.'],['termsAccepted','Az Általános Szerződési Feltételeket elolvastam és elfogadom.'],['privacyRead','Az Adatkezelési Tájékoztatót megismertem.'],['withdrawalAcknowledged','Tudomásul veszem, hogy a jóváhagyott látványterv és egyedi paramétereim alapján készülő ékszernél a 45/2014. (II. 26.) Korm. rendelet 29. § (1) c) pontja alapján nincs 14 napos indokolás nélküli elállási jog. Ez nem érinti szavatossági és jótállási jogaimat.'],['paymentObligation','Az ékszert a fenti feltételekkel megrendelem; nyilatkozatom fizetési kötelezettséggel jár.']].map(([key,label])=><label key={key} className="check-label"><input type="checkbox" checked={approval[key]===true} onChange={e=>setApproval(a=>({...a,[key]:e.target.checked}))}/><span>{label}</span></label>)}
@@ -1918,7 +1948,7 @@ function OrderCard({ req, onPay, onRevise, paying }) {
         <div className="price-big">{money(req.price)}</div>
         {req.vat ? <span className="mono-sm dim">{t('ord_vat')}: {money(req.vat)}</span> : null}
       </div>
-      {req.payable && <button className="btn btn-gold" disabled={paying||(needsApproval&&!approved)} onClick={() => onPay(req,{...approval,offerId:req.finalOffer?.id,offerDigest:req.finalOffer?.digest})}>
+      {req.payable && !req.acceptance && <button className="btn btn-gold" disabled={paying||(needsApproval&&!req.acceptance&&!approved)} onClick={() => onPay(req,{...approval,offerId:req.finalOffer?.id,offerDigest:req.finalOffer?.digest})}>
         {paying ? <><Spinner size={14} /> {t('ord_paying')}</> : <><Ico.lock s={13} /> {needsApproval?'Látványterv és végleges ár elfogadása – fizetési kötelezettséggel járó megrendelés':t('ord_pay')}</>}
       </button>}
     </div>}
@@ -1941,7 +1971,7 @@ function OrdersPage() {
     api('/requests').then(d => setList(d.requests)).catch(() => setList([]));
   }, []);
 
-  useEffect(() => { if (user) load(); }, [user, load]);
+  useEffect(() => { if (!user) return; load(); const timer=setInterval(load,30000); const refresh=()=>load();window.addEventListener('focus',refresh);return()=>{clearInterval(timer);window.removeEventListener('focus',refresh);}; }, [user, load]);
 
   const revise=async(req,note)=>{setPaying(req.requestNumber);try{await api('/requests/'+encodeURIComponent(req.requestNumber)+'/revision',{method:'POST',body:{note}});await load();}catch(e){toast(te(e.code),'err');}finally{setPaying(null);}};
   /* fizetés indítása */
@@ -1949,7 +1979,7 @@ function OrdersPage() {
     setPaying(req.requestNumber);
     try {
       const d = await api('/payment/start', { method: 'POST', body: { requestNumber: req.requestNumber,...approval } });
-      window.location.href = d.gatewayUrl;
+      if(d.bankTransfer){await load();toast('A rendelés véglegesítve. Az átutalási adatokat a rendelésnél találod.');setPaying(null);}else window.location.href = d.gatewayUrl;
     } catch (e) {
       toast(te(e.code) + (e.detail ? ' — ' + e.detail : ''), 'err');
       setPaying(null);
@@ -2123,15 +2153,17 @@ function AdminRow({ req, onChanged, defaultOpen }) {
   const [stock,setStock]=useState([]);
   useEffect(()=>{if(open&&req.sourcing)api('/diamonds').then(x=>setStock(x.items.filter(s=>s.purchasable&&Object.keys(req.sourcing).every(k=>s[k]===req.sourcing[k])))).catch(()=>setStock([]));},[open,req.sourcing]);
   const [note, setNote] = useState(req.adminNote || '');
-  const [finalOffer,setFinalOffer]=useState(req.finalOffer||{specification:req.design?JSON.stringify(req.design.config,null,2):Object.entries(req.details||{}).map(([k,v])=>k+': '+v).join('\n'),previewUrl:'',shippingFee:0,productionTime:'',deliveryTime:'',shippingMethod:'',paymentTerms:'',validUntil:''});
+  const [finalOffer,setFinalOffer]=useState(req.finalOffer||{specification:req.productSummary||req.note||'Egyedi ékszer',previewUrl:req.images[0]?.url||'',shippingFee:0,deliveryTime:'Egyeztetett átadás / feladás',shippingMethod:'Egyeztetett átadás',validUntil:new Date(Date.now()+14*86400000).toISOString().slice(0,16)});
   const [reviewReference,setReviewReference]=useState('');
+  const [productionRange,setProductionRange]=useState(req.productionDays?.join('-')||'');
+  const [bankReference,setBankReference]=useState('');
 
   const [busy, setBusy] = useState(false);
 
   const call = async (action, body) => {
     setBusy(true);
     try {
-      const endpoint=action==='approve'&&req.sourcing?`/diamonds/sourcing/${encodeURIComponent(req.requestNumber)}/confirm`:`/admin/requests/${encodeURIComponent(req.requestNumber)}/${action}`;
+      const endpoint=action==='approve'&&req.sourcing&&!req.combinationOffer?`/diamonds/sourcing/${encodeURIComponent(req.requestNumber)}/confirm`:`/admin/requests/${encodeURIComponent(req.requestNumber)}/${action}`;
       const d = await api(endpoint, { method: 'POST', body:{...body,stoneId} });
       onChanged(d.request);
       toast(action === 'approve' ? t('ad_approved_ok') : t('g_saved'));
@@ -2140,8 +2172,8 @@ function AdminRow({ req, onChanged, defaultOpen }) {
     setBusy(false);
   };
 
-  const canApprove = !req.combinationOffer&&(!req.diamond||!!req.sourcing)&&['submitted', 'approved', 'rejected'].includes(req.status);
-  const canReject = ['submitted', 'approved'].includes(req.status);
+  const canApprove = !req.acceptance&&['submitted', 'approved', 'rejected'].includes(req.status);
+  const canReject = false;
 
   return <div className="panel admin-row">
     <div className="admin-head" onClick={() => setOpen(o => !o)}>
@@ -2166,7 +2198,7 @@ function AdminRow({ req, onChanged, defaultOpen }) {
       {req.design && <div className="note-box" style={{marginBottom:20}}>
         <h4>{req.design.name || req.design.config.style} · {lang === 'en' ? 'Saved ring design' : 'Mentett gyűrűterv'}</h4>
         <p>{lang === 'en' ? 'The ZIP contains the submitted configuration, 3D concept (OBJ), reference images and a printable workshop brief. Production CAD preparation and goldsmith review are required.' : 'A ZIP tartalmazza a beküldött konfigurációt, a 3D látványtervet (OBJ), a referenciaképeket és a nyomtatható műhelylapot. Gyártási CAD-előkészítést és ötvösi ellenőrzést igényel.'}</p>
-        <a className="btn btn-dark btn-sm" href={`/api/admin/requests/${encodeURIComponent(req.requestNumber)}/design.zip`} download>{lang === 'en' ? 'Download workshop package (ZIP)' : 'Műhelycsomag letöltése (ZIP)'}</a>
+        <OrderCad req={req}/>
       </div>}
       <div className="admin-grid">
         <div>
@@ -2192,25 +2224,28 @@ function AdminRow({ req, onChanged, defaultOpen }) {
 
       {(canApprove || canReject) && <div className="admin-actions">
         <h4>{t('ad_setprice')}</h4>
+        {canApprove && <label className="field">Elkészülési idő (munkanap, például 2-5 vagy 8-11)<input className="input" placeholder="2-5" value={productionRange} onChange={e=>setProductionRange(e.target.value)} pattern="[0-9]+-[0-9]+"/><small>Az átutalás beérkezésétől számítva. Ez kerül a vásárló fiókjába és a jóváhagyó e-mailbe.</small></label>}
+
         {!req.sourcing&&!req.diamond&&<div className="final-offer">
-          <p>A teljes végösszeg tartalmazza a szállítást. Végleges paraméterek és ötvösi látványterv nélkül nem küldhető ajánlat.</p>
-          {Object.entries({specification:'Végleges specifikáció (anyag és finomság, kövek, méret, gravírozás)',previewUrl:'Jóváhagyandó látványterv HTTPS vagy /uploads/ URL-je',shippingFee:'Szállítási díj a végösszegen belül',productionTime:'Várható gyártási idő',deliveryTime:'Várható átadás / feladás',shippingMethod:'Szállítás módja',paymentTerms:'Fizetési módok, előleg / előrefizetés feltételei',validUntil:'Ajánlat érvényessége (dátum és idő)'}).map(([key,label])=><label className="field" key={key}>{label}{key==='specification'?<textarea className="input" value={finalOffer[key]} onChange={e=>setFinalOffer(x=>({...x,[key]:e.target.value}))}/>:<input className="input" type={key==='shippingFee'?'number':key==='validUntil'?'datetime-local':'text'} min={key==='shippingFee'?0:undefined} value={finalOffer[key]} onChange={e=>setFinalOffer(x=>({...x,[key]:e.target.value}))}/>}</label>)}
-        </div>}
+          <details><summary>Rendelési részletek és szállítás pontosítása</summary><p>A teljes végösszeg tartalmazza a szállítást. A beküldött terv és paraméterek automatikusan bekerülnek az összesítőbe.</p>
+          {Object.entries({specification:'Végleges specifikáció (anyag és finomság, kövek, méret, gravírozás)',previewUrl:'Jóváhagyandó látványterv HTTPS vagy /uploads/ URL-je',shippingFee:'Szállítási díj a végösszegen belül',deliveryTime:'Várható átadás / feladás',shippingMethod:'Szállítás módja',validUntil:'Ajánlat érvényessége (dátum és idő)'}).map(([key,label])=><label className="field" key={key}>{label}{key==='specification'?<textarea className="input" value={finalOffer[key]} onChange={e=>setFinalOffer(x=>({...x,[key]:e.target.value}))}/>:<input className="input" type={key==='shippingFee'?'number':key==='validUntil'?'datetime-local':'text'} min={key==='shippingFee'?0:undefined} value={finalOffer[key]} onChange={e=>setFinalOffer(x=>({...x,[key]:e.target.value}))}/>}</label>)}
+        </details></div>}
         <div className="price-form">
-          {req.sourcing?<label>Igazolt, pontosan egyező kő<select value={stoneId} onChange={e=>setStoneId(e.target.value)}><option value="">Válassz igazolt készletből</option>{stock.map(s=><option key={s.id} value={s.id}>{s.id} · IGI {s.certificate.number} · {money(s.price)}</option>)}</select><small>A végösszeget a szerver számítja. Hiányzó kőnél előbb importálj igazolt készletet és friss beszerzési árat.</small></label>:<input className="input" type="number" min="0" step="100" value={price}
+          {req.sourcing&&!req.combinationOffer?<label>Igazolt, pontosan egyező kő<select value={stoneId} onChange={e=>setStoneId(e.target.value)}><option value="">Válassz igazolt készletből</option>{stock.map(s=><option key={s.id} value={s.id}>{s.id} · IGI {s.certificate.number} · {money(s.price)}</option>)}</select><small>A végösszeget a szerver számítja. Hiányzó kőnél előbb importálj igazolt készletet és friss beszerzési árat.</small></label>:<input className="input" type="number" min="0" step="100" value={price}
             onChange={e => setPrice(e.target.value)} placeholder={t('ad_price_ph')} />}
           <input className="input" value={note} onChange={e => setNote(e.target.value)} placeholder={t('ad_note_ph')} />
         </div>
         <div className="btn-row" style={{ marginTop: 12 }}>
-          {canApprove && <button className="btn btn-gold" disabled={busy || (req.sourcing?!stoneId:!price)}
-            onClick={() => call('approve', { price: Number(price), adminNote: note,finalOffer })}>
+          {canApprove && <button className="btn btn-gold" disabled={busy || !/^\d{1,3}\s*[-–]\s*\d{1,3}$/.test(productionRange) || (req.sourcing&&!req.combinationOffer?!stoneId:!price)}
+            onClick={() => call('approve', { price: Number(price), adminNote: note,finalOffer,productionRange })}>
             {busy ? <Spinner size={14} /> : <><Ico.check s={14} /> {t('ad_approve')}</>}
           </button>}
-          {canReject && <button className="btn btn-ghost danger" disabled={busy}
-            onClick={() => call('reject', { adminNote: note })}>{t('ad_reject')}</button>}
+
         </div>
       </div>}
 
+      {req.status==='approved' && <div className="note-box"><h4>Banki átutalás rögzítése</h4><p>{req.acceptance||req.source==='diamond'?'Csak a bankszámlán ténylegesen beérkezett összeget igazold vissza.':'A vásárló még nem véglegesítette a rendelési összesítőt.'}</p><label>Banki tranzakció hivatkozása<input className="input" value={bankReference} onChange={e=>setBankReference(e.target.value)}/></label><button className="btn btn-dark" disabled={busy||!bankReference.trim()||(!req.acceptance&&req.source!=='diamond')} onClick={()=>call('bank-received',{reference:bankReference,confirmed:true})}>Az átutalás beérkezett</button></div>}
+      {req.emailDeliveries?.length>0 && <div className="note-box"><h4>Rendelési e-mailek</h4>{req.emailDeliveries.map(mail=><p key={mail.id}>{mail.kind==='received'?'Rendelés beérkezett':'Rendelés jóváhagyva'}: {({pending:'Küldésre vár',sending:'Küldés folyamatban',retry:'Újrapróbálásra vár',sent:'Elküldve',failed:'Küldés sikertelen'})[mail.status]}{mail.error&&<small> · {mail.error}</small>}{['failed','retry','pending'].includes(mail.status)&&<button className="btn btn-ghost btn-sm" disabled={busy} onClick={()=>call('retry-email',{id:mail.id})}>Újrapróbálás</button>}</p>)}</div>}
       {req.status==='paid'&&req.source!=='diamond'&&!req.contractAcceptedAt&&<div className="note-box"><h4>Teljesítés előtti ellenőrzés</h4><p>A szankciószűrést és az alkalmazandó ügyfél-átvilágítást a belső szabályzat szerint el kell végezni. Ide kizárólag a külön, védett nyilvántartás hivatkozása kerüljön, ne okmányadat.</p><label>Ellenőrzési nyilvántartás hivatkozása<input className="input" value={reviewReference} onChange={e=>setReviewReference(e.target.value)}/></label><button className="btn btn-outline" disabled={busy||!reviewReference.trim()} onClick={()=>call('fulfilment-review',{sanctionsChecked:true,dueDiligenceCompleted:true,contractAccepted:true,reviewReference})}>Elvégeztem az ellenőrzéseket; a megrendelést elfogadom</button></div>}
       {req.status === 'paid' && <div className="btn-row" style={{ marginTop: 14 }}>
         <button className="btn btn-dark btn-sm" disabled={busy}
@@ -2360,11 +2395,9 @@ function AdminPage() {
         <div>
           <p className="eyebrow-gold">ADMIN</p>
           <h1 className="h-display" style={{ fontSize: 30, marginTop: 8 }}>{t('ad_title')}</h1>
-          {config && config.barion && <p className="mono-sm dim" style={{ marginTop: 8 }}>
-            Barion: {config.barion.simulated
-              ? 'szimuláció (nincs POSKey)'
-              : config.barion.environment === 'test' ? 'SANDBOX — teszt pénz' : 'ÉLES — valódi fizetés'}
-          </p>}
+          <p className="mono-sm dim">Fizetés: banki átutalás · Ötvösi visszajelzés: 1 órán belül</p>
+          {config?.mail?.simulated && <p role="status">Az SMTP még nincs beállítva. A rendelési e-mailek a küldési sorban várakoznak.</p>}
+          {!config?.google?.enabled && <p className="mono-sm dim">Google-belépés: a GOOGLE_CLIENT_ID még nincs beállítva.</p>}
         </div>
         {data && <div className="stat-box">
           <span>{t('ad_revenue')}</span>
@@ -2485,10 +2518,10 @@ function DiamondSourcing(){
   return()=>{live=false;clearTimeout(timer);};
  },[value,revision]);
  const buy=async()=>{if(!user){setAuthModal('login');return;}setBusy(true);setMessage('');
-  try{if(!orderKey.current)orderKey.current=crypto.randomUUID();const {request}=await api('/diamonds/combination/order',{method:'POST',body:{...value,expectedPrice:offer.price,orderKey:orderKey.current,acceptTerms:terms,lang}});setMessage('Rendelés rögzítve: '+request.requestNumber+'. A fiókodban is megtalálod.');const payment=await api('/payment/start',{method:'POST',body:{requestNumber:request.requestNumber}});location.href=payment.gatewayUrl;}
+  try{if(!orderKey.current)orderKey.current=crypto.randomUUID();const {request}=await api('/diamonds/combination/order',{method:'POST',body:{...value,expectedPrice:offer.price,orderKey:orderKey.current,acceptTerms:terms,lang}});setMessage('Rendelés rögzítve: '+request.requestNumber+'. A fiókodban is megtalálod.');location.href='/rendeleseim';}
   catch(e){if(e.code==='PRICE_CHANGED'){setOffer(null);setTerms(false);}setMessage(errors[e.code]||'A fizetés nem indult el. Próbáld újra, vagy nyisd meg a rendelést a fiókodban.');}finally{setBusy(false);}
  };
- return <section className="diamond-import" aria-label="Egyedi gyémánt vásárlása"><h2>Válaszd ki a gyémántodat</h2><p>10 forma · D–M szín · FL–SI2 tisztaság · 0,10–30 ct. Egyedileg beszerzendő laboratóriumi gyémánt, tanúsítvány a beszerzéskor.</p><fieldset disabled={busy} style={{border:0,padding:0}}><DiamondCombination value={value} onChange={v=>{setOffer(null);setLoading(true);setTerms(false);setValue(v);}}/></fieldset><div aria-live="polite">{loading?<p>Ár kiszámítása…</p>:offer?<><h3>Bruttó ár: {offer.price.toLocaleString('hu-HU')} Ft</h3><p>A megrendeléskor rögzített ár a gyémánt ára; a szállítás egyeztetése külön történik.</p></>:<p>Az ár jelenleg nem elérhető.</p>}</div>{offer&&!isAdmin&&<><label><input type="checkbox" checked={terms} disabled={busy} onChange={e=>setTerms(e.target.checked)}/> Elfogadom az <a href="/aszf" target="_blank" rel="noopener noreferrer">ÁSZF-et</a>, és tudomásul veszem, hogy egyedileg beszerzendő követ rendelek.</label><button className="btn btn-dark" disabled={busy||!terms||loading} onClick={buy}>{busy?'Fizetés indítása…':user?'Vásárlás':'Belépés és vásárlás'}</button></>}{isAdmin&&<p>Vásárláshoz vásárlói fiókkal jelentkezz be.</p>}<button className="btn btn-ghost" disabled={busy||loading} onClick={()=>setRevision(x=>x+1)}>Ár frissítése</button><p role="status">{message}</p></section>;
+ return <section className="diamond-import" aria-label="Egyedi gyémánt vásárlása"><h2>Válaszd ki a gyémántodat</h2><p>10 forma · D–M szín · FL–SI2 tisztaság · 0,10–30 ct. Egyedileg beszerzendő laboratóriumi gyémánt, tanúsítvány a beszerzéskor.</p><fieldset disabled={busy} style={{border:0,padding:0}}><DiamondCombination value={value} onChange={v=>{setOffer(null);setLoading(true);setTerms(false);setValue(v);}}/></fieldset><div aria-live="polite">{loading?<p>Ár kiszámítása…</p>:offer?<><h3>Bruttó ár: {offer.price.toLocaleString('hu-HU')} Ft</h3><p>A megrendeléskor rögzített ár a gyémánt ára; a szállítás egyeztetése külön történik.</p></>:<p>Az ár jelenleg nem elérhető.</p>}</div>{offer&&!isAdmin&&<><label><input type="checkbox" checked={terms} disabled={busy} onChange={e=>setTerms(e.target.checked)}/> Elfogadom az <a href="/aszf" target="_blank" rel="noopener noreferrer">ÁSZF-et</a>, és tudomásul veszem, hogy egyedileg beszerzendő követ rendelek.</label><button className="btn btn-dark" disabled={busy||!terms||loading} onClick={buy}>{busy?'Rendelés leadása…':user?'Rendelés leadása':'Belépés és rendelés'}</button></>}{isAdmin&&<p>Vásárláshoz vásárlói fiókkal jelentkezz be.</p>}<button className="btn btn-ghost" disabled={busy||loading} onClick={()=>setRevision(x=>x+1)}>Ár frissítése</button><p role="status">{message}</p></section>;
 }
 function SupplierEvidenceAdmin(){
  const [data,setData]=useState(null),[message,setMessage]=useState('');
@@ -2523,7 +2556,7 @@ function DiamondsPage() {
    if(q.certificate&&!x.certificate?.number.includes(q.certificate))return false;
    for(const key of ['carat','price','ratio','depth','table']){if(x[key]==null&&(q[key+'Min']||q[key+'Max']))return false;if(q[key+'Min']!==undefined&&q[key+'Min']!==''&&x[key]<Number(q[key+'Min']))return false;if(q[key+'Max']!==undefined&&q[key+'Max']!==''&&x[key]>Number(q[key+'Max']))return false;}return true;
  }).sort((a,b)=>q.sort==='desc'?b.price-a.price:a.price-b.price);
- const order=async()=>{if(!user){setAuthModal('login');close();return;}setBusy(true);setError('');try{const {request}=await api('/diamonds/combination/order',{method:'POST',body:{shape:selected.shape,color:selected.color,clarity:selected.clarity,carat:selected.carat,cut:selected.cut,polish:selected.polish,symmetry:selected.symmetry,fluorescence:selected.fluorescence,expectedPrice:selected.price,orderKey:orderKey.current,acceptTerms:terms,lang}});setCart(cart.filter(id=>id!==selected.id));const payment=await api('/payment/start',{method:'POST',body:{requestNumber:request.requestNumber}});location.href=payment.gatewayUrl;}catch(e){setError(({PRICE_CHANGED:'Az ár megváltozott. Frissítsd a katalógust a vásárlás előtt.',PRICE_UNAVAILABLE:'Az ár ellenőrzése folyamatban van.',STONE_RESERVED:'Ez a kő már foglalt.',STONE_NOT_PURCHASABLE:'Ez a kő nem rendelhető.'})[e.code]||'A fizetés nem indult el. A létrejött rendelést a fiókodban is megtalálod.');}finally{setBusy(false);}};
+ const order=async()=>{if(!user){setAuthModal('login');close();return;}setBusy(true);setError('');try{const {request}=await api('/diamonds/combination/order',{method:'POST',body:{shape:selected.shape,color:selected.color,clarity:selected.clarity,carat:selected.carat,cut:selected.cut,polish:selected.polish,symmetry:selected.symmetry,fluorescence:selected.fluorescence,expectedPrice:selected.price,orderKey:orderKey.current,acceptTerms:terms,lang}});setCart(cart.filter(id=>id!==selected.id));location.href='/rendeleseim';}catch(e){setError(({PRICE_CHANGED:'Az ár megváltozott. Frissítsd a katalógust a vásárlás előtt.',PRICE_UNAVAILABLE:'Az ár ellenőrzése folyamatban van.',STONE_RESERVED:'Ez a kő már foglalt.',STONE_NOT_PURCHASABLE:'Ez a kő nem rendelhető.'})[e.code]||'A rendelés nem fejeződött be. Ellenőrizd a Rendeléseim menüpontot, mielőtt újrapróbálod.');}finally{setBusy(false);}};
  const labels={shape:'Forma',color:'Szín',clarity:'Tisztaság',cut:'Csiszolás',polish:'Polírozás',symmetry:'Szimmetria',fluorescence:'Fluoreszcencia',carat:'Karát',price:'Ár (Ft)',ratio:'Méretarány',depth:'Depth (%)',table:'Table (%)'};
  return <div className="page diamond-page"><div className="wrap"><span className="eyebrow">BRIGHTAL / LOOSE DIAMONDS</span><h1 className="h-display">Laboratóriumi gyémántok</h1><p className="lead-sm">Egyetlen kő. Végtelen lehetőség.</p>{data?.items.some(x=>x.demo)&&<p className="diamond-demo" role="status">Fejlesztési mintakatalógus. A mintákhoz nem tartozik IGI-tanúsítvány, és nem vásárolhatók meg.</p>}
  {error&&<p role="alert">{error} <button onClick={()=>location.reload()}>Újrapróbálás</button></p>}
@@ -2532,7 +2565,7 @@ function DiamondsPage() {
  <div className="diamond-layout"><aside id="diamond-search" tabIndex={-1} className="diamond-filters" aria-label="Gyémántszűrők"><h2>Találd meg a sajátodat</h2>{['shape','color','clarity'].map(key=><label key={key}>{labels[key]}<select value={q[key]||''} onChange={e=>setQ({...q,[key]:e.target.value})}><option value="">Mind</option>{data?.facets[key].map(v=><option key={v}>{v}</option>)}</select></label>)}{['carat','price'].map(key=><fieldset key={key}><legend>{labels[key]}</legend>{['Min','Max'].map((end,i)=><input key={end} type="number" min="0" step="any" placeholder={i?'Maximum':'Minimum'} aria-label={labels[key]+(i?' maximum':' minimum')} value={q[key+end]||''} onChange={e=>setQ({...q,[key+end]:e.target.value})}/>)}</fieldset>)}
  <details><summary>Részletes szűrők</summary>{['cut','polish','symmetry','fluorescence'].map(key=><label key={key}>{labels[key]}<select value={q[key]||''} onChange={e=>setQ({...q,[key]:e.target.value})}><option value="">Mind</option>{data?.facets[key].map(v=><option key={v}>{v}</option>)}</select></label>)}{['ratio','depth','table'].map(key=><fieldset key={key}><legend>{labels[key]}</legend>{['Min','Max'].map((end,i)=><input key={end} type="number" min="0" step="any" placeholder={i?'Maximum':'Minimum'} aria-label={labels[key]+end} value={q[key+end]||''} onChange={e=>setQ({...q,[key+end]:e.target.value})}/>)}</fieldset>)}<label>IGI-azonosító<input value={q.certificate||''} onChange={e=>setQ({...q,certificate:e.target.value})}/></label></details><button className="btn btn-ghost" onClick={()=>setQ({})}>Szűrők törlése</button></aside>
  <section><div className="diamond-results"><span role="status">{data?`${filtered.length} gyémánt`:'Betöltés…'}</span><label>Rendezés <select value={q.sort||'asc'} onChange={e=>setQ({...q,sort:e.target.value})}><option value="asc">Ár szerint növekvő</option><option value="desc">Ár szerint csökkenő</option></select></label></div><div className="diamond-grid">{!data&&!error&&Array.from({length:6},(_,i)=><div className="diamond-skeleton" key={i}/>)}{filtered.map(x=><button className="diamond-card" key={x.id} onClick={e=>choose(x,e)}><DiamondArtwork stone={x}/><span>{x.fulfilment==='sourced'?'Egyedileg beszerzendő':x.demo?'Fejlesztési minta':'IGI · '+x.certificate?.number}</span><h2>{x.carat.toFixed(2)} ct · {x.shape}</h2><p>{x.color} · {x.clarity} · {x.cut}</p><strong>{money(x.price)}</strong><small>Részletek és 360° nézet ↗</small></button>)}</div>{data&&!filtered.length&&<p>Nincs a szűrésnek megfelelő kő. Módosítsd a feltételeket.</p>}</section></div>
- <dialog ref={dialog} className="diamond-dialog" onCancel={close} aria-label="Gyémánt adatlap"><button className="diamond-close" onClick={close} aria-label="Bezárás">×</button>{selected&&<><h2>{selected.carat} ct · {selected.shape}</h2><div className="diamond-detail"><DiamondScene stone={selected}/><section><p>{selected.illustrative?'Paraméterek alapján beszerzendő gyémánt. A 3D kép és a méretek szemléltető adatok; a tényleges méreteket és tanúsítványt a beszerzéskor adjuk meg.':'Parametrikus szemléltetés; a tényleges követ a tanúsítvány írja le.'}</p><dl>{['shape','carat','color','clarity','cut','polish','symmetry','fluorescence','depth','table','ratio'].map(key=><div key={key}><dt>{labels[key]}</dt><dd>{selected[key]}</dd></div>)}<div><dt>Méretek</dt><dd>{selected.length} × {selected.width} × {selected.height} mm</dd></div></dl>{selected.certificate&&<a href={selected.certificate.url} target="_blank" rel="noopener noreferrer">IGI {selected.certificate.number} ↗</a>}<h3>Bruttó ár: {money(selected.price)}</h3><p>A szállítás egyeztetése külön történik.</p>{selected.purchasable&&!isAdmin?<><button className="btn btn-ghost" onClick={()=>setCart([...new Set([...cart,selected.id])])}>{cart.includes(selected.id)?'Kosárban':'Kosárba'}</button><label><input type="checkbox" checked={terms} onChange={e=>setTerms(e.target.checked)}/> Elfogadom az <a href="/aszf" target="_blank" rel="noopener noreferrer">ÁSZF-et</a>, és tudomásul veszem, hogy egyedileg beszerzendő követ rendelek.</label><button className="btn btn-dark" disabled={!terms||busy} onClick={order}>{busy?'Fizetés indítása…':user?'Vásárlás':'Belépés és vásárlás'}</button></>:<p>{isAdmin&&selected.purchasable?'Vásárláshoz vásárlói fiókkal jelentkezz be.':'Ez a kombináció jelenleg nem vásárolható meg.'}</p>}{error&&<p role="alert">{error}</p>}</section></div></>}</dialog>
+ <dialog ref={dialog} className="diamond-dialog" onCancel={close} aria-label="Gyémánt adatlap"><button className="diamond-close" onClick={close} aria-label="Bezárás">×</button>{selected&&<><h2>{selected.carat} ct · {selected.shape}</h2><div className="diamond-detail"><DiamondScene stone={selected}/><section><p>{selected.illustrative?'Paraméterek alapján beszerzendő gyémánt. A 3D kép és a méretek szemléltető adatok; a tényleges méreteket és tanúsítványt a beszerzéskor adjuk meg.':'Parametrikus szemléltetés; a tényleges követ a tanúsítvány írja le.'}</p><dl>{['shape','carat','color','clarity','cut','polish','symmetry','fluorescence','depth','table','ratio'].map(key=><div key={key}><dt>{labels[key]}</dt><dd>{selected[key]}</dd></div>)}<div><dt>Méretek</dt><dd>{selected.length} × {selected.width} × {selected.height} mm</dd></div></dl>{selected.certificate&&<a href={selected.certificate.url} target="_blank" rel="noopener noreferrer">IGI {selected.certificate.number} ↗</a>}<h3>Bruttó ár: {money(selected.price)}</h3><p>A szállítás egyeztetése külön történik.</p>{selected.purchasable&&!isAdmin?<><button className="btn btn-ghost" onClick={()=>setCart([...new Set([...cart,selected.id])])}>{cart.includes(selected.id)?'Kosárban':'Kosárba'}</button><label><input type="checkbox" checked={terms} onChange={e=>setTerms(e.target.checked)}/> Elfogadom az <a href="/aszf" target="_blank" rel="noopener noreferrer">ÁSZF-et</a>, és tudomásul veszem, hogy egyedileg beszerzendő követ rendelek.</label><button className="btn btn-dark" disabled={!terms||busy} onClick={order}>{busy?'Rendelés leadása…':user?'Rendelés leadása':'Belépés és rendelés'}</button></>:<p>{isAdmin&&selected.purchasable?'Vásárláshoz vásárlói fiókkal jelentkezz be.':'Ez a kombináció jelenleg nem vásárolható meg.'}</p>}{error&&<p role="alert">{error}</p>}</section></div></>}</dialog>
  </div><Footer/></div>;
 }
 function DiamondImport() {
@@ -2570,6 +2603,7 @@ const PAGES = {
   orders: OrdersPage, account: AccountPage, about: AboutPage, contact: ContactPage,
   admin: AdminPage, 'payment-return': PaymentReturnPage,
   /* jogi oldalak — mind ugyanazt a komponenst használja, más tartalommal */
+  ordering: OrderingPage,
   terms: () => <LegalPage doc="terms" />,
   privacy: () => <LegalPage doc="privacy" />,
   impressum: () => <LegalPage doc="impressum" />,

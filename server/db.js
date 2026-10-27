@@ -75,6 +75,7 @@ function collection(name) {
 
 module.exports = {
   DATA_DIR,
+  mailJobs: collection('mail-jobs'),
   users: collection('users'),
   requests: collection('requests'),
   orders: collection('orders'),

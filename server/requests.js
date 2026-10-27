@@ -72,6 +72,7 @@ function toPublic(r, { includeInternal = false } = {}) {
     paidAt: r.paidAt || null,
     images: r.images.map(i => ({ url: i.url, name: i.originalName })),
     details: r.details,
+    productSummary: require('./order-workflow').specification(r),
     source: r.diamond || r.sourcing ? 'diamond' : r.design ? 'designer' : 'upload',
     sourcing: r.sourcing || null,
     combinationOffer: r.combinationOffer || null,
@@ -88,7 +89,10 @@ function toPublic(r, { includeInternal = false } = {}) {
     contractAcceptedAt:r.contractAcceptedAt||null,
     paymentStatus: r.paymentStatus || null,
     payable: PAYABLE.includes(r.status) && r.price > 0 && (!offers.custom(r)||!!r.finalOffer),
-    productionDays: [cfg.shop.productionDaysMin, cfg.shop.productionDaysMax]
+    productionDays: r.productionDays || null,
+    reviewDueAt: r.reviewDueAt || (Number.isFinite(Date.parse(r.createdAt)) ? new Date(Date.parse(r.createdAt) + 3600000).toISOString() : null),
+    paymentMethod: r.paymentMethod || cfg.payment.method,
+    bankTransfer: require('./order-workflow').bankDetails(r)
   };
   if (includeInternal) {
     out.customer = r.customer;
@@ -97,6 +101,7 @@ function toPublic(r, { includeInternal = false } = {}) {
     out.history = r.history;
     out.lang = r.lang;
     out.compliance=r.compliance||null;
+    out.emailDeliveries = require('./db').mailJobs.filter(j => j.requestId === r.id).map(j => ({id:j.id, kind:j.kind, status:j.status, attempts:j.attempts, sentAt:j.sentAt, error:j.error}));
   }
   return out;
 }
@@ -112,6 +117,8 @@ function build({ user, body, files, lang, design = null }) {
     lang: lang === 'en' ? 'en' : 'hu',
     status: STATUS.SUBMITTED,
     createdAt: now,
+    reviewDueAt: new Date(Date.parse(now) + 3600000).toISOString(),
+    paymentMethod: cfg.payment.method,
     updatedAt: now,
     customer: {
       name: S(body.name, 100) || user.name,

@@ -80,7 +80,7 @@ module.exports = {
     phone: env('SHOP_PHONE', ''),
     address: env('SHOP_ADDRESS', '1024 Budapest, Káplár utca 11–13. 4. em. 13. ajtó'),
     vatRate: Number(env('VAT_RATE', 0.27)),
-    reviewHours: Number(env('REVIEW_HOURS', 72)),
+    reviewHours: 1,
     productionDaysMin: Number(env('PRODUCTION_DAYS_MIN', 10)),
     productionDaysMax: Number(env('PRODUCTION_DAYS_MAX', 14))
   },
@@ -105,7 +105,7 @@ module.exports = {
     preciousMetalRegNumber: env('PRECIOUS_METAL_REG_NUMBER',''),
     invoiceProvider: env('INVOICE_PROVIDER_NAME',''),
     accountant: env('ACCOUNTANT_NAME',''),
-    paymentProvider: 'Barion Payment Zrt.',
+    paymentProvider: 'OTP Bank Nyrt.',
     shippingProvider: env('SHIPPING_PROVIDER',''),
     shippingArea: env('SHIPPING_AREA',''),
     mailProvider: env('MAIL_PROVIDER_NAME',''),
@@ -117,7 +117,7 @@ module.exports = {
     regNumber: env('COMPANY_REG_NUMBER', '62270803'),
     regAuthority: env('COMPANY_REG_AUTHORITY', ''),
     representative: env('COMPANY_REPRESENTATIVE', 'Dezső Diána Ditta'),
-    bankName: env('COMPANY_BANK_NAME', ''),
+    bankName: env('COMPANY_BANK_NAME', 'OTP Bank Nyrt.'),
     bankAccount: env('COMPANY_BANK_ACCOUNT', ''),
     email: env('COMPANY_EMAIL', env('SHOP_EMAIL', '')),
     phone: env('COMPANY_PHONE', env('SHOP_PHONE', '')),
@@ -177,6 +177,8 @@ module.exports = {
     paymentWindow: env('BARION_PAYMENT_WINDOW', '1.00:00:00')
   },
 
+  payment: { method: 'bank_transfer' },
+
   google: { clientId: env('GOOGLE_CLIENT_ID', '').trim() },
 
   /* ---------- e-mail értesítés ---------- */
@@ -209,7 +211,7 @@ module.exports = {
     /* e-számla küldése az ügyfélnek a szolgáltatón keresztül */
     sendToCustomer: bool('INVOICE_SEND_TO_CUSTOMER', true),
     /* fizetési mód a számlán */
-    paymentMethod: env('INVOICE_PAYMENT_METHOD', 'bankkártya'),
+    paymentMethod: env('INVOICE_PAYMENT_METHOD', 'átutalás'),
     /* teljesítés = fizetés napja */
     vatRateLabel: env('INVOICE_VAT_RATE_LABEL', '27'),
     itemName: env('INVOICE_ITEM_NAME', 'Egyedi készítésű gyűrű'),

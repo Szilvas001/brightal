@@ -1,3 +1,4 @@
+require('../server/mailer').requestReceived=async()=>{};
 const test=require('node:test'),assert=require('node:assert/strict'),express=require('express');
 const D=require('../server/diamonds'),db=require('../server/db'),mail=require('../server/mailer');
 test('sourcing accepts all valid combinations but requires certified matching stock before payment',async()=>{
@@ -14,12 +15,12 @@ test('sourcing accepts all valid combinations but requires certified matching st
   const result=await (await post('/api/diamonds/sourcing','user',c)).json();const r=result.request;
   assert.equal(r.payable,false);assert.equal(r.source,'diamond');assert.deepEqual(r.sourcing,require('../server/supplier-model').combination(c));
   const path='/api/diamonds/sourcing/'+r.requestNumber+'/confirm';
-  assert.equal((await post(path,'user',{stoneId:stock.id})).status,403);
+  assert.equal((await post(path,'user',{productionRange:'2-5',stoneId:stock.id})).status,403);
   assert.equal((await post('/api/admin/requests/'+r.requestNumber+'/approve','admin',{price:1})).status,409);
-  assert.equal((await post(path,'admin',{stoneId:'missing'})).status,409);
-  const confirmed=await (await post(path,'admin',{stoneId:stock.id,price:1})).json();
+  assert.equal((await post(path,'admin',{productionRange:'2-5',stoneId:'missing'})).status,409);
+  const confirmed=await (await post(path,'admin',{productionRange:'2-5',stoneId:stock.id,price:1})).json();
   assert.equal(confirmed.request.price,201);assert.equal(confirmed.request.payable,true);assert.equal(confirmed.request.diamond.id,stock.id);
   const second=await (await post('/api/diamonds/sourcing','user',c)).json();
-  assert.equal((await post('/api/diamonds/sourcing/'+second.request.requestNumber+'/confirm','admin',{stoneId:stock.id})).status,409);
+  assert.equal((await post('/api/diamonds/sourcing/'+second.request.requestNumber+'/confirm','admin',{productionRange:'2-5',stoneId:stock.id})).status,409);
  }finally{await new Promise(r=>server.close(r));D.catalogue=original.catalogue;db.requests.find=original.find;db.requests.insert=original.insert;db.requests.update=original.update;mail.requestApproved=original.notify;}
 });

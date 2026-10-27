@@ -61,9 +61,9 @@ router.get('/requests', (req, res) => {
 router.post('/requests/:requestNumber/approve', async (req, res) => {
   const r = db.requests.find(x => x.requestNumber === req.params.requestNumber);
   if (!r) return res.status(404).json({ error: 'NOT_FOUND' });
-  if (r.sourcing || r.diamond) return res.status(409).json({error:'DIAMOND_CONFIRMATION_REQUIRED'});
+  if (r.sourcing && !r.combinationOffer) return res.status(409).json({error:'DIAMOND_CONFIRMATION_REQUIRED'});
 
-  const price = R.roundPrice((req.body || {}).price);
+  const price = (r.combinationOffer || r.diamond) ? r.price : R.roundPrice((req.body || {}).price);
   if (price === null) return res.status(400).json({ error: 'INVALID_PRICE' });
 
   const allowed = R.ADMIN_TRANSITIONS[r.status] || [];
@@ -73,8 +73,12 @@ router.post('/requests/:requestNumber/approve', async (req, res) => {
 
   if(r.acceptance) return res.status(409).json({error:'ORDER_ALREADY_ACCEPTED'});
   if(r.paymentId && !['Failed','Canceled','Expired'].includes(r.paymentStatus)) return res.status(409).json({error:'PAYMENT_IN_PROGRESS'});
-  let finalOffer;
-  try {finalOffer=offers.create({...req.body,price},r);} catch(e){return res.status(400).json({error:e.message});}
+  let finalOffer, productionDays;
+  try {
+    const workflow = require('../order-workflow');
+    productionDays = workflow.productionRange(req.body.productionRange);
+    if(offers.custom(r)) finalOffer=offers.create({...req.body,price,finalOffer:workflow.approvalOffer(r,req.body,productionDays)},r);
+  } catch(e){return res.status(400).json({error:e.message});}
   const adminNote = String((req.body || {}).adminNote || '').trim().slice(0, 600);
   const now = new Date().toISOString();
 
@@ -82,14 +86,14 @@ router.post('/requests/:requestNumber/approve', async (req, res) => {
     ...x,
     status: R.STATUS.APPROVED,
     price,
-    finalOffer, acceptance:null, contractAcceptedAt:null,
+    finalOffer, productionDays, paymentMethod:'bank_transfer', acceptance:null, contractAcceptedAt:null,
     adminNote: adminNote || null,
     approvedAt: x.approvedAt || now,
     updatedAt: now,
     history: [...x.history, { at: now, event: 'approved', price, by: 'admin' }]
   }));
 
-  mailer.requestApproved(updated, updated.lang).catch(e => console.error('[mail]', e.message));
+  await mailer.requestApproved(updated, updated.lang).catch(e => console.error('[mail]', e.message));
   console.log(`[admin] ✔ Jóváhagyva: ${updated.requestNumber} — ${price} ${cfg.currency.code}`);
 
   res.json({ request: R.toPublic(updated, { includeInternal: true }) });
@@ -106,6 +110,36 @@ router.post('/requests/:requestNumber/fulfilment-review',async(req,res)=>{
  const updated=await db.requests.update(x=>x.id===r.id,x=>({...x,contractAcceptedAt:now,compliance:{cleared:true,reviewedAt:now,reviewedBy:req.user.id,reference:String(req.body.reviewReference).slice(0,250)},history:[...x.history,{at:now,event:'fulfilment_review_completed',by:req.user.id}]}));
  mailer.contractAccepted(updated,updated.lang).catch(e=>console.error('[mail]',e.message));
  res.json({request:R.toPublic(updated,{includeInternal:true})});
+});
+
+
+/* Bank receipt is confirmed by an administrator, never by the customer. */
+router.post('/requests/:requestNumber/bank-received', async (req,res) => {
+  const r=db.requests.find(x=>x.requestNumber===req.params.requestNumber);
+  if(!r)return res.status(404).json({error:'NOT_FOUND'});
+  if(r.paidAt)return res.json({request:R.toPublic(r,{includeInternal:true})});
+  if(r.status!=='approved'||!r.price|| (offers.custom(r)&&!offers.accepted(r)))return res.status(409).json({error:'APPROVAL_REQUIRED'});
+  const reference=String(req.body.reference||'').trim().slice(0,200);
+  if(req.body.confirmed!==true||!reference)return res.status(400).json({error:'BANK_RECEIPT_REQUIRED'});
+  const now=new Date().toISOString();
+  let recorded=false;
+  const updated=await db.requests.update(x=>x.id===r.id,x=>{
+    if(x.paidAt)return x;
+    recorded=true;
+    return {...x,status:'paid',paidAt:now,updatedAt:now,paymentMethod:'bank_transfer',paymentStatus:'TransferReceived',history:[...x.history,{at:now,event:'bank_transfer_received',reference,by:req.user.id}]};
+  });
+  if(recorded){
+    mailer.paymentReceived(updated,updated.lang).catch(e=>console.error('[mail]',e.message));
+    require('../invoice').issueForRequest(updated).then(result=>{if(result.invoiceNumber)return db.requests.update(x=>x.id===updated.id,{invoiceNumber:result.invoiceNumber});}).catch(e=>console.error('[invoice]',e.message));
+  }
+  res.json({request:R.toPublic(updated,{includeInternal:true})});
+});
+router.post('/requests/:requestNumber/retry-email',async(req,res)=>{
+ const r=db.requests.find(x=>x.requestNumber===req.params.requestNumber);
+ const job=require('../db').mailJobs.find(j=>j.id===req.body.id&&j.requestId===r?.id);
+ if(!r||!job)return res.status(404).json({error:'NOT_FOUND'});
+ try{await require('../order-mail-queue').retry(job.id);res.json({request:R.toPublic(r,{includeInternal:true})});}
+ catch(e){res.status(409).json({error:e.message});}
 });
 
 /* ---------- elutasítás ---------- */

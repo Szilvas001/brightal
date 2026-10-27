@@ -1,3 +1,4 @@
+require('../server/config').payment.method='barion';
 const test=require('node:test'),assert=require('node:assert/strict'),express=require('express');
 const D=require('../server/diamonds'),P=require('../server/diamond-pricing'),db=require('../server/db'),barion=require('../server/barion'),invoice=require('../server/invoice');
 test('payment rechecks reference freshness and exact gross before calling the gateway',async()=>{

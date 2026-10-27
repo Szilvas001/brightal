@@ -1,3 +1,4 @@
+require('../server/config').payment.method='barion';
 const test=require('node:test'),assert=require('node:assert/strict');
 const O=require('../server/offers'),db=require('../server/db'),barion=require('../server/barion'),mailer=require('../server/mailer'),invoice=require('../server/invoice');
 const fields={specification:'Arany 585, ovális gyémánt, 54 méret, gravírozás nélkül',previewUrl:'https://example.com/design.png',shippingFee:2000,productionTime:'20 munkanap',deliveryTime:'2 munkanap',shippingMethod:'Biztosított futár',paymentTerms:'Teljes előrefizetés bankkártyával',validUntil:'2099-01-01'};
@@ -5,7 +6,7 @@ const approve=offer=>({offerId:offer.id,offerDigest:offer.digest,designApproved:
 test('final offer binds every declaration, exact version and billing to an immutable snapshot',()=>{
  const request={price:200000,currency:'HUF',design:{config:{shape:'oval'}}};
  for(const key of ['specification','previewUrl','productionTime','deliveryTime','shippingMethod','paymentTerms','validUntil'])assert.throws(()=>O.create({price:200000,finalOffer:{...fields,[key]:''}},request),/FINAL_OFFER_REQUIRED/);
- request.finalOffer=O.create({price:200000,finalOffer:fields},request);
+ request.finalOffer=O.create({price:200000,productionRange:"2-5",finalOffer:fields},request);
  const payload=approve(request.finalOffer);
  for(const key of ['designApproved','priceAccepted','termsAccepted','privacyRead','withdrawalAcknowledged','paymentObligation'])for(const value of [false,'true',undefined])assert.throws(()=>O.acceptance(request,{...payload,[key]:value},'u'),/APPROVAL_REQUIRED/);
  assert.throws(()=>O.acceptance(request,{...payload,offerDigest:'old'},'u'),/OFFER_CHANGED/);
@@ -27,9 +28,9 @@ test('custom order cannot pay or enter production without customer approval and 
  const server=app.listen(0);await new Promise(resolve=>server.once('listening',resolve));t.after(()=>new Promise(resolve=>server.close(resolve)));
  const post=async(path,body,admin=false)=>fetch(`http://127.0.0.1:${server.address().port}/api/${path}`,{method:'POST',headers:{'Content-Type':'application/json','x-role':admin?'admin':'user'},body:JSON.stringify(body)});
  assert.equal((await post('admin/requests/OFFER-TEST/approve',{price:200000},true)).status,400);
- assert.equal((await post('admin/requests/OFFER-TEST/approve',{price:200000,finalOffer:fields},true)).status,200);
+ assert.equal((await post('admin/requests/OFFER-TEST/approve',{price:200000,productionRange:"2-5",finalOffer:fields},true)).status,200);
  assert.equal((await post('requests/OFFER-TEST/revision',{note:'Legyen 55-ös a méret'})).status,200);assert.equal(r.finalOffer,null);assert.equal(r.status,'submitted');
- assert.equal((await post('admin/requests/OFFER-TEST/approve',{price:200000,finalOffer:fields},true)).status,200);
+ assert.equal((await post('admin/requests/OFFER-TEST/approve',{price:200000,productionRange:"2-5",finalOffer:fields},true)).status,200);
  assert.equal((await post('payment/start',{requestNumber:r.requestNumber})).status,409);assert.equal(charged,0);
  assert.equal((await post('payment/start',{requestNumber:r.requestNumber,...approve(r.finalOffer)})).status,200);assert.equal(charged,1);
  assert.equal((await post('requests/OFFER-TEST/revision',{note:'Utólag átírnám'})).status,409);

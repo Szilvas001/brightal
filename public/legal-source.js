@@ -62,6 +62,7 @@ window.LEGAL.hu.terms={
       "h": "4. A megrendelés folyamata",
       "b": [
         "4.1. Igényfelmérés",
+        "A rendelés részletes menetét a /rendeles-menete oldalon ismertetjük. A beküldött 3D terv vagy referenciafotó egyedi rendelésazonosítóval jelenik meg a Rendeléseim menüpontban, és e-mailes visszaigazolást küldünk róla. Az ötvössel az elkészítés időpontját egyeztetjük; 1 órán belül második e-mailben közöljük a vállalt munkanaptartományt. A Jóváhagyva állapotot munkatársunk rögzíti, a határidő az átutalás beérkezésétől számít.",
         "A Vásárló a Weboldalon keresztül megadja az elkészíteni kívánt ékszerre vonatkozó alapvető igényeit.",
         "Az igény megküldése, kapcsolatfelvétel vagy tervezési folyamat elindítása önmagában nem minősül végleges megrendelésnek, és nem keletkeztet fizetési kötelezettséget, kivéve, ha erről a Szolgáltató előzetesen kifejezetten és egyértelműen másként tájékoztatja a Vásárlót.",
         "4.2. Látványterv és végleges ajánlat",
@@ -161,7 +162,7 @@ window.LEGAL.hu.terms={
           "banki átutalással;"
         ],
         [
-          "online bankkártyás fizetéssel, amennyiben a Weboldalon ez a fizetési mód elérhető;"
+          "Online bankkártyás és Barion-fizetés jelenleg nem érhető el. A banki átutalás adatai a jóváhagyott rendelésnél jelennek meg; közleményként a rendelésazonosítót kell feltüntetni."
         ],
         [
           "a Szolgáltató belföldi pénzforgalmi szolgáltatónál vezetett fizetési számlájára történő készpénzbefizetéssel."

@@ -1,3 +1,5 @@
+require('../server/mailer').requestReceived=async()=>{};
+require('../server/config').payment.method='barion';
 const test=require('node:test'),assert=require('node:assert/strict'),express=require('express');
 process.env.BARION_SIMULATE='true';
 const S=require('../server/supplier-model'),D=require('../server/diamonds'),db=require('../server/db'),barion=require('../server/barion');

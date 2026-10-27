@@ -7,7 +7,7 @@ process.env.NODE_ENV='development';
 process.env.PORT=process.env.LOCAL_PORT||'3000';
 process.env.PUBLIC_URL='http://localhost:'+process.env.PORT;
 process.env.BARION_SIMULATE='true';
-process.env.MAIL_ENABLED='false';
+// Respect MAIL_ENABLED and SMTP settings so local orders can send real mail.
 process.env.INVOICE_ENABLED='false';
 const result=spawnSync(process.execPath,['scripts/build.js'],{stdio:'inherit'});
 if(result.status!==0)process.exit(result.status||1);

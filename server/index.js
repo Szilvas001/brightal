@@ -68,6 +68,7 @@ app.get('/api/config', (req, res) => {
       reviewHours: cfg.shop.reviewHours,
       productionDays: [cfg.shop.productionDaysMin, cfg.shop.productionDaysMax]
     },
+    payment: { method: cfg.payment.method },
     currency: cfg.currency,
     defaultLang: cfg.defaultLang,
     upload: {
@@ -83,13 +84,15 @@ app.get('/api/config', (req, res) => {
       environment: cfg.barion.envKey,
       label: cfg.barion.label,
       simulated: cfg.barion.simulate,
-      pixelId: cfg.barion.pixelId || null
+      pixelId: cfg.payment.method === 'barion' ? (cfg.barion.pixelId || null) : null
     },
     google: { enabled: !!cfg.google.clientId, clientId: cfg.google.clientId || null },
     mail: { simulated: mailer.isSimulated() },
     pinterest: { boardHu: cfg.pinterest.boardHu || null, boardEn: cfg.pinterest.boardEn || null }
   });
 });
+
+mailer.startWorker();
 
 app.use('/api/admin/cad', require('./routes/cad'));
 app.use('/api/diamonds', require('./routes/diamonds'));
@@ -186,6 +189,7 @@ const SITEMAP_PATHS = [
   { hu: '/inspiracio', en: '/inspiration', priority: '0.6', freq: 'monthly' },
   { hu: '/rolunk', en: '/about', priority: '0.5', freq: 'yearly' },
   { hu: '/kapcsolat', en: '/contact', priority: '0.5', freq: 'yearly' },
+  { hu: '/rendeles-menete', en: '/ordering', priority: '0.6', freq: 'monthly' },
   { hu: '/aszf', en: '/terms', priority: '0.3', freq: 'yearly' },
   { hu: '/adatkezeles', en: '/privacy', priority: '0.3', freq: 'yearly' },
   { hu: '/impresszum', en: '/impressum', priority: '0.3', freq: 'yearly' },
@@ -257,7 +261,7 @@ app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();
   /* Ismeretlen útvonalon is az SPA-t szolgáljuk ki (ott jelenik meg a
      404 oldal), de a keresőknek helyes státuszkódot küldünk. */
-  const known = /^\/($|ring-builder|diamonds|hogyan|how|feltoltes|upload|inspiracio|inspiration|rendeleseim|orders|fiok|account|rolunk|about|kapcsolat|contact|admin|payment-return|aszf|terms|adatkezeles|privacy|impresszum|impressum|elallas|refund|cookie|cookies)\/?$/;
+  const known = /^\/($|ring-builder|diamonds|hogyan|how|feltoltes|upload|inspiracio|inspiration|rendeleseim|orders|fiok|account|rolunk|about|kapcsolat|contact|admin|payment-return|rendeles-menete|ordering|aszf|terms|adatkezeles|privacy|impresszum|impressum|elallas|refund|cookie|cookies)\/?$/;
   if (!known.test(req.path)) res.status(404);
   res.type('html').send(renderIndex());
 });
@@ -283,9 +287,9 @@ app.listen(cfg.port, process.env.HOST || '127.0.0.1', () => {
   console.log(`  URL          : ${cfg.publicUrl}`);
   console.log(`  Nyelv        : ${cfg.defaultLang.toUpperCase()} (HU / EN váltható)`);
   console.log(`  Pénznem      : ${cfg.currency.code}`);
-  console.log(`  Barion       : ${cfg.barion.label} → ${cfg.barion.apiBase}`);
-  console.log(`  Fizetés mód  : ${cfg.barion.simulate ? '⚠  SZIMULÁCIÓ (nincs BARION_POS_KEY)' : '✔  valódi Barion API'}`);
-  console.log(`  E-mail       : ${mailer.isSimulated() ? '⚠  szimulált (data/mail-outbox.log)' : '✔  SMTP aktív'}`);
+  console.log(`  Fizetés      : banki átutalás · ${cfg.company.bankName}`);
+  console.log(`  Számlaszám   : ${cfg.company.bankAccount || '[] — kitöltendő'}`);
+  console.log(`  E-mail       : ${mailer.isSimulated() ? 'SMTP nincs beállítva; a rendelési levelek küldésre várnak' : '✔  SMTP aktív'}`);
   console.log(`  Google login : ${cfg.google.clientId ? '✔ bekapcsolva' : '– nincs beállítva'}`);
   console.log(line);
   console.log(`  Számlázás    : ${require('./invoice').isEnabled() ? `✔  ${cfg.invoice.provider}` : '⚠  szimulált (data/invoice-outbox.log)'}`);
