@@ -1473,8 +1473,7 @@ function LegalPage({ doc }) {
 function LegalNav({ current }) {
   const { t, navigate } = useA();
   const docs = [
-    ['ordering', /^\/(rendeles-menete|ordering)\/?$/, () => (LANG === 'en' ? '/ordering' : '/rendeles-menete')],
-  ['terms', 'lg_terms_long'], ['privacy', 'lg_privacy_long'],
+    ['terms', 'lg_terms_long'], ['privacy', 'lg_privacy_long'],
     ['impressum', 'lg_impressum'], ['refund', 'lg_refund_long'], ['cookies', 'lg_cookies']
   ];
   return <div className="legal-nav">
