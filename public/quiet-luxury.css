@@ -1,4 +1,6 @@
 /* Presentation only: shared palette, existing navigation and atelier photography. */
+/* Display serif of the homepage reference ("Időtlen szépség" heading). */
+@import url('https://fonts.googleapis.com/css2?family=Gilda+Display&display=swap');
 :root{
   --brand-ink:#3C332D;--brand-blush:#F7F2EA;--brand-taupe:#776B62;
   --ink:#3C332D;--ink-soft:#776B62;--text:#3C332D;--text-light:#776B62;--text-mute:#776B62;
@@ -104,4 +106,31 @@ body[data-page="home"] .hero-sub{font:400 18px/1.75 var(--sans);color:#776B62;ma
   .nav-wordmark{font-size:26px;letter-spacing:2px}
   body[data-page="home"] .hero{padding-left:22px;padding-right:22px}
   .hero .hero-cta .btn{width:100%}
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   HOMEPAGE REFERENCE MATCH — presentation only
+   Measured from the approved homepage mockup: display serif, softer
+   ink, gold primary button, light outline, warm header strip. Inner
+   pages use the palm-shadow wall photograph ("háttéroldalak háttere").
+   No markup, labels, handlers or layout behaviour are touched here.
+   ══════════════════════════════════════════════════════════════════ */
+:root{--display:'Gilda Display','Cormorant Garamond',Georgia,serif}
+html{background:#D9CAB9}
+body::before{background-color:#D9CAB9;background-image:url('/assets/atelier-pages.webp?v=palm')}
+.nav,.nav.scrolled{background:rgba(235,229,221,.96)}
+.h-display{font-family:var(--display);font-weight:400;font-synthesis:none}
+.hero .hero-title{font-family:var(--display);font-weight:400;font-size:60px;line-height:1.17;letter-spacing:-.02em;color:#524536}
+.hero .hero-cta .btn{font-size:11.5px;letter-spacing:2px}
+.hero .hero-cta .btn-dark{background:#BE9C68;border:1px solid #BE9C68;color:#FFFFFF}
+.hero .hero-cta .btn-dark:hover{background:#AD8B58;border-color:#AD8B58}
+.hero .hero-cta .btn-outline{border-color:#BCAE9C;color:#4A4038}
+.hero .hero-cta .btn-outline:hover{border-color:#3C332D}
+.rule{background:#B6956A}
+/* Text that sits directly on the darker palm wall keeps >=4.5:1 contrast. */
+body:not([data-page="home"]){--text-light:#4D433B;--text-mute:#4D433B;--gold-deep:#57422B}
+@media(max-width:1200px){.hero .hero-title{font-size:55px}}
+@media(max-width:760px){
+  body[data-page="home"]::before{background-image:url('/assets/atelier-pages.webp?v=palm')}
+  .hero .hero-title{font-size:clamp(30px,6.3vw,47px);line-height:1.17}
 }
