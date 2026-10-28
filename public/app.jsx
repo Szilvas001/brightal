@@ -2371,8 +2371,32 @@ function loadRingRuntime(){
  return builderLoad;
 }
 function OrderContact(){
- const {config}=useA(),c=config?.company||{},s=config?.shop||{};
- return <aside className="note-box"><h3>Segíthetünk?</h3><p>{c.name||s.name}</p><p><a href={'mailto:'+(c.email||s.email)}>{c.email||s.email}</a> · <a href={'tel:'+(c.phone||s.phone)}>{c.phone||s.phone}</a></p><p>{c.address||s.address}</p></aside>;
+ const {config}=useA(),c=config?.company||{},s=config?.shop||{},email=c.email||s.email,phone=c.phone||s.phone;
+ return <aside className="note-box"><h3>Kérdésed van? Keress minket!</h3><p>Amíg a gyűrűd készül, bármilyen kérdés esetén írj nekünk{phone?' vagy hívj minket telefonon':''}. Hivatkozz a rendelési azonosítódra, hogy gyorsan segíthessünk.</p>{email&&<p>E-mail: <a href={'mailto:'+email}>{email}</a></p>}{phone&&<p>Telefon: <a href={'tel:'+phone.replace(/[^+\d]/g,'')}>{phone}</a></p>}</aside>;
+}
+function OrderPaymentPage({req}){
+ const bank=req.bankTransfer,offer=req.acceptance?.offer||req.finalOffer,paid=!!req.paidAt;
+ return <div className="page"><div className="wrap-n guest-order">
+  <h1 className="h-display page-title">{paid?'Köszönjük a fizetésedet!':'Sikeres rendelés – fizetési tudnivalók'}</h1>
+  <p>{paid?'Az átutalásod beérkezését rögzítettük.':'A rendelésedet rögzítettük. A következő lépés a teljes vételár banki átutalása.'}</p>
+  <div className="ref-box"><span>Rendelési azonosító</span><strong>{req.requestNumber}</strong></div>
+  {!paid&&<section className="panel form-panel"><h2 className="h-display">Hogyan tudsz fizetni?</h2>
+   {bank?.configured?<><p>A fizetés banki átutalással történik. A fizetendő végösszeg a szállítási díjat is tartalmazza.</p><ol>
+    <li>Nyisd meg a bankod mobilalkalmazását vagy internetbankját, és válassz új forintátutalást.</li>
+    <li>Másold be az alábbi kedvezményezett nevét és bankszámlaszámát.</li>
+    <li>Összegként pontosan <strong>{money(bank.amount)}</strong> értéket adj meg.</li>
+    <li>A közlemény mezőbe ezt írd: <strong>{bank.reference}</strong>. Ez alapján azonosítjuk a befizetésedet.</li>
+    <li>Ellenőrizd az adatokat, majd hagyd jóvá az átutalást a bankod felületén. Őrizd meg az átutalási bizonylatot.</li>
+   </ol><p>Kérjük, a jóváhagyástól számított <strong>2 munkanapon belül</strong> utald el a teljes összeget. A banki jóváhagyás önmagában még nem jelenti, hogy az összeg hozzánk is beérkezett.</p></>:<p role="status">Az átutaláshoz szükséges bankszámlaszámot még véglegesítjük. Kérjük, egyelőre ne indíts utalást; a fizetési adatokért írj nekünk az alábbi elérhetőségen.</p>}
+   <BankTransfer req={req}/>
+  </section>}
+  <section className="panel form-panel"><h2 className="h-display">Mikor érkezik a csomagod?</h2>
+   <p>Várható elkészítés és feladás: <strong>{offer?.productionTime||'Az ajánlatban egyeztetett határidő szerint'}</strong>. A határidő az összeg bankszámlánkra történő beérkezésétől indul.</p>
+   <p>Az elkészült gyűrűt a megadott címre küldjük. A feladást követő kézbesítés ideje a szállítástól függ.</p>
+   {offer?.deliveryTime&&<p>Egyeztetett szállítás: {offer.deliveryTime}</p>}
+   <h3>Szállítási cím</h3><p style={{whiteSpace:'pre-wrap'}}>{req.acceptance.shippingAddress}</p>
+  </section><OrderContact/>
+ </div><Footer/></div>;
 }
 function GuestOrderPage(){
  const {toast}=useA();
@@ -2388,11 +2412,12 @@ function GuestOrderPage(){
  const messages={ORDER_LINK_INVALID:'A hivatkozás érvénytelen. Nyisd meg a rendeléshez kapott e-mailben szereplő teljes linket.',OFFER_CHANGED:'Az ajánlat időközben megváltozott. Frissítsd az oldalt, és ellenőrizd újra.',OFFER_EXPIRED:'Az ajánlat lejárt. Kérj új ajánlatot vagy módosítást.',ADDRESS_REQUIRED:'Töltsd ki a nevet és a teljes szállítási címet.',EMAIL_MISMATCH:'A rendeléshez eredetileg megadott e-mail-címet használd.',APPROVAL_REQUIRED:'A véglegesítéshez fogadd el a nyilatkozatokat.',NOT_PAYABLE:'Ez az ajánlat jelenleg nem hagyható jóvá.'};
  const fail=e=>setError(messages[e.code]||'A művelet nem sikerült. Kérjük, próbáld újra.');
  useEffect(()=>{let live=true;api(endpoint,{headers}).then(d=>{if(!live)return;setReq(d.request);setForm(f=>({...f,email:d.request.customer.email,shipping:{...f.shipping,name:d.request.customer.name==='Vásárlónk'?'':d.request.customer.name}}));}).catch(e=>{if(live)fail(e);});return()=>{live=false;};},[number,token]);
- useEffect(()=>{if(req?.design)loadRingRuntime().then(()=>setRuntime(true)).catch(()=>setError('A 3D nézet nem tölthető be. Frissítsd az oldalt.'));},[req?.design?.sha256]);
+ useEffect(()=>{if(req?.design&&!req.acceptance)loadRingRuntime().then(()=>setRuntime(true)).catch(()=>setError('A 3D nézet nem tölthető be. Frissítsd az oldalt.'));},[req?.design?.sha256]);
  const post=async(action,body)=>{setBusy(true);setError('');try{const d=await api(endpoint+'/'+action,{method:'POST',headers,body});setReq(d.request);setChecks({});if(action==='revision'){setNote('');toast('A módosítási kérésedet elküldtük.');}}catch(e){fail(e);}finally{setBusy(false);}};
  const download=async(kind='design.json')=>{try{const res=await fetch('/api'+endpoint+'/'+kind,{headers});if(!res.ok)throw Error();const url=URL.createObjectURL(await res.blob()),a=document.createElement('a');a.href=url;a.download=number+(kind==='terms'?'-ASZF.txt':'-design.json');a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch{setError('A terv letöltése nem sikerült.');}};
  if(!req)return <div className="page"><div className="wrap-n"><h1 className="h-display">Rendelés megtekintése</h1>{error?<p role="alert">{error}</p>:<Spinner dark/>}<OrderContact/></div><Footer/></div>;
  const o=req.finalOffer,accepted=!!req.acceptance,expired=o&&Date.parse(o.validUntil)<=Date.now();
+ if(accepted)return <OrderPaymentPage req={req}/>;
  const Viewer=window.BrightalBuilder?.OrderViewer;
  const declarations=[['designApproved','A fenti látványtervet és a megrendelésben szereplő valamennyi termékparamétert – különösen a méretet, az anyagot, a nemesfém finomságát, a kövek adatait és az esetleges gravírozást – ellenőriztem, és azokat jóváhagyom. Tudomásul veszem, hogy az ékszer ezen jóváhagyott adatok alapján kerül egyedileg legyártásra.'],['termsAccepted','Az Általános Szerződési Feltételeket elolvastam és elfogadom.'],['priceAccepted','A szállítást is tartalmazó teljes végösszeget elfogadom.'],['privacyRead','Az Adatkezelési Tájékoztatót megismertem.'],['withdrawalAcknowledged','Tudomásul veszem az egyedileg gyártott ékszerre vonatkozó, az ÁSZF-ben ismertetett elállási feltételeket.'],['paymentObligation','A megrendelés fizetési kötelezettséggel jár.']];
  const valid=declarations.every(([k])=>checks[k])&&['name','country','zip','city','street','houseNumber'].every(k=>form.shipping[k].trim())&&form.email.trim().toLowerCase()===req.customer.email&&(!req.design||ready);
