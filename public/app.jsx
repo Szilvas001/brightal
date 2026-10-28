@@ -929,7 +929,7 @@ function Nav() {
     <nav className={'nav' + (sc || mob || page !== 'home' ? ' scrolled' : '')}>
       <div className="nav-inner">
         <button className="brand" aria-label={lang==='en'?'BRIGHTAL — Home':'BRIGHTAL — Főoldal'} onClick={() => navigate('home')}>
-          <span className="nav-wordmark">BRIGHTAL</span>
+          <img className="nav-logo" src="/brightal-logo.png" alt="Brightal" width="676" height="200" />
         </button>
 
         <div className="nav-links">
