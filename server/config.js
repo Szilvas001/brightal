@@ -188,7 +188,7 @@ module.exports = {
     port: Number(env('SMTP_PORT', 587)),
     secure: bool('SMTP_SECURE', false),
     user: env('SMTP_USER', ''),
-    pass: env('SMTP_PASS', ''),
+    pass: require('./smtp-secret').read(env('SMTP_PASS', ''), env('SMTP_KEYCHAIN_SERVICE', ''), env('SMTP_USER', '')),
     replyTo: env('MAIL_REPLY_TO', env('SHOP_EMAIL', '')),
     from: env('MAIL_FROM', `BRIGHTAL <${env('SHOP_EMAIL', '')}>`)
   },

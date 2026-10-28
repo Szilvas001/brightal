@@ -56,3 +56,5 @@ Az élesítés előtti valós postaládás kézbesítési próbához mindhárom 
 Owner confirms rendeles@ and hello@ are full mailboxes; admin@ is receive-only and forwards to Gmail. Authenticate and send only as rendeles@; use hello@ as Reply-To and admin@ for internal notifications. Owner reports MX/SPF/DKIM and DMARC (p=none) configured.
 
 SMTP_PASS stays in the private .env file. With an SMTP username but no password, delivery remains simulated and customer jobs stay queued. Before activation, review pending test jobs and PUBLIC_URL: localhost links are only suitable for local tests. Production requires the public HTTPS website URL. Restart and verify SMTP authentication after adding the password.
+
+Mac: SMTP_KEYCHAIN_SERVICE=hu.brightal.smtp reads the password from the encrypted macOS login Keychain using SMTP_USER as account. Leave SMTP_PASS empty. The Keychain must be unlocked. Production hosting needs its own secret store; the Mac credential does not travel with Git.
