@@ -12,7 +12,7 @@ const path = require('path');
 const cfg = require('./config');
 
 let transporter = null;
-if (cfg.mail.enabled && cfg.mail.host) {
+if (cfg.mail.enabled && cfg.mail.host && (!cfg.mail.user || cfg.mail.pass)) {
   try {
     const nodemailer = require('nodemailer');
     transporter = nodemailer.createTransport({

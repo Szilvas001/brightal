@@ -30,9 +30,9 @@ ADMIN_EMAIL=admin@brightal.hu
 MAIL_FROM=BRIGHTAL <rendeles@brightal.hu>
 MAIL_REPLY_TO=hello@brightal.hu
 MAIL_ENABLED=true
-SMTP_HOST=SZOLGALTATO_ALTAL_MEGADOTT_SMTP_CIM
-SMTP_PORT=587
-SMTP_SECURE=false
+SMTP_HOST=smtp.rackhost.hu
+SMTP_PORT=465
+SMTP_SECURE=true
 SMTP_USER=rendeles@brightal.hu
 SMTP_PASS=SZOLGALTATO_ALTAL_MEGADOTT_JELSZO
 COMPANY_PHONE=VALOS_TELEFONSZAM
@@ -50,3 +50,9 @@ Az `.env` és az SMTP-jelszó nem kerül Gitbe. A SESSION_SECRET legyen álland�
 SMTP nélkül a vásárlói levelek tartós küldési sorban várnak, az adminnál látszik állapotuk. Az éles SMTP bekapcsolása előtt a helyi tesztadatokat különítsd el; az éles szerver ne a fejlesztői adatmappából induljon. Hiányzó bankszámlaszámnál a vásárló kifejezett várakozási tájékoztatást kap, a rendszer nem talál ki számlaszámot.
 
 Az élesítés előtti valós postaládás kézbesítési próbához mindhárom cím és az SMTP-hozzáférés szükséges. A `tests/guest-orders.test.cjs` helyi tesztje külső e-mail küldése nélkül ellenőrzi a folyamatot.
+
+## Rackhost activation
+
+Owner confirms rendeles@ and hello@ are full mailboxes; admin@ is receive-only and forwards to Gmail. Authenticate and send only as rendeles@; use hello@ as Reply-To and admin@ for internal notifications. Owner reports MX/SPF/DKIM and DMARC (p=none) configured.
+
+SMTP_PASS stays in the private .env file. With an SMTP username but no password, delivery remains simulated and customer jobs stay queued. Before activation, review pending test jobs and PUBLIC_URL: localhost links are only suitable for local tests. Production requires the public HTTPS website URL. Restart and verify SMTP authentication after adding the password.
