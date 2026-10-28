@@ -895,7 +895,21 @@ function Nav() {
     return () => window.removeEventListener('scroll', h);
   }, []);
   useEffect(() => { setMob(false); }, [page]);
-  useEffect(() => { document.body.style.overflow = mob ? 'hidden' : ''; }, [mob]);
+  useEffect(() => {
+    if (!mob) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const closeOnEscape = e => { if (e.key === 'Escape') setMob(false); };
+    const desktop = window.matchMedia('(min-width:1201px)');
+    const closeOnDesktop = e => { if (e.matches) setMob(false); };
+    window.addEventListener('keydown', closeOnEscape);
+    desktop.addEventListener('change', closeOnDesktop);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', closeOnEscape);
+      desktop.removeEventListener('change', closeOnDesktop);
+    };
+  }, [mob]);
 
   const items = [['diamonds','SHOP'], ['builder',lang==='en'?'COLLECTIONS':'KOLLEKCIÓK'], ['about',lang==='en'?'ABOUT':'RÓLUNK'], ['inspiration',lang==='en'?'INSPIRATION':'INSPIRÁCIÓ']];
 
@@ -914,7 +928,7 @@ function Nav() {
 
         <div className="nav-links">
           {items.map(([id, label]) =>
-            <button key={id} className={'nav-link' + (id === 'builder' ? ' nav-designer' : '') + (page === id ? ' active' : '')} onClick={() => navigate(id)}>{id === 'builder' && <Ico.gem s={16}/>} {label}</button>)}
+            <button key={id} className={'nav-link' + (id === 'builder' ? ' nav-designer' : '') + (page === id ? ' active' : '')} onClick={() => { setMob(false); navigate(id); }}>{id === 'builder' && <Ico.gem s={16}/>} {label}</button>)}
 
         </div>
 
@@ -937,7 +951,7 @@ function Nav() {
             </div>
           </div> : <button className="nav-profile" aria-label={t('nav_login')} title={t('nav_login')} onClick={() => setAuthModal('login')}><Ico.user s={22}/></button>}
           <a className="nav-icon" href="/diamonds#diamond-cart" aria-label={lang==='en'?'Cart':'Kosár'}><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"><path d="M3 4h2l2.5 12h11l2-9H6"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg></a>
-          <button className="burger" aria-label={lang==='en'?'Menu':'Menü'} aria-expanded={mob} onClick={() => setMob(m => !m)}>
+          <button className="burger" aria-label={lang==='en'?'Menu':'Menü'} aria-expanded={mob} aria-controls="mobile-navigation" onClick={() => setMob(m => !m)}>
             <span style={mob ? { transform: 'rotate(45deg) translate(3px,4px)' } : null} />
             <span style={mob ? { opacity: 0 } : null} />
             <span style={mob ? { transform: 'rotate(-45deg) translate(3px,-4px)' } : null} />
@@ -946,8 +960,8 @@ function Nav() {
       </div>
     </nav>
 
-    {mob && <div className="mobile-menu">
-      {[...items,['upload',t('nav_upload')],...(isAdmin?[['admin',t('nav_admin')]]:[])].map(([id, label]) => <button key={id} className={id === 'builder' ? 'nav-designer' : undefined} onClick={() => navigate(id)}>{id === 'builder' && <Ico.gem s={16}/>} {label}</button>)}
+    {mob && <div id="mobile-navigation" className="mobile-menu">
+      {[...items,['upload',t('nav_upload')],...(isAdmin?[['admin',t('nav_admin')]]:[])].map(([id, label]) => <button key={id} className={id === 'builder' ? 'nav-designer' : undefined} onClick={() => { setMob(false); navigate(id); }}>{id === 'builder' && <Ico.gem s={16}/>} {label}</button>)}
       {user && !isAdmin && <button onClick={() => navigate('orders')}>{t('nav_orders')}</button>}
       {user && !isAdmin && <button onClick={() => navigate('account')}>{t('nav_account')}</button>}
       <div style={{ marginTop: 22, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -1166,21 +1180,16 @@ function HomePage() {
     <section className="hero">
       <div className="hero-glow a" /><div className="hero-glow b" />
       <div className="hero-inner">
-        <p className="fade-in d1 eyebrow-gold">{t('hero_eyebrow')}</p>
         <h1 className="fade-in d1 h-display hero-title">
           {lang==='en'?'Timeless beauty,':'Időtlen szépség,'}<br />{lang==='en'?'for every moment.':'minden pillanatra.'}
         </h1>
-        <div className="fade-in d1 rule" />
+        <div className="fade-in d1 rule" aria-hidden="true" />
         <p className="fade-in d2 hero-sub">{lang==='en'?<>Fine details, premium materials,<br /> in the spirit of timeless elegance.</>:<>Finom részletek, prémium anyagok,<br /> az időtlen elegancia jegyében.</>}</p>
         <div className="fade-in d3 hero-cta">
           <button className="btn btn-dark btn-lg" onClick={() => navigate('builder')}>{lang==='en'?'Explore the collection':'Kollekció felfedezése'}</button>
           <button className="btn btn-outline btn-lg" onClick={() => navigate('builder')}>
             {lang==='en'?'New collection':'Új kollekció'}
           </button>
-        </div>
-        <div className="fade-in d3 hero-trust">
-          {[t('hero_trust_1'), t('hero_trust_2'), t('hero_trust_3')].map(x =>
-            <span key={x}><Ico.check s={13} /> {x}</span>)}
         </div>
       </div>
     </section>
