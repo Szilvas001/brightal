@@ -6,11 +6,18 @@ function productionRange(value) {
   if (!match || Number(match[1]) < 1 || Number(match[2]) < Number(match[1]) || Number(match[2]) > 365) throw Error('INVALID_PRODUCTION_RANGE');
   return [Number(match[1]), Number(match[2])];
 }
+function transferDueAt(at) {
+ if(!at)return null;
+ const d=new Date(at);let days=0;
+ while(days<2){d.setUTCDate(d.getUTCDate()+1);if(![0,6].includes(d.getUTCDay()))days++;}
+ return d.toISOString();
+}
 function bankDetails(request) {
   return {
     beneficiary: cfg.company.name,
     bank: cfg.company.bankName || 'OTP Bank Nyrt.',
-    account: cfg.company.bankAccount || '[]',
+    account: cfg.company.bankAccount || 'Megadás alatt',
+    dueAt: transferDueAt(request.acceptance?.at),
     reference: request.requestNumber,
     amount: request.price,
     currency: request.currency,
@@ -31,7 +38,7 @@ function approvalOffer(r, body, days) {
     shippingMethod: 'Egyeztetett átadás', validUntil: new Date(Date.now() + 14 * 86400000).toISOString(),
     ...body.finalOffer,
     productionTime: `${days[0]}–${days[1]} munkanap az átutalás beérkezésétől`,
-    paymentTerms: 'Banki átutalás, a teljes végösszeg előre történő megfizetésével. Közlemény: ' + r.requestNumber,
+    paymentTerms: 'Banki átutalás a megrendelés jóváhagyásától számított 2 munkanapon belül, a teljes végösszeg előre történő megfizetésével. Közlemény: ' + r.requestNumber,
   };
 }
 module.exports = { productionRange, bankDetails, specification, approvalOffer };

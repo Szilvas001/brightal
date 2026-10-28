@@ -67,7 +67,7 @@ function wrap(title, bodyHtml) {
 async function send(to, subject, text, html, attachments = []) {
   if (!transporter) { logToOutbox(to, subject, text); return { simulated: true }; }
   try {
-    await transporter.sendMail({ from: cfg.mail.from, to, subject, text, html: html || undefined, attachments });
+    await transporter.sendMail({ from: cfg.mail.from, replyTo: cfg.mail.replyTo || undefined, to, subject, text, html: html || undefined, attachments });
     console.log(`[mail] ✔ elküldve: ${to} — ${subject}`);
     return { simulated: false };
   } catch (e) {
@@ -87,7 +87,7 @@ function notice(r,subject,text){return send(r.customer.email,subject,text,wrap(s
 function offerText(r){const o=r.finalOffer;if(!o)return `Azonosító: ${r.requestNumber}\nÁr: ${money(r.price)}`;return `Azonosító: ${r.requestNumber}\n${o.specification}\n\nÉkszer: ${money(o.productPrice)}\nSzállítás: ${money(o.shippingFee)}\nFizetendő végösszeg: ${money(o.total)}\nGyártási idő: ${o.productionTime}\nÁtadás / feladás: ${o.deliveryTime}\nSzállítás: ${o.shippingMethod}\nFizetési feltételek: ${o.paymentTerms}\nÉrvényesség: ${o.validUntil}\nLátványterv: ${o.previewUrl.startsWith('/')?cfg.publicUrl:''}${o.previewUrl}\nAjánlat azonosítója: ${o.id}`;}
 function requestReceived(r){return require('./order-mail-queue').enqueue(r,'received');}
 function requestApproved(r){return require('./order-mail-queue').enqueue(r,'approved');}
-function contractAccepted(r){return notice(r,`Megrendelés elfogadva — ${r.requestNumber}`,`Kedves ${r.customer.name}!\n\nMegrendelését elfogadtuk. Fizetése beérkezett, a teljesítés előtti ellenőrzések lezárultak.\n\n${offerText(r)}\n\nJóváhagyás: ${r.acceptance?.at}\nSzállítási cím: ${r.acceptance?.shippingAddress}\nA gyártás és a kiszállítás állapotát fiókjában követheti: ${cfg.publicUrl}/orders`);}
+function contractAccepted(r){return notice(r,`Megrendelés elfogadva — ${r.requestNumber}`,`Kedves ${r.customer.name}!\n\nMegrendelését elfogadtuk. Fizetése beérkezett, a teljesítés előtti ellenőrzések lezárultak.\n\n${offerText(r)}\n\nJóváhagyás: ${r.acceptance?.at}\nSzállítási cím: ${r.acceptance?.shippingAddress}\nA gyártás és a kiszállítás állapotát a privát hivatkozáson követheti: ${require("./guest-access").url(r)}`);}
 
 /** 3) Elutasítva */
 function requestRejected(req_, lang = 'hu') {
@@ -105,7 +105,7 @@ function requestRejected(req_, lang = 'hu') {
 }
 
 function paymentReceived(r,lang='hu') {
- return notice(r,`${lang==='hu'?'Fizetés beérkezett':'Payment received'} — ${r.requestNumber}`,`Kedves ${r.customer.name}!\n\nFizetése beérkezett. Köszönjük!\n\n${offerText(r)}\n\nA fizetés visszaigazolása önmagában nem jelenti a gyártás megkezdését. A megrendelés elfogadásáról és teljesítéséről külön értesítjük. A számlát a számlázási szolgáltatón keresztül küldjük meg.\n\n${cfg.publicUrl}/orders`);
+ return notice(r,`${lang==='hu'?'Fizetés beérkezett':'Payment received'} — ${r.requestNumber}`,`Kedves ${r.customer.name}!\n\nFizetése beérkezett. Köszönjük!\n\n${offerText(r)}\n\nA fizetés visszaigazolása önmagában nem jelenti a gyártás megkezdését. A megrendelés elfogadásáról és teljesítéséről külön értesítjük. A számlát a számlázási szolgáltatón keresztül küldjük meg.\n\n${require("./guest-access").url(r)}`);
 }
 
 /** 5) Admin értesítés új kérésről */
@@ -117,7 +117,7 @@ function adminNewRequest(req_) {
     + (req_.note ? `Megjegyzés: ${req_.note}\n` : '')
     + `\nÁrazás: ${url}`;
   return send(cfg.admin.email, `[ADMIN] Új kérés — ${req_.requestNumber}`, text,
-    wrap('Új kérés érkezett', `<pre style="font-family:Helvetica,Arial,sans-serif;font-size:14px;color:#4A2C1F;white-space:pre-wrap">${text}</pre>`));
+    wrap('Új kérés érkezett', `<pre style="font-family:Helvetica,Arial,sans-serif;font-size:14px;color:#4A2C1F;white-space:pre-wrap">${escapeHtml(text)}</pre>`));
 }
 
 module.exports = {

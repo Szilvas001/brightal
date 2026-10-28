@@ -13,6 +13,15 @@ const mailer = require('../mailer');
 const designs = require('../designs');
 
 const router = express.Router();
+const submissionHits = new Map();
+setInterval(()=>{for(const [k,v] of submissionHits)if(v.until<Date.now())submissionHits.delete(k);},60000).unref();
+function submissionLimit(req,res,next){
+ const key=req.ip,now=Date.now(),v=submissionHits.get(key)||{count:0,until:now+3600000};
+ if(v.until<now){v.count=0;v.until=now+3600000;}
+ if(++v.count>10)return res.status(429).json({error:'TOO_MANY_ATTEMPTS'});
+ submissionHits.set(key,v);next();
+}
+
 
 /* ══════════════════════════════════════════════════════════════════
    KÉPFELTÖLTÉS
@@ -61,18 +70,17 @@ function cleanup(files) {
 
 /* ══════════════════════════════════════════════════════════════════
    1) ÚJ KÉRÉS BEKÜLDÉSE
-   Bejelentkezés szükséges — a kérés a fiókhoz kötődik, hogy később
-   ott jelenjen meg az árajánlat és a fizetés.
+   Regisztráció nélkül. A későbbi hozzáférést a privát e-mailes link adja.
    ══════════════════════════════════════════════════════════════════ */
-router.post('/requests', auth.requireUser, handleUpload, async (req, res) => {
-  if (req.user.role === 'admin') { cleanup(req.files); return res.status(400).json({ error: 'ADMIN_CANNOT_ORDER' }); }
+router.post('/requests', submissionLimit, handleUpload, async (req, res) => {
+  if (req.user?.role === 'admin') { cleanup(req.files); return res.status(400).json({ error: 'ADMIN_CANNOT_ORDER' }); }
   if (!req.files || !req.files.length) return res.status(400).json({ error: 'NO_PHOTO' });
 
   const body = req.body || {};
-  const email = String(body.email || req.user.email).trim().toLowerCase();
+  const email = String(body.email || req.user?.email || "").trim().toLowerCase();
   if (!auth.emailOk(email)) { cleanup(req.files); return res.status(400).json({ error: 'INVALID_EMAIL' }); }
-  if (String(body.name || req.user.name).trim().length < 2) { cleanup(req.files); return res.status(400).json({ error: 'NAME_REQUIRED' }); }
-  if (!body.acceptTerms || body.acceptTerms === 'false') { cleanup(req.files); return res.status(400).json({ error: 'TERMS_REQUIRED' }); }
+  if (!/^[+()\d\s-]{7,40}$/.test(String(body.phone || ''))) { cleanup(req.files); return res.status(400).json({error:'PHONE_REQUIRED'}); }
+  if (body.acceptTerms !== 'true') { cleanup(req.files); return res.status(400).json({ error: 'TERMS_REQUIRED' }); }
 
   let design;
   try { design = await designs.parseDesign(body.ringDesign); }
@@ -105,7 +113,7 @@ router.post('/requests', auth.requireUser, handleUpload, async (req, res) => {
 
 /* ---------- 2) SAJÁT KÉRÉSEK ---------- */
 router.get('/requests', auth.requireUser, (req, res) => {
-  if (req.user.role === 'admin') return res.json({ requests: [] });
+  if (req.user?.role === 'admin') return res.json({ requests: [] });
   const list = db.requests
     .filter(r => r.userId === req.user.id)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -117,7 +125,7 @@ router.get('/requests', auth.requireUser, (req, res) => {
 router.get('/requests/:requestNumber', auth.requireUser, (req, res) => {
   const r = db.requests.find(x => x.requestNumber === req.params.requestNumber);
   if (!r) return res.status(404).json({ error: 'NOT_FOUND' });
-  const isAdmin = req.user.role === 'admin';
+  const isAdmin = req.user?.role === 'admin';
   if (!isAdmin && r.userId !== req.user.id) return res.status(403).json({ error: 'FORBIDDEN' });
   res.json({ request: R.toPublic(r, { includeInternal: isAdmin }) });
 });

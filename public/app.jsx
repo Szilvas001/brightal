@@ -39,9 +39,9 @@ const I18N = {
     step2_t: 'Megvárod az elfogadást',
     step2_d: '1 órán belül e-mailben visszajelzünk, hány munkanapon belül készül el az ékszered.',
     step3_t: 'Fizetsz',
-    step3_d: 'Jóváhagyás után a Rendeléseim menüpontban található adatokkal, banki átutalással fizetsz.',
+    step3_d: 'Az e-mailben kapott linken jóváhagyod az ajánlatot, majd 2 munkanapon belül banki átutalással fizetsz.',
     step4_t: 'Megvárod az elkészítést',
-    step4_d: 'Kézzel készítjük el, a végleges ajánlatban vállalt határidővel. Végig követheted a fiókodban.',
+    step4_d: 'Kézzel készítjük el, a végleges ajánlatban vállalt határidővel. A rendelésedet az e-mailben kapott privát linken követheted.',
 
     /* --- feltöltés --- */
     up_eyebrow: 'AZ ÁLOMGYŰRŰ',
@@ -605,6 +605,7 @@ function useReveal() {
 /* ═══════════ ÚTVONALAK ═══════════ */
 
 const ROUTES = [
+  ['guest-order', /^\/order\/BRG-[A-Z0-9-]+\/?$/, () => location.pathname],
   ['diamonds', /^\/diamonds\/?$/, () => '/diamonds'],
   ['builder', /^\/ring-builder\/?$/, () => '/ring-builder'],
   ['home', /^\/$/, () => '/'],
@@ -934,8 +935,7 @@ function Nav() {
 
         <div className="nav-actions">
           <div className="nav-language"><LangSwitch /></div>
-          <a className="nav-icon" href="/diamonds#diamond-search" aria-label={lang==='en'?'Search':'Keresés'}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></a>
-          {user ? <div className="user-chip" tabIndex={0} aria-label={t('nav_account')}>
+          {isAdmin ? <div className="user-chip" tabIndex={0} aria-label={t('nav_account')}>
             {user.picture
               ? <img src={user.picture} alt="" referrerPolicy="no-referrer" />
               : <span className="avatar">{(user.name || '?')[0].toUpperCase()}</span>}
@@ -944,13 +944,10 @@ function Nav() {
                 <strong>{user.name}</strong>
                 <span>{user.email}</span>
               </div>
-              {!isAdmin && <button onClick={() => navigate('orders')}>{t('nav_orders')}</button>}
-              {!isAdmin && <button onClick={() => navigate('account')}>{t('nav_account')}</button>}
-              {isAdmin && <button onClick={() => navigate('admin')}>{t('nav_admin')}</button>}
+                          {isAdmin && <button onClick={() => navigate('admin')}>{t('nav_admin')}</button>}
               <button onClick={logout}>{t('nav_logout')}</button>
             </div>
-          </div> : <button className="nav-profile" aria-label={t('nav_login')} title={t('nav_login')} onClick={() => setAuthModal('login')}><Ico.user s={22}/></button>}
-          <a className="nav-icon" href="/diamonds#diamond-cart" aria-label={lang==='en'?'Cart':'Kosár'}><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"><path d="M3 4h2l2.5 12h11l2-9H6"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg></a>
+          </div> : null}
           <button className="burger" aria-label={lang==='en'?'Menu':'Menü'} aria-expanded={mob} aria-controls="mobile-navigation" onClick={() => setMob(m => !m)}>
             <span style={mob ? { transform: 'rotate(45deg) translate(3px,4px)' } : null} />
             <span style={mob ? { opacity: 0 } : null} />
@@ -962,13 +959,11 @@ function Nav() {
 
     {mob && <div id="mobile-navigation" className="mobile-menu">
       {[...items,...(isAdmin?[['admin',t('nav_admin')]]:[])].map(([id, label]) => <button key={id} className={id === 'builder' ? 'nav-designer' : undefined} onClick={() => { setMob(false); navigate(id); }}>{id === 'builder' && <Ico.gem s={16}/>} {label}</button>)}
-      {user && !isAdmin && <button onClick={() => navigate('orders')}>{t('nav_orders')}</button>}
-      {user && !isAdmin && <button onClick={() => navigate('account')}>{t('nav_account')}</button>}
       <div style={{ marginTop: 22, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
         {!isAdmin && <button className="btn btn-gold btn-sm" onClick={() => navigate('upload')}>{t('nav_upload')}</button>}
-        {user
+        {isAdmin
           ? <button className="btn btn-ghost btn-sm" onClick={logout}>{t('nav_logout')}</button>
-          : <button className="btn btn-ghost btn-sm" onClick={() => { setMob(false); setAuthModal('login'); }}>{t('nav_login')}</button>}
+          : null}
         <LangSwitch block />
       </div>
     </div>}
@@ -998,9 +993,7 @@ function Footer() {
         <button onClick={() => navigate('inspiration')}>{t('nav_inspiration')}</button>
       </div>
       <div>
-        <h4>{t('nav_account')}</h4>
-        {!isAdmin && <button onClick={() => navigate('orders')}>{t('nav_orders')}</button>}
-        {!isAdmin && <button onClick={() => navigate('account')}>{t('nav_account')}</button>}
+        <h4>{lang==='en'?'Contact':'Kapcsolat'}</h4>
         <button onClick={() => navigate('about')}>{t('nav_about')}</button>
         <button onClick={() => navigate('contact')}>{t('nav_contact')}</button>
       </div>
@@ -1070,87 +1063,13 @@ function GoogleButton({ onDone, onError }) {
 /* ═══════════ BELÉPÉS / REGISZTRÁCIÓ ═══════════ */
 
 function AuthModal() {
-  const { authModal, setAuthModal, setUser, toast, t, te, config, navigate } = useA();
-  const [mode, setMode] = useState('login');
-  const [f, setF] = useState({ email: '', password: '', name: '', phone: '' });
-  const [err, setErr] = useState('');
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => { if (authModal) { setMode(authModal); setErr(''); } }, [authModal]);
-  if (!authModal) return null;
-
-  const close = () => setAuthModal(null);
-
-  const submit = async () => {
-    setBusy(true); setErr('');
-    try {
-      const d = mode === 'login'
-        ? await api('/auth/login', { method: 'POST', body: { email: f.email, password: f.password } })
-        : await api('/auth/register', { method: 'POST', body: f });
-      setUser(d.user);
-      close();
-      toast(d.user.role === 'admin' ? 'Admin' : t(mode === 'login' ? 'au_login_btn' : 'au_register_btn') + ' ✓');
-      if (d.user.role === 'admin') navigate('admin');
-    } catch (e) { setErr(te(e.code)); }
-    setBusy(false);
-  };
-
-  const googleOn = config && config.google && config.google.enabled;
-
-  return <div className="modal-back" onClick={e => { if (e.target === e.currentTarget) close(); }}>
-    <div className="modal">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 }}>
-        <div>
-          <p className="eyebrow-gold">BRIGHTAL</p>
-          <h2 className="h-display" style={{ fontSize: 26, marginTop: 8 }}>
-            {t(mode === 'login' ? 'au_login_t' : 'au_register_t')}
-          </h2>
-        </div>
-        <button onClick={close} className="icon-x"><Ico.close /></button>
-      </div>
-
-      <p className="lead-sm">{t(mode === 'login' ? 'au_login_sub' : 'au_register_sub')}</p>
-
-      {googleOn && <>
-        <p className="fine-print">{LANG==='en'?'Continue with Google — no separate registration. Your orders stay in this account.':'Belépés Google-fiókkal, külön regisztráció nélkül. Rendeléseid ehhez a fiókhoz kapcsolódnak.'}</p>
-        <GoogleButton onDone={u => { setUser(u); close(); toast('Google ✓'); }} onError={c => setErr(te(c))} />
-        <div className="or-line"><span /><em>{t('au_or')}</em><span /></div>
-      </>}
-
-      {mode === 'register' && <>
-        <Field label={t('au_name')}>
-          <input className="input" value={f.name} onChange={e => setF({ ...f, name: e.target.value })} />
-        </Field>
-        <Field label={t('au_phone')}>
-          <input className="input" value={f.phone} onChange={e => setF({ ...f, phone: e.target.value })} />
-        </Field>
-      </>}
-
-      <Field label={t('au_email')}>
-        <input className="input" type="text" autoComplete="username" value={f.email}
-          onChange={e => setF({ ...f, email: e.target.value })} placeholder="you@example.com" />
-      </Field>
-      <Field label={t('au_password')} hint={mode === 'register' ? t('au_pw_hint') : null}>
-        <input className="input" type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-          value={f.password} onChange={e => setF({ ...f, password: e.target.value })}
-          onKeyDown={e => e.key === 'Enter' && submit()} placeholder="••••••••" />
-      </Field>
-
-      {err && <div className="err-msg" style={{ marginBottom: 12 }}>{err}</div>}
-
-      <button className="btn btn-dark btn-block" disabled={busy} onClick={submit}>
-        {busy ? <Spinner size={15} /> : t(mode === 'login' ? 'au_login_btn' : 'au_register_btn')}
-      </button>
-
-      <p className="modal-foot">
-        {t(mode === 'login' ? 'au_no_account' : 'au_have_account')}{' '}
-        <button onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setErr(''); }}>
-          {t(mode === 'login' ? 'au_register_link' : 'au_login_link')}
-        </button>
-      </p>
-    </div>
-  </div>;
+ const {authModal,setAuthModal,setUser,navigate}=useA();
+ const [f,setF]=useState({email:'',password:''}),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+ if(!authModal)return null;
+ const submit=async e=>{e.preventDefault();setBusy(true);setError('');try{const d=await api('/auth/login',{method:'POST',body:f});setUser(d.user);setAuthModal(null);navigate('admin');}catch{setError('Hibás adminazonosító vagy jelszó.');}finally{setBusy(false);}};
+ return <div className="modal-back"><form className="modal" onSubmit={submit}><h2 className="h-display">Admin belépés</h2><label className="field">Adminazonosító<input className="input" autoComplete="username" required value={f.email} onChange={e=>setF({...f,email:e.target.value})}/></label><label className="field">Jelszó<input className="input" type="password" autoComplete="current-password" required value={f.password} onChange={e=>setF({...f,password:e.target.value})}/></label>{error&&<p role="alert">{error}</p>}<button className="btn btn-dark" disabled={busy}>Admin belépés</button><button type="button" className="btn btn-ghost" onClick={()=>setAuthModal(null)}>Bezárás</button></form></div>;
 }
+function GuestAccessHelp(){return <div className="page"><div className="wrap-n"><h1 className="h-display">Rendelés megtekintése</h1><p>A rendelésedet az e-mailben kapott egyedi hivatkozással nyithatod meg. Vásárlói fiók és regisztráció nem szükséges.</p><OrderContact/></div><Footer/></div>;}
 /* ═══════════ FŐOLDAL ═══════════ */
 
 function StepCard({ n, icon, title, desc }) {
@@ -1680,7 +1599,7 @@ function UploadPage() {
   const validate = () => {
     const e = {};
     if (!files.length) e.photos = te('NO_PHOTO');
-    if (String(f.name).trim().length < 2) e.name = te('NAME_REQUIRED');
+    if (!/^[+()\d\s-]{7,40}$/.test(f.phone)) e.phone = 'Adj meg érvényes telefonszámot.';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email)) e.email = te('INVALID_EMAIL');
     if (!f.acceptTerms) e.acceptTerms = te('TERMS_REQUIRED');
     setErrors(e);
@@ -1717,20 +1636,18 @@ function UploadPage() {
 
   /* --- siker --- */
   if (done) {
-    const h = (config && config.shop && config.shop.reviewHours) || 1;
     return <div className="page">
       <div className="wrap-s" style={{ paddingBottom: 70 }}>
         <div className="panel success-panel">
           <div className="success-ring"><Ico.check s={26} /></div>
           <h1 className="h-display" style={{ fontSize: 30, marginBottom: 12 }}>{t('ok_title')}</h1>
-          <p className="lead-sm">{t('ok_sub', { email: done.images ? f.email || (user && user.email) : '', h })}</p>
+          <p className="lead-sm">{`Igényedet rögzítettük. Visszaigazolás címzettje: ${f.email}. 1 órán belül visszajelzünk, a végleges látványtervet és ajánlatot 3 napon belül küldjük.`}</p>
           <div className="ref-box">
             <span>{t('ok_ref')}</span>
             <strong>{done.requestNumber}</strong>
           </div>
-          <p className="lead-sm">{t('ok_next')}</p>
+          <p className="lead-sm">A visszaigazolást a megadott e-mail-címre küldjük. Az admin által jóváhagyott ajánlat külön levélben érkezik; a benne lévő privát linken tudod véglegesíteni a rendelést. Nézd meg a spam mappát is.</p>
           <div className="btn-row">
-            <button className="btn btn-dark" onClick={() => navigate('orders')}>{t('ok_orders')}</button>
             <button className="btn btn-ghost" onClick={() => { setDone(null); setF(p => ({ ...p, note: '', engraving: '' })); }}>
               {t('ok_another')}
             </button>
@@ -1740,27 +1657,6 @@ function UploadPage() {
       <Footer />
     </div>;
   }
-
-  /* --- belépés szükséges --- */
-  if (!user) return <div className="page">
-    <div className="page-head">
-      <p className="eyebrow-gold">{t('up_eyebrow')}</p>
-      <h1 className="h-display page-title">{t('up_title')}</h1>
-      <div className="rule" />
-    </div>
-    <div className="wrap-s" style={{ paddingBottom: 80 }}>
-      <div className="panel" style={{ padding: '40px 32px', textAlign: 'center' }}>
-        {window.brightalRingDraft && <div style={{ marginBottom: 24 }}>
-          <img src={previews[0]} alt={lang === 'en' ? 'Your custom ring design' : 'A saját gyűrűterved'} style={{ width: '100%', maxWidth: 260, maxHeight: 220, objectFit: 'contain' }}/>
-          <p className="lead-sm">{lang === 'en' ? 'Your design and specifications are ready. Sign in to request your personal quote.' : 'A terved és a specifikáció elkészült. Lépj be a személyes árajánlat kéréséhez.'}</p>
-        </div>}
-        <span className="lock-ring"><Ico.lock s={20} /></span>
-        <p className="lead-sm" style={{ margin: '18px 0 22px' }}>{t('up_login_needed')}</p>
-        <button className="btn btn-gold btn-lg" onClick={() => setAuthModal('login')}>{t('up_login_btn')}</button>
-      </div>
-    </div>
-    <Footer />
-  </div>;
 
   /* --- űrlap --- */
   return <div className="page">
@@ -1825,11 +1721,11 @@ function UploadPage() {
       <div className="panel form-panel">
         <h3 className="h-display">{t('up_contact')}</h3>
         <div className="grid-2-gap">
-          <Field label={t('up_name') + ' *'} error={errors.name}>
+          <Field label={t('up_name') + ' (nem kötelező)'} error={errors.name}>
             <input className={'input' + (errors.name ? ' err' : '')} value={f.name} onChange={e => set('name', e.target.value)} />
           </Field>
-          <Field label={t('up_phone')}>
-            <input className="input" value={f.phone} onChange={e => set('phone', e.target.value)} />
+          <Field label={t('up_phone') + ' *'} error={errors.phone}>
+            <input type="tel" className="input" value={f.phone} onChange={e => set('phone', e.target.value)} />
           </Field>
         </div>
         <Field label={t('up_email') + ' *'} error={errors.email}>
@@ -1839,7 +1735,7 @@ function UploadPage() {
         <label className="checkline">
           <input type="checkbox" checked={f.acceptTerms} onChange={e => set('acceptTerms', e.target.checked)} />
           <span>
-            {t('up_terms')} *
+            Megismertem az adatkezelési tájékoztatót. Az igény elküldése nem végleges megrendelés. *
             {' '}
             <a className="legal-link" onClick={e => { e.preventDefault(); navigate('terms'); }} href={pathFor('terms')}>{t('lg_terms_long')}</a>
             {' · '}
@@ -1849,7 +1745,7 @@ function UploadPage() {
           </span>
         </label>
         {/* Az elállási jog kizárására a jogszabály kifejezett tájékoztatást ír elő. */}
-        <p className="legal-inline-note">{t('up_custom_note')}</p>
+        <p className="legal-inline-note">A végleges látványtervet, árat és ÁSZF-et az ajánlat megérkezése után külön hagyod jóvá.</p>
         {errors.acceptTerms && <div className="err-msg">{errors.acceptTerms}</div>}
 
         <button className="btn btn-gold btn-block btn-lg" style={{ marginTop: 18 }} disabled={busy} onClick={submit}>
@@ -1867,7 +1763,7 @@ function UploadPage() {
 function BankTransfer({req}) {
   const {lang}=useA(); const bank=req.bankTransfer;
   if(!bank)return null;
-  return <section className="bank-transfer note-box"><h3>{lang==='en'?'Bank transfer':'Banki átutalás'}</h3><dl className="kv">{[[lang==='en'?'Beneficiary':'Kedvezményezett',bank.beneficiary],['Bank',bank.bank],[lang==='en'?'Account number':'Számlaszám',bank.account],[lang==='en'?'Reference':'Közlemény',bank.reference],[lang==='en'?'Amount':'Összeg',money(bank.amount)]].map(([key,value])=><React.Fragment key={key}><dt>{key}</dt><dd>{value}</dd></React.Fragment>)}</dl><p>{lang==='en'?'Use the exact order number as the payment reference. Production time starts when the transfer arrives.':'A közleménybe pontosan a rendelésazonosítót írd. Az elkészítési idő az átutalás beérkezésétől indul.'}</p>{!bank.configured&&<p role="status">{lang==='en'?'Bank details are being completed. Please wait for the final account number before paying.':'A számlaszám kitöltés alatt áll. A végleges számlaszám megadásáig ne indíts átutalást.'}</p>}</section>;
+  return <section className="bank-transfer note-box"><h3>{lang==='en'?'Bank transfer':'Banki átutalás'}</h3><dl className="kv">{[[lang==='en'?'Beneficiary':'Kedvezményezett',bank.beneficiary],['Bank',bank.bank],[lang==='en'?'Account number':'Számlaszám',bank.account],[lang==='en'?'Reference':'Közlemény',bank.reference],[lang==='en'?'Amount':'Összeg',money(bank.amount)]].map(([key,value])=><React.Fragment key={key}><dt>{key}</dt><dd>{value}</dd></React.Fragment>)}</dl><p>{bank.dueAt && !req.paidAt && <>Fizetési határidő: <strong>{fmtDate(bank.dueAt)}</strong> (2 munkanap). </>}{lang==='en'?'Use the exact order number as the payment reference. Production time starts when the transfer arrives.':'A közleménybe pontosan a rendelésazonosítót írd. Az elkészítési idő az átutalás beérkezésétől indul.'}</p>{!bank.configured&&<p role="status">{lang==='en'?'Bank details are being completed. Please wait for the final account number before paying.':'A számlaszám kitöltés alatt áll. A végleges számlaszám megadásáig ne indíts átutalást.'}</p>}</section>;
 }
 function OrderCad({req}) {
   const [job,setJob]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[styles,setStyles]=useState([]);
@@ -1877,20 +1773,15 @@ function OrderCad({req}) {
   const download=async format=>{try{const r=await api('/admin/cad/jobs/'+job.id+'/download',{method:'POST',body:{format}});location.href=r.url;}catch(e){setError(e.message);}};
   return <div><div className="btn-row"><a className="btn btn-dark btn-sm" href={`/api/admin/requests/${encodeURIComponent(req.requestNumber)}/design.zip`} download>Teljes 3D fájl és műhelylap letöltése (ZIP / OBJ)</a><button className="btn btn-outline btn-sm" disabled={busy||['queued','running'].includes(job?.status)} onClick={()=>create('mesh')}>3D CAD letöltése · export előkészítése</button>{styles.includes(req.design.config.style)&&<button className="btn btn-outline btn-sm" disabled={busy||['queued','running'].includes(job?.status)} onClick={()=>create('cad')}>Parametrikus STEP előkészítése</button>}</div>{job&&<p role="status">{({queued:'Export várakozik…',running:'3D export készül…',ready:'A teljes 3D fájl letölthető.',failed:'Az export nem készült el: '})[job.status]} {job.error}</p>}{job?.status==='ready'&&<div className="btn-row">{job.formats?.map(format=><button className="btn btn-dark btn-sm" key={format} onClick={()=>download(format)}>{format.toUpperCase()} letöltése</button>)}</div>}{error&&<p role="alert">{error}</p>}</div>;
 }
-function OrderingPage() {
-  const {lang,config,navigate}=useA();const hu=lang==='hu';
-  const steps=hu?[
-    ['01','Leadod a rendelést','Tervezd meg az ékszeredet a 3D gyűrűtervezővel, vagy tölts fel referenciafotót. Lépj be a fiókodba; Google-belépésnél nincs szükség külön regisztrációra. A rendelés egyedi azonosítóval azonnal megjelenik a Rendeléseim menüpontban.'],
-    ['02','Megérkezik az első e-mail','Visszaigazoljuk a rendelésedet az azonosítóval és a beküldött termék részleteivel. A 3D tervezőből érkező rendeléshez forgó GIF-et, képfeltöltésnél a referenciafotódat mellékeljük.'],
-    ['03','1 órán belül visszajelzünk','Az ékszer elkészítését vállaljuk; az ötvössel az elkészítés legkorábbi időpontját egyeztetjük. Visszaigazolása után rendelésed Jóváhagyva állapotba kerül. Második e-mailt küldünk, benne a vállalt munkanaptartománnyal – például 2–5 vagy 8–11 munkanap. Ugyanezt a Rendeléseim menüpontban is látod. A jóváhagyást munkatársunk rögzíti az ötvös válasza alapján.'],
-    ['04','Banki átutalással fizetsz','Jóváhagyás után ellenőrizd és fogadd el a végleges rendelési összesítőt a fiókodban. A feltüntetett végösszeget banki átutalással rendezheted. Közleményként a rendelésazonosítót add meg. Az elkészítési idő az összeg beérkezésétől számít, munkanapokban.'],
-  ]:[
-    ['01','Place your order','Create your jewellery in the 3D ring designer or upload a reference photo. Sign in; Google sign-in creates your account automatically. Your order immediately appears under My orders with its unique order number.'],
-    ['02','Receive your first email','We confirm the order number and item details, with a rotating GIF for a 3D design or your reference photo for a photo upload.'],
-    ['03','Confirmation within 1 hour','We undertake to make your jewellery. Our goldsmith confirms the earliest production schedule, then our team marks your order Approved. Our second email and My orders show the working-day range, such as 2–5 or 8–11 working days.'],
-    ['04','Pay by bank transfer','Review and accept the final order summary after approval. Pay the displayed total by bank transfer using your order number as the reference. Production time starts when payment arrives and is measured in working days.'],
-  ];
-  return <div className="page"><div className="wrap-n" style={{paddingBottom:70}}><p className="eyebrow-gold">BRIGHTAL · {hu?'RENDELÉS':'ORDERING'}</p><h1 className="h-display page-title">{hu?'Az elképzeléstől az ékszerig':'From your idea to your jewellery'}</h1><p className="lead-sm">{hu?'Egy rendelés, egy azonosító. Minden visszajelzés a fiókodban és e-mailben.':'One order, one number. Every update in your account and by email.'}</p>{steps.map(([number,title,body])=><section key={number} className="panel" style={{marginTop:20,padding:28}}><p className="eyebrow-gold">{number}</p><h2>{title}</h2><p style={{lineHeight:1.9}}>{body}</p></section>)}<section className="panel" style={{padding:28,marginTop:20}}><h2>{hu?'Átutalási adatok':'Bank details'}</h2><p>{config?.company?.name}<br/>OTP Bank Nyrt.<br/>{hu?'Számlaszám':'Account'}: {config?.company?.bankAccount||'[]'}</p><p>{hu?'A pontos, fizetendő összeget és a közleményt mindig a jóváhagyott rendelésnél találod. A számlaszám végleges kitöltéséig ne indíts átutalást.':'Find the exact total and payment reference on your approved order. Wait until final account details are provided before paying.'}</p></section><div className="btn-row" style={{marginTop:24}}><button className="btn btn-dark" onClick={()=>navigate('orders')}>{hu?'Rendeléseim':'My orders'}</button><button className="btn btn-ghost" onClick={()=>navigate('terms')}>{hu?'ÁSZF':'Terms'}</button></div></div><Footer/></div>;
+function OrderingPage(){
+ const {navigate}=useA();
+ return <div className="page"><div className="wrap-n"><h1 className="h-display">Az elképzeléstől az ékszerig</h1>{[
+ ['1. Elküldöd az elképzelésed','Megtervezed a gyűrűt vagy feltöltesz egy képet. Megadod az e-mail-címedet és telefonszámodat. Regisztráció nem szükséges.'],
+ ['2. Visszaigazoljuk','Automatikus e-mailt kapsz az egyedi azonosítóval. 1 órán belül visszajelzünk; a végleges látványtervet és ajánlatot 3 napon belül küldjük.'],
+ ['3. Elkészítjük az ajánlatot','Az admin jóváhagyása után külön e-mailben küldjük a specifikációt, a végösszeget, a vállalt munkanaptartományt és a privát hivatkozást.'],
+ ['4. Jóváhagyod és megrendeled','Az e-mail linkjén ellenőrzöd saját tervedet, megadod a szállítási adatokat és elfogadod a végleges ajánlatot és az ÁSZF-et.'],
+ ['5. Átutalod a vételárat','A sikeres rendelés oldalán látod a pontos összeget, az OTP-számlaadatokat és a közleménybe írandó rendelési azonosítót. A fizetési határidő 2 munkanap. Hiányzó számlaszám esetén várd meg annak megadását.']
+ ].map(([h,p])=><section className="panel" style={{padding:24,marginTop:20}} key={h}><h2>{h}</h2><p>{p}</p></section>)}<OrderContact/><button className="btn btn-dark" onClick={()=>navigate('upload')}>Elküldöm az elképzelésem</button></div><Footer/></div>;
 }
 
 function OrderCard({ req, onPay, onRevise, paying }) {
@@ -1999,7 +1890,7 @@ function OrdersPage() {
     <div className="wrap-s" style={{ textAlign: 'center', paddingBottom: 80 }}>
       <h1 className="h-display page-title">{t('ord_title')}</h1>
       <p className="lead-sm" style={{ margin: '16px 0 24px' }}>{t('au_login_sub')}</p>
-      <button className="btn btn-dark" onClick={() => setAuthModal('login')}>{t('nav_login')}</button>
+      <button className="btn btn-dark" onClick={() => setAuthModal('login')}>Admin belépés</button>
     </div>
     <Footer />
   </div>;
@@ -2221,7 +2112,7 @@ function AdminRow({ req, onChanged, defaultOpen }) {
         <div>
           <h4>{t('ad_details')}</h4>
           <dl className="kv">
-            {[['Email', req.customer.email], ['Tel', req.customer.phone],
+            {[['Email', req.customer.email], ['Tel', req.customer.phone], ['Szállítási cím', req.acceptance?.shippingAddress],
               [t('up_metal'), req.details.metal], [t('up_size'), req.details.ringSize],
               [t('up_budget'), req.details.budget], [t('up_deadline'), req.details.deadline],
               [t('up_engraving'), req.details.engraving]]
@@ -2233,7 +2124,7 @@ function AdminRow({ req, onChanged, defaultOpen }) {
 
       {(canApprove || canReject) && <div className="admin-actions">
         <h4>{t('ad_setprice')}</h4>
-        {canApprove && <label className="field">Elkészülési idő (munkanap, például 2-5 vagy 8-11)<input className="input" placeholder="2-5" value={productionRange} onChange={e=>setProductionRange(e.target.value)} pattern="[0-9]+-[0-9]+"/><small>Az átutalás beérkezésétől számítva. Ez kerül a vásárló fiókjába és a jóváhagyó e-mailbe.</small></label>}
+        {canApprove && <label className="field">Elkészülési idő (munkanap, például 2-5 vagy 8-11)<input className="input" placeholder="2-5" value={productionRange} onChange={e=>setProductionRange(e.target.value)} pattern="[0-9]+-[0-9]+"/><small>Az átutalás beérkezésétől számítva. Ez kerül a vásárló privát rendelési oldalára és a jóváhagyó e-mailbe.</small></label>}
 
         {!req.sourcing&&!req.diamond&&<div className="final-offer">
           <details><summary>Rendelési részletek és szállítás pontosítása</summary><p>A teljes végösszeg tartalmazza a szállítást. A beküldött terv és paraméterek automatikusan bekerülnek az összesítőbe.</p>
@@ -2374,7 +2265,7 @@ function AdminPage() {
     <div className="wrap-s" style={{ textAlign: 'center', paddingBottom: 80 }}>
       <h1 className="h-display page-title">Admin</h1>
       <p className="lead-sm" style={{ margin: '16px 0 22px' }}>{t('e_ADMIN_REQUIRED')}</p>
-      <button className="btn btn-dark" onClick={() => setAuthModal('login')}>{t('nav_login')}</button>
+      <button className="btn btn-dark" onClick={() => setAuthModal('login')}>Admin belépés</button>
     </div>
     <Footer />
   </div>;
@@ -2406,7 +2297,6 @@ function AdminPage() {
           <h1 className="h-display" style={{ fontSize: 30, marginTop: 8 }}>{t('ad_title')}</h1>
           <p className="mono-sm dim">Fizetés: banki átutalás · Ötvösi visszajelzés: 1 órán belül</p>
           {config?.mail?.simulated && <p role="status">Az SMTP még nincs beállítva. A rendelési e-mailek a küldési sorban várakoznak.</p>}
-          {!config?.google?.enabled && <p className="mono-sm dim">Google-belépés: a GOOGLE_CLIENT_ID még nincs beállítva.</p>}
         </div>
         {data && <div className="stat-box">
           <span>{t('ad_revenue')}</span>
@@ -2474,6 +2364,55 @@ function loadRingRuntime(){
  if(!builderLoad)builderLoad=new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='/builder/bundle.js';script.onload=resolve;script.onerror=()=>{builderLoad=null;script.remove();reject(new Error('3D load failed'));};document.head.appendChild(script);});
  return builderLoad;
 }
+function OrderContact(){
+ const {config}=useA(),c=config?.company||{},s=config?.shop||{};
+ return <aside className="note-box"><h3>Segíthetünk?</h3><p>{c.name||s.name}</p><p><a href={'mailto:'+(c.email||s.email)}>{c.email||s.email}</a> · <a href={'tel:'+(c.phone||s.phone)}>{c.phone||s.phone}</a></p><p>{c.address||s.address}</p></aside>;
+}
+function GuestOrderPage(){
+ const {toast}=useA();
+ const number=decodeURIComponent(location.pathname.split('/').pop());
+ const [token]=useState(()=>{
+  const incoming=location.hash.slice(1),key='brightal-order:'+number;
+  if(/^[\w-]{43}$/.test(incoming)){try{sessionStorage.setItem(key,incoming);}catch{}history.replaceState(null,'',location.pathname);return incoming;}
+  try{return sessionStorage.getItem(key)||'';}catch{return '';}
+ });
+ const [req,setReq]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[ready,setReady]=useState(false),[runtime,setRuntime]=useState(false);
+ const [form,setForm]=useState({email:'',shipping:{name:'',country:'Magyarország',zip:'',city:'',street:'',houseNumber:'',extra:''}}),[checks,setChecks]=useState({}),[note,setNote]=useState('');
+ const endpoint='/guest-orders/'+encodeURIComponent(number),headers={Authorization:'Bearer '+token};
+ const messages={ORDER_LINK_INVALID:'A hivatkozás érvénytelen. Nyisd meg a rendeléshez kapott e-mailben szereplő teljes linket.',OFFER_CHANGED:'Az ajánlat időközben megváltozott. Frissítsd az oldalt, és ellenőrizd újra.',OFFER_EXPIRED:'Az ajánlat lejárt. Kérj új ajánlatot vagy módosítást.',ADDRESS_REQUIRED:'Töltsd ki a nevet és a teljes szállítási címet.',EMAIL_MISMATCH:'A rendeléshez eredetileg megadott e-mail-címet használd.',APPROVAL_REQUIRED:'A véglegesítéshez fogadd el a nyilatkozatokat.',NOT_PAYABLE:'Ez az ajánlat jelenleg nem hagyható jóvá.'};
+ const fail=e=>setError(messages[e.code]||'A művelet nem sikerült. Kérjük, próbáld újra.');
+ useEffect(()=>{let live=true;api(endpoint,{headers}).then(d=>{if(!live)return;setReq(d.request);setForm(f=>({...f,email:d.request.customer.email,shipping:{...f.shipping,name:d.request.customer.name==='Vásárlónk'?'':d.request.customer.name}}));}).catch(e=>{if(live)fail(e);});return()=>{live=false;};},[number,token]);
+ useEffect(()=>{if(req?.design)loadRingRuntime().then(()=>setRuntime(true)).catch(()=>setError('A 3D nézet nem tölthető be. Frissítsd az oldalt.'));},[req?.design?.sha256]);
+ const post=async(action,body)=>{setBusy(true);setError('');try{const d=await api(endpoint+'/'+action,{method:'POST',headers,body});setReq(d.request);setChecks({});if(action==='revision'){setNote('');toast('A módosítási kérésedet elküldtük.');}}catch(e){fail(e);}finally{setBusy(false);}};
+ const download=async(kind='design.json')=>{try{const res=await fetch('/api'+endpoint+'/'+kind,{headers});if(!res.ok)throw Error();const url=URL.createObjectURL(await res.blob()),a=document.createElement('a');a.href=url;a.download=number+(kind==='terms'?'-ASZF.txt':'-design.json');a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch{setError('A terv letöltése nem sikerült.');}};
+ if(!req)return <div className="page"><div className="wrap-n"><h1 className="h-display">Rendelés megtekintése</h1>{error?<p role="alert">{error}</p>:<Spinner dark/>}<OrderContact/></div><Footer/></div>;
+ const o=req.finalOffer,accepted=!!req.acceptance,expired=o&&Date.parse(o.validUntil)<=Date.now();
+ const Viewer=window.BrightalBuilder?.OrderViewer;
+ const declarations=[['designApproved','A fenti látványtervet és a megrendelésben szereplő valamennyi termékparamétert – különösen a méretet, az anyagot, a nemesfém finomságát, a kövek adatait és az esetleges gravírozást – ellenőriztem, és azokat jóváhagyom. Tudomásul veszem, hogy az ékszer ezen jóváhagyott adatok alapján kerül egyedileg legyártásra.'],['termsAccepted','Az Általános Szerződési Feltételeket elolvastam és elfogadom.'],['priceAccepted','A szállítást is tartalmazó teljes végösszeget elfogadom.'],['privacyRead','Az Adatkezelési Tájékoztatót megismertem.'],['withdrawalAcknowledged','Tudomásul veszem az egyedileg gyártott ékszerre vonatkozó, az ÁSZF-ben ismertetett elállási feltételeket.'],['paymentObligation','A megrendelés fizetési kötelezettséggel jár.']];
+ const valid=declarations.every(([k])=>checks[k])&&['name','country','zip','city','street','houseNumber'].every(k=>form.shipping[k].trim())&&form.email.trim().toLowerCase()===req.customer.email&&(!req.design||ready);
+ return <div className="page"><div className="wrap-n guest-order">
+  <h1 className="h-display page-title">{accepted?'Sikeres rendelés':o?'Látványterv jóváhagyása és megrendelés':'Megérkezett az elképzelésed'}</h1>
+  <div className="ref-box"><span>Rendelési azonosító</span><strong>{req.requestNumber}</strong></div>
+  {accepted?<><p role="status">A jóváhagyásodat és a szállítási adataidat rögzítettük.</p><BankTransfer req={req}/><p>Szállítás: {req.acceptance.shippingAddress}</p></>:!o?<p>Az ajánlat egyeztetés alatt áll. A végleges látványtervet és ajánlatot e-mailben küldjük. Most még nincs fizetési kötelezettséged.</p>:null}
+  {req.design&&runtime&&Viewer?<Viewer design={req.design} onReady={setReady}/>:req.design?<p>3D látványterv betöltése…</p>:null}
+  {o?.previewUrl&&<img className="order-final-preview" src={o.previewUrl} alt="Admin által jóváhagyott látványterv"/>}
+  {!o&&req.images.map((im,i)=><img className="order-final-preview" key={i} src={im.url} alt="Beküldött referencia"/>)}
+  {req.design&&<button className="btn btn-outline" onClick={()=>download()}>Saját terv letöltése (JSON)</button>}
+  <h2 className="h-display">Az ékszer specifikációja</h2><p style={{whiteSpace:'pre-wrap'}}>{o?.specification||req.productSummary}</p>
+  {o&&<dl className="kv">{[['Ékszer vételára',money(o.productPrice)],['Szállítási díj',money(o.shippingFee)],['Fizetendő végösszeg',money(o.total)],['Várható gyártási idő',o.productionTime],['Várható átadás / feladás',o.deliveryTime],['Szállítás módja',o.shippingMethod],['Ajánlat érvényessége',fmtDate(o.validUntil)]].map(([k,v])=><React.Fragment key={k}><dt>{k}</dt><dd>{v}</dd></React.Fragment>)}</dl>}
+  {o&&!accepted&&req.status==='approved'&&!expired&&<form onSubmit={e=>{e.preventDefault();post('accept',{...form,...checks,offerId:o.id,offerDigest:o.digest});}}>
+   <h2 className="h-display">Szállítási adatok</h2><div className="grid-2-gap">{[['name','Teljes név'],['country','Ország'],['zip','Irányítószám'],['city','Város / település'],['street','Utca'],['houseNumber','Házszám'],['extra','Emelet, ajtó (nem kötelező)']].map(([k,label])=><label className="field" key={k}>{label}<input className="input" required={k!=='extra'} maxLength={250} value={form.shipping[k]} onChange={e=>setForm(f=>({...f,shipping:{...f.shipping,[k]:e.target.value}}))}/></label>)}</div>
+   <label className="field">E-mail-cím<input className="input" type="email" required value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))}/></label>
+   <p>A megadott név és cím a számlázási cím is. Eltérő számlázási adatokhoz kérj egyeztetést a véglegesítés előtt.</p>
+   {declarations.map(([k,label])=><label key={k} className="checkline"><input type="checkbox" checked={!!checks[k]} onChange={e=>setChecks(c=>({...c,[k]:e.target.checked}))}/><span>{label}{k==='termsAccepted'&&<> <a href="/aszf" target="_blank" rel="noopener noreferrer">ÁSZF megnyitása</a> · <button type="button" className="legal-link" onClick={()=>download('terms')}>ÁSZF letöltése</button></>}{k==='privacyRead'&&<> <a href="/adatkezeles" target="_blank" rel="noopener noreferrer">Adatkezelési tájékoztató</a></>}</span></label>)}
+   <button className="btn btn-dark btn-block" disabled={!valid||busy}>Látványterv jóváhagyása és megrendelés</button>
+  </form>}
+  {expired&&!accepted&&<p role="status">Az ajánlat lejárt. Kérj frissített ajánlatot az alábbi mezőben.</p>}
+  {!accepted&&['submitted','approved'].includes(req.status)&&<section><h2 className="h-display">Módosítást kérek</h2><label className="field">Kért módosítások<textarea className="textarea" maxLength={2000} value={note} onChange={e=>setNote(e.target.value)}/></label><button className="btn btn-outline" disabled={busy||note.trim().length<3} onClick={()=>post('revision',{note})}>Módosítási kérés elküldése</button></section>}
+  {error&&<p role="alert" className="err-msg">{error}</p>}<OrderContact/>
+ </div><Footer/></div>;
+}
+
 function BuilderPage() {
   const { lang, navigate } = useA();
   const [loaded, setLoaded] = useState(!!window.BrightalBuilder);
@@ -2608,8 +2547,9 @@ function DiamondPriceAdmin(){
 const PAGES = {
   diamonds: DiamondsPage,
   builder: BuilderPage,
+  'guest-order': GuestOrderPage,
   home: HomePage, how: HowPage, upload: UploadPage, inspiration: InspirationPage,
-  orders: OrdersPage, account: AccountPage, about: AboutPage, contact: ContactPage,
+  orders: GuestAccessHelp, account: GuestAccessHelp, about: AboutPage, contact: ContactPage,
   admin: AdminPage, 'payment-return': PaymentReturnPage,
   /* jogi oldalak — mind ugyanazt a komponenst használja, más tartalommal */
   ordering: OrderingPage,

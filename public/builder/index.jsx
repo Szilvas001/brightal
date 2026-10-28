@@ -1597,3 +1597,6 @@ window.BrightalBuilder = { RingBuilder };
 
 import { DiamondViewer } from './diamond-viewer.js';
 window.BrightalBuilder.DiamondViewer = DiamondViewer;
+
+import { OrderViewer } from './order-viewer.jsx';
+window.BrightalBuilder.OrderViewer = OrderViewer;

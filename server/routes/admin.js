@@ -82,16 +82,17 @@ router.post('/requests/:requestNumber/approve', async (req, res) => {
   const adminNote = String((req.body || {}).adminNote || '').trim().slice(0, 600);
   const now = new Date().toISOString();
 
-  const updated = await db.requests.update(x => x.id === r.id, x => ({
-    ...x,
-    status: R.STATUS.APPROVED,
-    price,
-    finalOffer, productionDays, paymentMethod:'bank_transfer', acceptance:null, contractAcceptedAt:null,
-    adminNote: adminNote || null,
-    approvedAt: x.approvedAt || now,
-    updatedAt: now,
-    history: [...x.history, { at: now, event: 'approved', price, by: 'admin' }]
-  }));
+  let updated;
+  try {
+    updated = await db.requests.update(x => x.id === r.id, x => {
+      if(x.acceptance)throw Error('ORDER_ALREADY_ACCEPTED');
+      if(x.updatedAt!==r.updatedAt)throw Error('OFFER_CHANGED');
+      return {...x, guestAccess:x.guestAccess||require('../guest-access').issue(),
+        status:R.STATUS.APPROVED,price,finalOffer,productionDays,paymentMethod:'bank_transfer',
+        acceptance:null,contractAcceptedAt:null,adminNote:adminNote||null,approvedAt:x.approvedAt||now,updatedAt:now,
+        history:[...x.history,{at:now,event:'approved',price,by:'admin'}]};
+    });
+  }catch(e){return res.status(409).json({error:e.message});}
 
   await mailer.requestApproved(updated, updated.lang).catch(e => console.error('[mail]', e.message));
   console.log(`[admin] ✔ Jóváhagyva: ${updated.requestNumber} — ${price} ${cfg.currency.code}`);
@@ -151,10 +152,14 @@ router.post('/requests/:requestNumber/reject', async (req, res) => {
   }
   const adminNote = String((req.body || {}).adminNote || '').trim().slice(0, 600);
   const now = new Date().toISOString();
-  const updated = await db.requests.update(x => x.id === r.id, x => ({
-    ...x, status: R.STATUS.REJECTED, adminNote: adminNote || null, updatedAt: now,
-    history: [...x.history, { at: now, event: 'rejected', by: 'admin' }]
-  }));
+  let updated;
+  try {
+    updated = await db.requests.update(x => x.id === r.id, x => {
+      if (x.acceptance || !(R.ADMIN_TRANSITIONS[x.status] || []).includes(R.STATUS.REJECTED)) throw Error('INVALID_TRANSITION');
+      return {...x, status: R.STATUS.REJECTED, adminNote: adminNote || null, updatedAt: now,
+        history: [...x.history, { at: now, event: 'rejected', by: 'admin' }]};
+    });
+  } catch (e) { return res.status(409).json({error:e.message}); }
   mailer.requestRejected(updated, updated.lang).catch(e => console.error('[mail]', e.message));
   res.json({ request: R.toPublic(updated, { includeInternal: true }) });
 });

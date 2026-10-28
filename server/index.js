@@ -97,6 +97,7 @@ mailer.startWorker();
 app.use('/api/admin/cad', require('./routes/cad'));
 app.use('/api/diamonds', require('./routes/diamonds'));
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/guest-orders', require('./routes/guest-orders'));
 app.use('/api', require('./routes/requests'));
 app.use('/api', require('./routes/payment'));
 app.use('/api/admin', require('./routes/admin'));
@@ -259,9 +260,10 @@ function renderIndex() {
 
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();
+  if(req.path.startsWith('/order/'))res.set({'Cache-Control':'private, no-store','Referrer-Policy':'no-referrer','X-Robots-Tag':'noindex, nofollow'});
   /* Ismeretlen útvonalon is az SPA-t szolgáljuk ki (ott jelenik meg a
      404 oldal), de a keresőknek helyes státuszkódot küldünk. */
-  const known = /^\/($|ring-builder|diamonds|hogyan|how|feltoltes|upload|inspiracio|inspiration|rendeleseim|orders|fiok|account|rolunk|about|kapcsolat|contact|admin|payment-return|rendeles-menete|ordering|aszf|terms|adatkezeles|privacy|impresszum|impressum|elallas|refund|cookie|cookies)\/?$/;
+  const known = /^\/($|ring-builder|diamonds|hogyan|how|feltoltes|upload|inspiracio|inspiration|rendeleseim|orders|fiok|account|rolunk|about|kapcsolat|contact|admin|order\/BRG-[A-Z0-9-]+|payment-return|rendeles-menete|ordering|aszf|terms|adatkezeles|privacy|impresszum|impressum|elallas|refund|cookie|cookies)\/?$/;
   if (!known.test(req.path)) res.status(404);
   res.type('html').send(renderIndex());
 });

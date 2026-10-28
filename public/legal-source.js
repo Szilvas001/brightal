@@ -62,7 +62,7 @@ window.LEGAL.hu.terms={
       "h": "4. A megrendelés folyamata",
       "b": [
         "4.1. Igényfelmérés",
-        "A rendelés részletes menetét a /rendeles-menete oldalon ismertetjük. A beküldött 3D terv vagy referenciafotó egyedi rendelésazonosítóval jelenik meg a Rendeléseim menüpontban, és e-mailes visszaigazolást küldünk róla. Az ötvössel az elkészítés időpontját egyeztetjük; 1 órán belül második e-mailben közöljük a vállalt munkanaptartományt. A Jóváhagyva állapotot munkatársunk rögzíti, a határidő az átutalás beérkezésétől számít.",
+        "A rendelés részletes menetét a /rendeles-menete oldalon ismertetjük. Vásárlói regisztráció nélkül, e-mail-cím és telefonszám megadásával küldhető be a 3D terv vagy referenciafotó. A beküldést egyedi azonosítóval e-mailben visszaigazoljuk; 1 órán belül visszajelzünk, a végleges látványtervet és ajánlatot 3 napon belül küldjük. Az admin által jóváhagyott ajánlatot a vásárló az e-mailben kapott privát linken tekinti meg és fogadja el, szállítási adatai megadásával. A sikeres megrendelés után 2 munkanapon belül banki átutalással fizet; a közlemény a rendelési azonosító. A vállalt gyártási munkanaptartomány az átutalás beérkezésétől számít.",
         "A Vásárló a Weboldalon keresztül megadja az elkészíteni kívánt ékszerre vonatkozó alapvető igényeit.",
         "Az igény megküldése, kapcsolatfelvétel vagy tervezési folyamat elindítása önmagában nem minősül végleges megrendelésnek, és nem keletkeztet fizetési kötelezettséget, kivéve, ha erről a Szolgáltató előzetesen kifejezetten és egyértelműen másként tájékoztatja a Vásárlót.",
         "4.2. Látványterv és végleges ajánlat",

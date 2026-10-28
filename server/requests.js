@@ -112,7 +112,8 @@ function build({ user, body, files, lang, design = null }) {
   return {
     id: crypto.randomUUID(),
     requestNumber: requestNumber(),
-    userId: user.id,
+    userId: user?.id || null,
+    guestAccess: require("./guest-access").issue(),
     design,
     lang: lang === 'en' ? 'en' : 'hu',
     status: STATUS.SUBMITTED,
@@ -121,8 +122,8 @@ function build({ user, body, files, lang, design = null }) {
     paymentMethod: cfg.payment.method,
     updatedAt: now,
     customer: {
-      name: S(body.name, 100) || user.name,
-      email: (S(body.email, 190) || user.email).toLowerCase(),
+      name: S(body.name, 100) || user?.name || "Vásárlónk",
+      email: (S(body.email, 190) || user?.email || "").toLowerCase(),
       phone: S(body.phone, 40)
     },
     images: files.map(f => ({

@@ -17,7 +17,17 @@ async function tick(){
   if(!job)return;
   await db.mailJobs.update(j=>j.id===job.id,{status:'sending',attempts:job.attempts+1,error:null});
   try{
-   const attachment=await require('./order-preview').attachment(job.request);
+   const current=db.requests.find(r=>r.id===job.requestId);
+   if(job.kind==='approved'&&(!current||current.status!=='approved'||current.finalOffer?.id!==job.request.finalOffer?.id)){
+    await db.mailJobs.update(j=>j.id===job.id,{status:'superseded',error:null});return;
+   }
+   // An optional GIF must never prevent delivery of the order acknowledgement.
+   let attachment=null;
+   try{attachment=await require('./order-preview').attachment(job.request);}catch(e){console.error('[mail preview]',e.message);}
+   const latest=db.requests.find(r=>r.id===job.requestId);
+   if(job.kind==='approved'&&(!latest||latest.status!=='approved'||latest.finalOffer?.id!==job.request.finalOffer?.id)){
+    await db.mailJobs.update(j=>j.id===job.id,{status:'superseded',error:null});return;
+   }
    const message=require('./order-email').render(job.request,job.kind,attachment);
    const result=await mailer.send(message.to,message.subject,message.text,message.html,message.attachments);
    if(result.simulated)throw Error('SMTP_NOT_CONFIGURED');

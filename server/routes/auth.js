@@ -1,9 +1,7 @@
 'use strict';
 const express = require('express');
-const crypto = require('crypto');
 const auth = require('../auth');
 const db = require('../db');
-const cfg = require('../config');
 
 const router = express.Router();
 
@@ -23,79 +21,13 @@ function rateLimit(max = 10, windowMs = 60_000) {
 }
 setInterval(() => { const n = Date.now(); for (const [k, v] of hits) if (n > v.reset) hits.delete(k); }, 300_000).unref();
 
-/* ---------- regisztráció ---------- */
-router.post('/register', rateLimit(8), async (req, res) => {
-  const { email, password, name, phone } = req.body || {};
-  const mail = String(email || '').trim().toLowerCase();
-  if (!auth.emailOk(mail)) return res.status(400).json({ error: 'INVALID_EMAIL' });
-  if (typeof password !== 'string' || password.length < 8) return res.status(400).json({ error: 'PASSWORD_TOO_SHORT' });
-  if (db.users.find(u => u.email === mail)) return res.status(409).json({ error: 'EMAIL_TAKEN' });
-
-  const user = {
-    id: crypto.randomUUID(),
-    email: mail,
-    name: String(name || mail.split('@')[0]).slice(0, 80),
-    phone: String(phone || '').slice(0, 40),
-    password: auth.hashPassword(password),
-    provider: 'password',
-    createdAt: new Date().toISOString()
-  };
-  await db.users.insert(user);
-  await auth.createSession(res, user.id);
-  res.json({ user: auth.publicUser(user) });
-});
-
-/* ══════════════════════════════════════════════════════════════════
-   BEJELENTKEZÉS
-   Ugyanaz az űrlap kezeli az ügyfeleket és az admint.
-   Ha a megadott azonosító megegyezik az ADMIN_USERNAME értékkel,
-   admin munkamenet jön létre.
-   ══════════════════════════════════════════════════════════════════ */
-router.post('/login', rateLimit(12), async (req, res) => {
-  const id = String((req.body || {}).email || (req.body || {}).username || '').trim();
-  const pw = String((req.body || {}).password || '');
-
-  /* admin belépés */
-  if (auth.checkAdmin(id, pw)) {
-    await auth.createSession(res, auth.ADMIN_ID);
-    return res.json({ user: auth.adminUser() });
-  }
-  /* ha az azonosító az admin felhasználónév, de a jelszó rossz: ne essen át
-     a normál ágra, különben az e-mail formátumú hibaüzenet elárulná a fiók létét */
-  if (auth.safeEqual(id, cfg.admin.username)) {
-    return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
-  }
-
-  /* normál felhasználó */
-  const user = db.users.find(u => u.email === id.toLowerCase());
-  if (!user || !user.password || !auth.verifyPassword(pw, user.password)) {
-    return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
-  }
-  await auth.createSession(res, user.id);
-  res.json({ user: auth.publicUser(user) });
-});
-
-/* ---------- Google belépés ---------- */
-router.post('/google', rateLimit(20), async (req, res) => {
-  try {
-    if (!cfg.google.clientId) return res.status(503).json({ error: 'GOOGLE_NOT_CONFIGURED' });
-    const p = await auth.verifyGoogleToken(String((req.body || {}).credential || ''));
-    let user = db.users.find(u => u.email === p.email);
-    if (!user) {
-      user = {
-        id: crypto.randomUUID(), email: p.email, name: p.name, picture: p.picture,
-        googleId: p.sub, password: null, provider: 'google', createdAt: new Date().toISOString()
-      };
-      await db.users.insert(user);
-    } else if (!user.googleId) {
-      await db.users.update(u => u.id === user.id, { googleId: p.sub, picture: p.picture });
-      user = db.users.find(u => u.id === user.id);
-    }
-    await auth.createSession(res, user.id);
-    res.json({ user: auth.publicUser(user) });
-  } catch (e) {
-    res.status(401).json({ error: e.message });
-  }
+// Customer orders use private per-order links. Only administrators sign in.
+router.post('/register',(req,res)=>res.status(404).json({error:'NOT_AVAILABLE'}));
+router.post('/google',(req,res)=>res.status(404).json({error:'NOT_AVAILABLE'}));
+router.post('/login',rateLimit(12),async(req,res)=>{
+ const id=String(req.body?.email||req.body?.username||'').trim();
+ if(!auth.checkAdmin(id,String(req.body?.password||'')))return res.status(401).json({error:'INVALID_CREDENTIALS'});
+ await auth.createSession(res,auth.ADMIN_ID);res.json({user:auth.adminUser()});
 });
 
 router.post('/logout', async (req, res) => {

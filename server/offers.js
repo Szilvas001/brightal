@@ -9,6 +9,7 @@ function create(body,request,now=new Date()) {
  offer.productPrice=total-shippingFee;
  offer.design=request.design?.config||null;
  offer.termsVersion=cfg.company.legalEffectiveFrom;
+ offer.termsText=require("./terms-document").snapshot();
  offer.digest=crypto.createHash('sha256').update(JSON.stringify(offer)).digest('hex');
  return offer;
 }

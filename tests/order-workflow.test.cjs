@@ -16,14 +16,14 @@ test('upload and designer orders share customer/admin identifiers, manual approv
  const server=app.listen(0);await new Promise(r=>server.once('listening',r));t.after(()=>new Promise(r=>server.close(r)));const base=`http://127.0.0.1:${server.address().port}/api`;
  const post=(url,body,admin=false)=>fetch(base+url,{method:'POST',headers:{'Content-Type':'application/json','x-role':admin?'admin':'user'},body:JSON.stringify(body)});
  for(const design of [null,{version:3,design:{style:'bezel',metal:'yellow18',size:54}}]){
-  const form=new FormData();form.append('photos',new Blob([Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aF1sAAAAASUVORK5CYII=','base64')],{type:'image/png'}),'reference.png');form.append('acceptTerms','true');form.append('name','Teszt Vásárló');if(design)form.append('ringDesign',JSON.stringify(design));
+  const form=new FormData();form.append('phone','+36301234567');form.append('photos',new Blob([Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aF1sAAAAASUVORK5CYII=','base64')],{type:'image/png'}),'reference.png');form.append('acceptTerms','true');form.append('name','Teszt Vásárló');if(design)form.append('ringDesign',JSON.stringify(design));
   const response=await fetch(base+'/requests',{method:'POST',body:form});assert.equal(response.status,200);const {request}=await response.json();const saved=db.requests.find(r=>r.id===request.id);files.push(...saved.images.map(i=>path.join(cfg.upload.dir,i.filename)));
   assert.equal(request.status,'submitted');assert.equal(request.source,design?'designer':'upload');assert.equal(db.mailJobs.filter(j=>j.requestId===request.id&&j.kind==='received').length,1);
   assert.equal((await post('/payment/start',{requestNumber:request.requestNumber})).status,409);
   assert.equal((await post('/admin/requests/'+request.requestNumber+'/approve',{price:100000,productionRange:'2-5'})).status,403);
   assert.equal((await post('/admin/requests/'+request.requestNumber+'/approve',{price:100000,productionRange:'5-2'},true)).status,400);
   const approval=await post('/admin/requests/'+request.requestNumber+'/approve',{price:100000,productionRange:'2-5'},true);assert.equal(approval.status,200);const approved=(await approval.json()).request;
-  assert.equal(approved.status,'approved');assert.deepEqual(approved.productionDays,[2,5]);assert.equal(approved.bankTransfer.reference,request.requestNumber);assert.equal(approved.bankTransfer.account,'[]');assert.equal(approved.payable,true);
+  assert.equal(approved.status,'approved');assert.deepEqual(approved.productionDays,[2,5]);assert.equal(approved.bankTransfer.reference,request.requestNumber);assert.equal(approved.bankTransfer.account,'Megadás alatt');assert.equal(approved.payable,true);
   assert.equal(db.mailJobs.filter(j=>j.requestId===request.id&&j.kind==='approved').length,1);
   const mine=(await (await fetch(base+'/requests')).json()).requests.find(r=>r.id===request.id);
   assert.equal(mine.requestNumber,approved.requestNumber);assert.equal(mine.emailDeliveries,undefined);
@@ -43,12 +43,13 @@ test('upload and designer orders share customer/admin identifiers, manual approv
 });
 test('email templates escape submitted text and include both confirmations, bank reference and preview',()=>{
  const r=R.build({user:{id:'u',name:'<script>Buyer</script>',email:'buyer@example.test'},body:{note:'<img onerror=attack>'},files:[],lang:'hu'});const received=require('../server/order-email').render(r,'received',{filename:'preview.gif',content:Buffer.from('GIF89a'),contentType:'image/gif'});
- assert.match(received.text,/1 órán belül/);assert.match(received.text,/második e-mail/);assert.match(received.text,/Rendeléseim/);assert.match(received.text,/OTP Bank Nyrt/);assert.match(received.html,/cid:order-preview/);assert.ok(!received.html.includes('<script>'));assert.equal(received.attachments[0].cid,'order-preview');
- const approved=require('../server/order-email').render({...r,price:100000,productionDays:[8,11]},'approved',null);assert.match(approved.text,/8–11 munkanapon/);assert.match(approved.text,/beérkezésétől/);assert.ok(approved.text.includes(r.requestNumber));
+ assert.match(received.text,/1 órán belül/);assert.match(received.text,/3 napon belül/);assert.ok(!received.text.includes('/orders'));assert.ok(received.text.includes('/order/'));assert.match(received.html,/cid:order-preview/);assert.ok(!received.html.includes('<script>'));assert.equal(received.attachments[0].cid,'order-preview');
+ const approved=require('../server/order-email').render({...r,price:100000,productionDays:[8,11],finalOffer:{total:100000,productPrice:100000,shippingFee:0,productionTime:'8–11 munkanapon belül az átutalás beérkezésétől',specification:'Teszt'}},'approved',null);assert.match(approved.text,/8–11 munkanapon/);assert.match(approved.text,/beérkezésétől/);assert.ok(approved.text.includes(r.requestNumber));
 });
 test('durable email queue deduplicates, retains SMTP failures and retries before approval email',async t=>{
- const original={jobs:db.mailJobs,send:Mail.send,simulated:Mail.isSimulated,attachment:require('../server/order-preview').attachment};db.mailJobs=memory();t.after(()=>{db.mailJobs=original.jobs;Mail.send=original.send;Mail.isSimulated=original.simulated;require('../server/order-preview').attachment=original.attachment;});
+ const original={requests:db.requests,jobs:db.mailJobs,send:Mail.send,simulated:Mail.isSimulated,attachment:require('../server/order-preview').attachment};db.mailJobs=memory();db.requests=memory();t.after(()=>{db.requests=original.requests;db.mailJobs=original.jobs;Mail.send=original.send;Mail.isSimulated=original.simulated;require('../server/order-preview').attachment=original.attachment;});
  const r=R.build({user:{id:'u',name:'Buyer',email:'buyer@example.test'},body:{},files:[],lang:'hu'});
+ await db.requests.insert({...r,status:'approved'});
  const first=await queue.enqueue(r,'received');await queue.enqueue(r,'received');await queue.enqueue({...r,approvedAt:'now',productionDays:[2,5]},'approved');assert.equal(db.mailJobs.all().length,2);
  Mail.isSimulated=()=>true;await queue.tick();assert.equal(db.mailJobs.find(j=>j.id===first.id).status,'pending');
  Mail.isSimulated=()=>false;require('../server/order-preview').attachment=async()=>null;Mail.send=async()=>{throw Error('SMTP temporarily unavailable');};await queue.tick();assert.equal(db.mailJobs.find(j=>j.id===first.id).status,'retry');

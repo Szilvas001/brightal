@@ -189,6 +189,7 @@ module.exports = {
     secure: bool('SMTP_SECURE', false),
     user: env('SMTP_USER', ''),
     pass: env('SMTP_PASS', ''),
+    replyTo: env('MAIL_REPLY_TO', env('SHOP_EMAIL', '')),
     from: env('MAIL_FROM', `BRIGHTAL <${env('SHOP_EMAIL', '')}>`)
   },
 

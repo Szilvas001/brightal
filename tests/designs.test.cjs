@@ -82,7 +82,7 @@ test('submission, admin-only immutable download, source filter and malformed upl
   const url=`http://127.0.0.1:${server.address().port}`;
   t.after(async()=>{await new Promise(resolve=>server.close(resolve));await fs.rm(tmp,{recursive:true,force:true});for(const r of rows)if(r.design)await fs.rm(D.archivePath(r.id),{force:true});});
   const submit=async raw=>{
-    const form=new FormData();form.append('name','Test User');form.append('acceptTerms','true');
+    const form=new FormData();form.append('name','Test User');form.append('phone','+36301234567');form.append('acceptTerms','true');
     form.append('photos',new Blob([Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a1ioAAAAASUVORK5CYII=','base64')],{type:'image/png'}),'ring.png');
     if(raw!==undefined)form.append('ringDesign',raw);
     return fetch(url+'/api/requests',{method:'POST',headers:{'x-test-role':'user'},body:form});
