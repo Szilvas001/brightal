@@ -1,6 +1,6 @@
 # BRIGHTAL – rendelés vásárlói fiók nélkül
 
-A két beküldési út külön űrlapot használ. A gyűrűtervező utolsó lépése a `/gyuruterv-ajanlat` oldalra vezet, automatikusan csatolt tervvel, képfeltöltő nélkül. A `/feltoltes` önálló, üres képfeltöltő űrlap; nem veszi át a gyűrűtervező mentett tervét. Az e-mail-cím és telefonszám kötelező; a név kezdetben opcionális. A beküldés nem végleges megrendelés. Az automatikus első levél azonosítót és privát megtekintési linket tartalmaz. 1 órán belüli visszajelzést, 3 napon belüli végleges látványtervet ígér.
+A két beküldési út külön űrlapot használ. A gyűrűtervező utolsó lépése a `/gyuruterv-ajanlat` oldalra vezet, automatikusan csatolt tervvel, képfeltöltő nélkül. A `/feltoltes` önálló, üres képfeltöltő űrlap; nem veszi át a gyűrűtervező mentett tervét. Az e-mail-cím és telefonszám kötelező; a név kezdetben opcionális. A beküldés nem végleges megrendelés. Az automatikus első levél azonosítót és privát megtekintési linket tartalmaz. gyűrűtervező esetén 48 órán belüli jóváhagyást, képfeltöltés esetén 48 órán belüli látványtervet ígér. Képfeltöltéses rendelésnél az admin a rendelés kártyáján tölti fel a látványtervet (GIF, PNG, JPG vagy WebP, legfeljebb 10 MB); jóváhagyáskor ez kerül a második e-mailbe és a vásárló privát rendelési oldalára.
 
 Az admin kizárólag a `/admin` oldalon lép be. Az admin belépési gomb ezen az oldalon van; a vásárlói fejlécben nincs belépés vagy regisztráció. A védelmet a szerveroldali adminhitelesítés biztosítja. A meglévő CAD- és ZIP-export megmarad.
 

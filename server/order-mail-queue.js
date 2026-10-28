@@ -23,7 +23,7 @@ async function tick(){
    }
    // An optional GIF must never prevent delivery of the order acknowledgement.
    let attachment=null;
-   try{attachment=await require('./order-preview').attachment(job.request);}catch(e){console.error('[mail preview]',e.message);}
+   try{attachment=await require('./order-preview').attachment(job.request,job.kind);}catch(e){console.error('[mail preview]',e.message);}
    const latest=db.requests.find(r=>r.id===job.requestId);
    if(job.kind==='approved'&&(!latest||latest.status!=='approved'||latest.finalOffer?.id!==job.request.finalOffer?.id)){
     await db.mailJobs.update(j=>j.id===job.id,{status:'superseded',error:null});return;

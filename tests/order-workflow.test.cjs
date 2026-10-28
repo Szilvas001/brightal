@@ -21,9 +21,17 @@ test('upload and designer orders share customer/admin identifiers, manual approv
   assert.equal(request.status,'submitted');assert.equal(request.source,design?'designer':'upload');assert.equal(db.mailJobs.filter(j=>j.requestId===request.id&&j.kind==='received').length,1);
   assert.equal((await post('/payment/start',{requestNumber:request.requestNumber})).status,409);
   assert.equal((await post('/admin/requests/'+request.requestNumber+'/approve',{price:100000,productionRange:'2-5'})).status,403);
+  if(!design){
+   // Photo-upload orders need the workshop's visual design before approval.
+   const blocked=await post('/admin/requests/'+request.requestNumber+'/approve',{price:100000,productionRange:'2-5'},true);assert.equal(blocked.status,409);assert.equal((await blocked.json()).error,'VISUAL_REQUIRED');
+   const vf=new FormData();vf.append('visual',new Blob([Buffer.from('R0lGODlhAQABAAAAACw=','base64')],{type:'image/gif'}),'latvanyterv.gif');
+   assert.equal((await fetch(base+'/admin/requests/'+request.requestNumber+'/visual',{method:'POST',body:vf})).status,403);
+   const up=await fetch(base+'/admin/requests/'+request.requestNumber+'/visual',{method:'POST',headers:{'x-role':'admin'},body:vf});assert.equal(up.status,200);const withVisual=(await up.json()).request;
+   assert.match(withVisual.visual.url,/^\/uploads\/visual-.+\.gif$/);files.push(path.join(cfg.upload.dir,path.basename(withVisual.visual.url)));
+  }
   assert.equal((await post('/admin/requests/'+request.requestNumber+'/approve',{price:100000,productionRange:'5-2'},true)).status,400);
   const approval=await post('/admin/requests/'+request.requestNumber+'/approve',{price:100000,productionRange:'2-5'},true);assert.equal(approval.status,200);const approved=(await approval.json()).request;
-  assert.equal(approved.status,'approved');assert.deepEqual(approved.productionDays,[2,5]);assert.equal(approved.bankTransfer.reference,request.requestNumber);assert.equal(approved.bankTransfer.account,'Megadás alatt');assert.equal(approved.payable,true);
+  assert.equal(approved.status,'approved');assert.deepEqual(approved.productionDays,[2,5]);if(!design)assert.equal(approved.finalOffer.previewUrl,approved.visual.url);assert.equal(approved.bankTransfer.reference,request.requestNumber);assert.equal(approved.bankTransfer.account,'Megadás alatt');assert.equal(approved.payable,true);
   assert.equal(db.mailJobs.filter(j=>j.requestId===request.id&&j.kind==='approved').length,1);
   const mine=(await (await fetch(base+'/requests')).json()).requests.find(r=>r.id===request.id);
   assert.equal(mine.requestNumber,approved.requestNumber);assert.equal(mine.emailDeliveries,undefined);
@@ -43,8 +51,15 @@ test('upload and designer orders share customer/admin identifiers, manual approv
 });
 test('email templates escape submitted text and include both confirmations, bank reference and preview',()=>{
  const r=R.build({user:{id:'u',name:'<script>Buyer</script>',email:'buyer@example.test'},body:{note:'<img onerror=attack>'},files:[],lang:'hu'});const received=require('../server/order-email').render(r,'received',{filename:'preview.gif',content:Buffer.from('GIF89a'),contentType:'image/gif'});
- assert.match(received.text,/1 órán belül/);assert.match(received.text,/3 napon belül/);assert.ok(!received.text.includes('/orders'));assert.ok(received.text.includes('/order/'));assert.match(received.html,/cid:order-preview/);assert.ok(!received.html.includes('<script>'));assert.equal(received.attachments[0].cid,'order-preview');
+ assert.match(received.text,/48 órán belül/);assert.match(received.text,/látványtervet/);assert.ok(!/1 órán|3 napon/.test(received.text));
+ const designed=require('../server/order-email').render({...r,design:{name:'Halo',config:{style:'halo'}}},'received',null);assert.match(designed.text,/Gyűrűtervét legkésőbb 48 órán belül jóváhagyjuk/);assert.ok(!received.text.includes('/orders'));assert.ok(received.text.includes('/order/'));assert.match(received.html,/cid:order-preview/);assert.ok(!received.html.includes('<script>'));assert.equal(received.attachments[0].cid,'order-preview');
  const approved=require('../server/order-email').render({...r,price:100000,productionDays:[8,11],finalOffer:{total:100000,productPrice:100000,shippingFee:0,productionTime:'8–11 munkanapon belül az átutalás beérkezésétől',specification:'Teszt'}},'approved',null);assert.match(approved.text,/8–11 munkanapon/);assert.match(approved.text,/beérkezésétől/);assert.ok(approved.text.includes(r.requestNumber));
+});
+test('approval email embeds the image as an attachment, never as a remote upload URL',async()=>{
+ const r={...R.build({user:{id:'u',name:'Buyer',email:'buyer@example.test'},body:{},files:[],lang:'hu'}),price:100000,finalOffer:{total:100000,productPrice:100000,shippingFee:0,productionTime:'2–5 munkanap',specification:'Teszt',previewUrl:'/uploads/visual-x.gif'},visual:{filename:'visual-x.gif',url:'/uploads/visual-x.gif',mime:'image/gif'}};
+ const att=await require('../server/order-preview').attachment(r,'approved');assert.equal(att.contentType,'image/gif');assert.ok(att.path.endsWith('visual-x.gif'));
+ const mail=require('../server/order-email').render(r,'approved',att);assert.match(mail.html,/cid:order-preview/);assert.ok(!mail.html.includes('/uploads/'));
+ assert.ok(!require('../server/order-email').render(r,'approved',null).html.includes('<img'));
 });
 test('durable email queue deduplicates, retains SMTP failures and retries before approval email',async t=>{
  const original={requests:db.requests,jobs:db.mailJobs,send:Mail.send,simulated:Mail.isSimulated,attachment:require('../server/order-preview').attachment};db.mailJobs=memory();db.requests=memory();t.after(()=>{db.requests=original.requests;db.mailJobs=original.jobs;Mail.send=original.send;Mail.isSimulated=original.simulated;require('../server/order-preview').attachment=original.attachment;});

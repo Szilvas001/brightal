@@ -37,6 +37,7 @@ function approvalOffer(r, body, days) {
     shippingFee: 0, deliveryTime: 'Az elkészülést követően egyeztetett átadás / feladás.',
     shippingMethod: 'Egyeztetett átadás', validUntil: new Date(Date.now() + 14 * 86400000).toISOString(),
     ...body.finalOffer,
+    ...(r.visual ? { previewUrl: r.visual.url } : {}),
     productionTime: `${days[0]}–${days[1]} munkanap az átutalás beérkezésétől`,
     paymentTerms: 'Banki átutalás a megrendelés jóváhagyásától számított 2 munkanapon belül, a teljes végösszeg előre történő megfizetésével. Közlemény: ' + r.requestNumber,
   };

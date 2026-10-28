@@ -71,6 +71,7 @@ function toPublic(r, { includeInternal = false } = {}) {
     approvedAt: r.approvedAt || null,
     paidAt: r.paidAt || null,
     images: r.images.map(i => ({ url: i.url, name: i.originalName })),
+    visual: r.visual ? { url: r.visual.url, name: r.visual.originalName, mime: r.visual.mime, uploadedAt: r.visual.uploadedAt } : null,
     details: r.details,
     productSummary: require('./order-workflow').specification(r),
     source: r.diamond || r.sourcing ? 'diamond' : r.design ? 'designer' : 'upload',
@@ -90,7 +91,7 @@ function toPublic(r, { includeInternal = false } = {}) {
     paymentStatus: r.paymentStatus || null,
     payable: PAYABLE.includes(r.status) && r.price > 0 && (!offers.custom(r)||!!r.finalOffer),
     productionDays: r.productionDays || null,
-    reviewDueAt: r.reviewDueAt || (Number.isFinite(Date.parse(r.createdAt)) ? new Date(Date.parse(r.createdAt) + 3600000).toISOString() : null),
+    reviewDueAt: r.reviewDueAt || (Number.isFinite(Date.parse(r.createdAt)) ? new Date(Date.parse(r.createdAt) + 48 * 3600000).toISOString() : null),
     paymentMethod: r.paymentMethod || cfg.payment.method,
     bankTransfer: require('./order-workflow').bankDetails(r)
   };

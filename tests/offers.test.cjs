@@ -19,7 +19,7 @@ test('final offer binds every declaration, exact version and billing to an immut
  assert.equal(O.readyForProduction({...request,paidAt:'now',contractAcceptedAt:'now',compliance:{cleared:true}}),true);
 });
 test('custom order cannot pay or enter production without customer approval and separate manual acceptance',async t=>{
- const express=require('express');let r={id:'r',userId:'u',requestNumber:'OFFER-TEST',status:'submitted',currency:'HUF',history:[],customer:{email:'test@example.com'},images:[]},charged=0,acceptedMails=0;
+ const express=require('express');let r={id:'r',userId:'u',requestNumber:'OFFER-TEST',status:'submitted',currency:'HUF',history:[],customer:{email:'test@example.com'},images:[],visual:{filename:'visual-test.gif',url:'/uploads/visual-test.gif',mime:'image/gif'}},charged=0,acceptedMails=0;
  db.requests.find=fn=>fn(r)?r:null;db.requests.update=async(fn,patch)=>{if(!fn(r))return null;r=patch(r);return r;};
  mailer.requestApproved=mailer.paymentReceived=mailer.adminNewRequest=async()=>{};mailer.contractAccepted=async()=>{acceptedMails++};invoice.issueForRequest=async()=>({});
  barion.startPayment=async()=>{charged++;return{paymentId:'p',gatewayUrl:'/test',status:'Prepared'}};

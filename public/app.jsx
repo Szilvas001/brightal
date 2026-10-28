@@ -27,7 +27,7 @@ const I18N = {
     hero_sub: 'Küldj egy képet, vagy írd körbe az álomgyűrűt — mi megalkotjuk. Kézzel készítve, magyar ötvösműhelyben, a te történetedre szabva.',
     hero_cta: 'Töltsd fel a gyűrűt',
     hero_cta2: 'Hogyan működik?',
-    hero_trust_1: 'Ötvösi visszajelzés 1 órán belül',
+    hero_trust_1: 'Ötvösi visszajelzés 48 órán belül',
     hero_trust_2: 'Fizetés csak elfogadás után',
     hero_trust_3: 'Gyártási idő a végleges ajánlatban',
 
@@ -37,7 +37,7 @@ const I18N = {
     step1_t: 'Töltsd fel a képet',
     step1_d: 'Screenshot Pinterestről, Instagramról, vagy egy fotó — bármi, amin látszik az álomgyűrű. JPG vagy PNG.',
     step2_t: 'Megvárod az elfogadást',
-    step2_d: '1 órán belül e-mailben visszajelzünk, hány munkanapon belül készül el az ékszered.',
+    step2_d: '48 órán belül e-mailben visszajelzünk, hány munkanapon belül készül el az ékszered.',
     step3_t: 'Fizetsz',
     step3_d: 'Az e-mailben kapott linken jóváhagyod az ajánlatot, majd 2 munkanapon belül banki átutalással fizetsz.',
     step4_t: 'Megvárod az elkészítést',
@@ -77,7 +77,7 @@ const I18N = {
 
     /* --- siker --- */
     ok_title: 'Megkaptuk!',
-    ok_sub: 'Rendelésedet rögzítettük. A visszaigazolást a {email} címre küldjük. 1 órán belül egy második e-mailben jelezzük az ötvös által vállalt elkészítési időt.',
+    ok_sub: 'Rendelésedet rögzítettük. A visszaigazolást a {email} címre küldjük. 48 órán belül egy második e-mailben jelezzük az ötvös által vállalt elkészítési időt.',
     ok_ref: 'Azonosító',
     ok_next: 'A rendelés már megjelent a Rendeléseim menüpontban. Jóváhagyás után ott látod a munkanaptartományt, a végösszeget és az átutalási adatokat.',
     ok_orders: 'Rendeléseim',
@@ -92,7 +92,7 @@ const I18N = {
     ord_submitted: 'Beküldve',
     ord_price: 'Ár',
     ord_waiting: 'Árajánlatra vár',
-    ord_waiting_d: '1 órán belül e-mailben visszajelzünk az elkészítési időről. Az ötvös visszaigazolását követően itt jelenik meg a Jóváhagyva állapot és a vállalt munkanaptartomány.',
+    ord_waiting_d: '48 órán belül e-mailben visszajelzünk az elkészítési időről. Az ötvös visszaigazolását követően itt jelenik meg a Jóváhagyva állapot és a vállalt munkanaptartomány.',
     ord_approved_d: 'Jóváhagyva. Az ötvös visszaigazolta az elkészítési időt. A végleges összesítő elfogadása után banki átutalással rendezheted a rendelést.',
     ord_rejected_d: 'Sajnos ezt a gyűrűt nem tudjuk elkészíteni.',
     ord_paid_d: 'A fizetés megérkezett. A megrendelés elfogadásáról külön visszaigazolást küldünk.',
@@ -262,6 +262,8 @@ const I18N = {
     e_FULFILMENT_REVIEW_REQUIRED: 'A teljesítés előtti ellenőrzés és szerződés-elfogadás szükséges.',
     e_PAYMENT_IN_PROGRESS: 'Folyamatban lévő fizetés mellett az ajánlat nem módosítható.',
     e_TERMS_REQUIRED: 'Az ÁSZF elfogadása kötelező.',
+    e_VISUAL_REQUIRED: 'Jóváhagyás előtt töltsd fel a látványtervet.',
+    e_VISUAL_NOT_APPLICABLE: 'Ehhez a rendeléshez nem tölthető fel látványterv.',
     e_NAME_REQUIRED: 'A név megadása kötelező.',
     e_NOT_FOUND: 'Nem található.',
     e_FORBIDDEN: 'Nincs jogosultság.',
@@ -297,7 +299,7 @@ const I18N = {
     hero_sub: 'Send us a photo or describe your dream ring — we bring it to life. Handcrafted in a Hungarian goldsmith workshop, as unique as your story.',
     hero_cta: 'Upload the ring',
     hero_cta2: 'How it works',
-    hero_trust_1: 'Goldsmith confirmation within 1 hour',
+    hero_trust_1: 'Goldsmith confirmation within 48 hours',
     hero_trust_2: 'Pay only after approval',
     hero_trust_3: 'Production time confirmed in your final offer',
 
@@ -306,7 +308,7 @@ const I18N = {
     step1_t: 'Upload the photo',
     step1_d: 'A screenshot from Pinterest or Instagram, or a photo — anything that shows the dream ring. JPG or PNG.',
     step2_t: 'Wait for approval',
-    step2_d: 'Within 1 hour we email you the confirmed production time in working days.',
+    step2_d: 'Within 48 hours we email you the confirmed production time in working days.',
     step3_t: 'Pay',
     step3_d: 'After approval, pay by bank transfer using the details under My orders.',
     step4_t: 'Wait for the making',
@@ -344,7 +346,7 @@ const I18N = {
     up_custom_note: 'The ring is made specifically to your request with individual parameters, therefore the 14-day right of withdrawal does not apply under Section 29(1)(c) of Government Decree 45/2014 (II. 26.). You only pay when you accept the quote — until then you can step back at any time.',
 
     ok_title: 'We got it!',
-    ok_sub: 'Your order is saved. We will send confirmation to {email} and a second email within 1 hour with the production schedule.',
+    ok_sub: 'Your order is saved. We will send confirmation to {email} and a second email within 48 hours with the production schedule.',
     ok_ref: 'Reference',
     ok_next: 'Your order is listed under My orders. After approval you will see the working-day range, final total and bank details.',
     ok_orders: 'My orders',
@@ -358,7 +360,7 @@ const I18N = {
     ord_submitted: 'Submitted',
     ord_price: 'Price',
     ord_waiting: 'Awaiting quote',
-    ord_waiting_d: 'Within 1 hour we will email the production schedule. My orders will show Approved once the goldsmith confirms it.',
+    ord_waiting_d: 'Within 48 hours we will email the production schedule. My orders will show Approved once the goldsmith confirms it.',
     ord_approved_d: 'Approved. Your production schedule is confirmed. Review your final summary, then pay by bank transfer.',
     ord_rejected_d: 'Unfortunately we cannot craft this particular ring.',
     ord_paid_d: 'Payment received. Acceptance of your order is confirmed separately.',
@@ -517,6 +519,8 @@ const I18N = {
     e_FULFILMENT_REVIEW_REQUIRED: 'A teljesítés előtti ellenőrzés és szerződés-elfogadás szükséges.',
     e_PAYMENT_IN_PROGRESS: 'Folyamatban lévő fizetés mellett az ajánlat nem módosítható.',
     e_TERMS_REQUIRED: 'You must accept the Terms and Conditions.',
+    e_VISUAL_REQUIRED: 'Upload the visual design before approval.',
+    e_VISUAL_NOT_APPLICABLE: 'A visual design cannot be uploaded for this order.',
     e_NAME_REQUIRED: 'Your name is required.',
     e_NOT_FOUND: 'Not found.',
     e_FORBIDDEN: 'Access denied.',
@@ -1643,7 +1647,7 @@ function EnquiryForm({designer = false}) {
         <div className="panel success-panel">
           <div className="success-ring"><Ico.check s={26} /></div>
           <h1 className="h-display" style={{ fontSize: 30, marginBottom: 12 }}>{t('ok_title')}</h1>
-          <p className="lead-sm">{`Igényedet rögzítettük. Visszaigazolás címzettje: ${f.email}. 1 órán belül visszajelzünk, a végleges látványtervet és ajánlatot 3 napon belül küldjük.`}</p>
+          <p className="lead-sm">{designer?`Igényedet rögzítettük. Visszaigazolás címzettje: ${f.email}. Gyűrűtervedet legkésőbb 48 órán belül jóváhagyjuk, és e-mailben küldjük a végleges ajánlatot.`:`Igényedet rögzítettük. Visszaigazolás címzettje: ${f.email}. A feltöltött kép alapján legkésőbb 48 órán belül e-mailben küldjük a látványtervet és az ajánlatot.`}</p>
           <div className="ref-box">
             <span>{t('ok_ref')}</span>
             <strong>{done.requestNumber}</strong>
@@ -1779,11 +1783,28 @@ function OrderCad({req}) {
   const download=async format=>{try{const r=await api('/admin/cad/jobs/'+job.id+'/download',{method:'POST',body:{format}});location.href=r.url;}catch(e){setError(e.message);}};
   return <div><div className="btn-row"><a className="btn btn-dark btn-sm" href={`/api/admin/requests/${encodeURIComponent(req.requestNumber)}/design.zip`} download>Teljes 3D fájl és műhelylap letöltése (ZIP / OBJ)</a><button className="btn btn-outline btn-sm" disabled={busy||['queued','running'].includes(job?.status)} onClick={()=>create('mesh')}>3D CAD letöltése · export előkészítése</button>{styles.includes(req.design.config.style)&&<button className="btn btn-outline btn-sm" disabled={busy||['queued','running'].includes(job?.status)} onClick={()=>create('cad')}>Parametrikus STEP előkészítése</button>}</div>{job&&<p role="status">{({queued:'Export várakozik…',running:'3D export készül…',ready:'A teljes 3D fájl letölthető.',failed:'Az export nem készült el: '})[job.status]} {job.error}</p>}{job?.status==='ready'&&<div className="btn-row">{job.formats?.map(format=><button className="btn btn-dark btn-sm" key={format} onClick={()=>download(format)}>{format.toUpperCase()} letöltése</button>)}</div>}{error&&<p role="alert">{error}</p>}</div>;
 }
+function GuestVisual({src,token}){
+ const [url,setUrl]=useState('');
+ useEffect(()=>{let live=true,obj='';fetch(src,{headers:{Authorization:'Bearer '+token}}).then(r=>{if(!r.ok)throw Error();return r.blob();}).then(b=>{obj=URL.createObjectURL(b);if(live)setUrl(obj);}).catch(()=>{});return()=>{live=false;if(obj)URL.revokeObjectURL(obj);};},[src,token]);
+ return url?<img className="order-final-preview" src={url} alt="Látványterv"/>:null;
+}
+function VisualUpload({req,onChanged}){
+ const {toast,te}=useA();
+ const [busy,setBusy]=useState(false);
+ const upload=async file=>{if(!file)return;setBusy(true);try{const fd=new FormData();fd.append('visual',file);const d=await api(`/admin/requests/${encodeURIComponent(req.requestNumber)}/visual`,{method:'POST',body:fd});onChanged(d.request);toast('Látványterv feltöltve.');}catch(e){toast(te(e.code),'err');}setBusy(false);};
+ return <div className="note-box" style={{marginBottom:20}}>
+  <h4>Látványterv a vásárlónak</h4>
+  <p>Képfeltöltéssel érkezett rendelés. Jóváhagyás előtt töltsd fel a látványtervet: jóváhagyáskor ez kerül a második e-mailbe és a vásárló privát rendelési oldalára.</p>
+  <p className="mono-sm dim">Formátum: animált GIF (ajánlott, mint a gyűrűtervezőé: 480×400 px), PNG, JPG vagy WebP · legfeljebb 10 MB.</p>
+  {req.visual&&<p><a href={req.visual.url} target="_blank" rel="noopener noreferrer"><img src={req.visual.url} alt="Feltöltött látványterv" style={{maxWidth:'100%',maxHeight:320}}/></a><br/><small>{req.visual.name} · {fmtDate(req.visual.uploadedAt)}</small></p>}
+  {!req.acceptance&&<label className="btn btn-outline btn-sm" style={{cursor:busy?'wait':'pointer'}}>{busy?<Spinner size={14}/>:req.visual?'Látványterv cseréje':'Látványterv feltöltése'}<input type="file" hidden accept="image/gif,image/png,image/jpeg,image/webp" disabled={busy} onChange={e=>{upload(e.target.files[0]);e.target.value='';}}/></label>}
+ </div>;
+}
 function OrderingPage(){
  const {navigate}=useA();
  return <div className="page"><div className="wrap-n"><h1 className="h-display">Az elképzeléstől az ékszerig</h1>{[
  ['1. Elküldöd az elképzelésed','Megtervezed a gyűrűt vagy feltöltesz egy képet. Megadod az e-mail-címedet és telefonszámodat. Regisztráció nem szükséges.'],
- ['2. Visszaigazoljuk','Automatikus e-mailt kapsz az egyedi azonosítóval. 1 órán belül visszajelzünk; a végleges látványtervet és ajánlatot 3 napon belül küldjük.'],
+ ['2. Visszaigazoljuk','Automatikus e-mailt kapsz az egyedi azonosítóval. Gyűrűtervező esetén legkésőbb 48 órán belül jóváhagyjuk a tervet és küldjük az ajánlatot; képfeltöltés esetén legkésőbb 48 órán belül küldjük a látványtervet és az ajánlatot.'],
  ['3. Elkészítjük az ajánlatot','Az admin jóváhagyása után külön e-mailben küldjük a specifikációt, a végösszeget, a vállalt munkanaptartományt és a privát hivatkozást.'],
  ['4. Jóváhagyod és megrendeled','Az e-mail linkjén ellenőrzöd saját tervedet, megadod a szállítási adatokat és elfogadod a végleges ajánlatot és az ÁSZF-et.'],
  ['5. Átutalod a vételárat','A sikeres rendelés oldalán látod a pontos összeget, az OTP-számlaadatokat és a közleménybe írandó rendelési azonosítót. A fizetési határidő 2 munkanap. Hiányzó számlaszám esetén várd meg annak megadását.']
@@ -2128,6 +2149,7 @@ function AdminRow({ req, onChanged, defaultOpen }) {
         </div>
       </div>
 
+      {!req.design&&!req.diamond&&!req.sourcing&&<VisualUpload req={req} onChanged={onChanged}/>}
       {(canApprove || canReject) && <div className="admin-actions">
         <h4>{t('ad_setprice')}</h4>
         {canApprove && <label className="field">Elkészülési idő (munkanap, például 2-5 vagy 8-11)<input className="input" placeholder="2-5" value={productionRange} onChange={e=>setProductionRange(e.target.value)} pattern="[0-9]+-[0-9]+"/><small>Az átutalás beérkezésétől számítva. Ez kerül a vásárló privát rendelési oldalára és a jóváhagyó e-mailbe.</small></label>}
@@ -2142,7 +2164,7 @@ function AdminRow({ req, onChanged, defaultOpen }) {
           <input className="input" value={note} onChange={e => setNote(e.target.value)} placeholder={t('ad_note_ph')} />
         </div>
         <div className="btn-row" style={{ marginTop: 12 }}>
-          {canApprove && <button className="btn btn-gold" disabled={busy || !/^\d{1,3}\s*[-–]\s*\d{1,3}$/.test(productionRange) || (req.sourcing&&!req.combinationOffer?!stoneId:!price)}
+          {canApprove && <button className="btn btn-gold" disabled={busy || (!req.design&&!req.diamond&&!req.sourcing&&!req.visual) || !/^\d{1,3}\s*[-–]\s*\d{1,3}$/.test(productionRange) || (req.sourcing&&!req.combinationOffer?!stoneId:!price)}
             onClick={() => call('approve', { price: Number(price), adminNote: note,finalOffer,productionRange })}>
             {busy ? <Spinner size={14} /> : <><Ico.check s={14} /> {t('ad_approve')}</>}
           </button>}
@@ -2301,7 +2323,7 @@ function AdminPage() {
         <div>
           <p className="eyebrow-gold">ADMIN</p>
           <h1 className="h-display" style={{ fontSize: 30, marginTop: 8 }}>{t('ad_title')}</h1>
-          <p className="mono-sm dim">Fizetés: banki átutalás · Ötvösi visszajelzés: 1 órán belül</p>
+          <p className="mono-sm dim">Fizetés: banki átutalás · Ötvösi visszajelzés: 48 órán belül</p>
           {config?.mail?.simulated && <p role="status">Az SMTP még nincs beállítva. A rendelési e-mailek a küldési sorban várakoznak.</p>}
         </div>
         {data && <div className="stat-box">
@@ -2426,8 +2448,7 @@ function GuestOrderPage(){
   <div className="ref-box"><span>Rendelési azonosító</span><strong>{req.requestNumber}</strong></div>
   {accepted?<><p role="status">A jóváhagyásodat és a szállítási adataidat rögzítettük.</p><BankTransfer req={req}/><p>Szállítás: {req.acceptance.shippingAddress}</p></>:!o?<p>Az ajánlat egyeztetés alatt áll. A végleges látványtervet és ajánlatot e-mailben küldjük. Most még nincs fizetési kötelezettséged.</p>:null}
   {req.design&&runtime&&Viewer?<Viewer design={req.design} onReady={setReady}/>:req.design?<p>3D látványterv betöltése…</p>:null}
-  {o?.previewUrl&&<img className="order-final-preview" src={o.previewUrl} alt="Admin által jóváhagyott látványterv"/>}
-  {!o&&req.images.map((im,i)=><img className="order-final-preview" key={i} src={im.url} alt="Beküldött referencia"/>)}
+  {o&&!req.design&&req.visual&&<GuestVisual src={'/api'+endpoint+'/visual'} token={token}/>}
   {req.design&&<button className="btn btn-outline" onClick={()=>download()}>Saját terv letöltése (JSON)</button>}
   <h2 className="h-display">Az ékszer specifikációja</h2><p style={{whiteSpace:'pre-wrap'}}>{o?.specification||req.productSummary}</p>
   {o&&<dl className="kv">{[['Ékszer vételára',money(o.productPrice)],['Szállítási díj',money(o.shippingFee)],['Fizetendő végösszeg',money(o.total)],['Várható gyártási idő',o.productionTime],['Várható átadás / feladás',o.deliveryTime],['Szállítás módja',o.shippingMethod],['Ajánlat érvényessége',fmtDate(o.validUntil)]].map(([k,v])=><React.Fragment key={k}><dt>{k}</dt><dd>{v}</dd></React.Fragment>)}</dl>}

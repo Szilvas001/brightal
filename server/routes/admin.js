@@ -72,6 +72,8 @@ router.post('/requests/:requestNumber/approve', async (req, res) => {
   }
 
   if(r.acceptance) return res.status(409).json({error:'ORDER_ALREADY_ACCEPTED'});
+  // Photo-upload orders are approved only with the visual design prepared by the workshop.
+  if(offers.custom(r) && !r.design && !r.visual) return res.status(409).json({error:'VISUAL_REQUIRED'});
   if(r.paymentId && !['Failed','Canceled','Expired'].includes(r.paymentStatus)) return res.status(409).json({error:'PAYMENT_IN_PROGRESS'});
   let finalOffer, productionDays;
   try {
@@ -99,6 +101,33 @@ router.post('/requests/:requestNumber/approve', async (req, res) => {
 
   res.json({ request: R.toPublic(updated, { includeInternal: true }) });
 });
+
+/* ══════════════════════════════════════════════════════════════════
+   LÁTVÁNYTERV FELTÖLTÉSE (képfeltöltéssel érkezett rendelésekhez)
+   A jóváhagyó e-mailbe és a vásárló privát rendelési oldalára ez kerül.
+   ══════════════════════════════════════════════════════════════════ */
+const VISUAL_EXT={'image/gif':'.gif','image/png':'.png','image/jpeg':'.jpg','image/webp':'.webp'};
+const visualUpload=require('multer')({
+  storage:require('multer').diskStorage({
+    destination:(req,file,cb)=>cb(null,cfg.upload.dir),
+    filename:(req,file,cb)=>cb(null,`visual-${Date.now().toString(36)}-${require('crypto').randomBytes(12).toString('hex')}${VISUAL_EXT[file.mimetype]}`)
+  }),
+  limits:{fileSize:10*1024*1024,files:1},
+  fileFilter:(req,file,cb)=>VISUAL_EXT[file.mimetype]?cb(null,true):cb(new Error('UNSUPPORTED_FILE_TYPE'))
+}).single('visual');
+router.post('/requests/:requestNumber/visual',(req,res)=>visualUpload(req,res,async err=>{
+  const discard=()=>{if(req.file)require('fs').unlink(req.file.path,()=>{});};
+  if(err){discard();return res.status(400).json({error:err.code==='LIMIT_FILE_SIZE'?'FILE_TOO_LARGE':err.message==='UNSUPPORTED_FILE_TYPE'?'UNSUPPORTED_FILE_TYPE':'UPLOAD_FAILED'});}
+  if(!req.file)return res.status(400).json({error:'NO_FILES'});
+  const r=db.requests.find(x=>x.requestNumber===req.params.requestNumber);
+  if(!r){discard();return res.status(404).json({error:'NOT_FOUND'});}
+  if(r.design||!offers.custom(r)){discard();return res.status(409).json({error:'VISUAL_NOT_APPLICABLE'});}
+  if(r.acceptance){discard();return res.status(409).json({error:'ORDER_ALREADY_ACCEPTED'});}
+  const now=new Date().toISOString();
+  const visual={filename:req.file.filename,url:'/uploads/'+req.file.filename,mime:req.file.mimetype,originalName:String(req.file.originalname||'').slice(0,200),size:req.file.size,uploadedAt:now};
+  const updated=await db.requests.update(x=>x.id===r.id,x=>({...x,visual,updatedAt:now,history:[...x.history,{at:now,event:'visual_uploaded',by:req.user.id,file:visual.filename}]}));
+  res.json({request:R.toPublic(updated,{includeInternal:true})});
+}));
 
 // Human review remains a separate action; payment alone cannot start production.
 router.post('/requests/:requestNumber/fulfilment-review',async(req,res)=>{

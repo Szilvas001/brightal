@@ -22,10 +22,18 @@ test('guest photo/designer enquiry → admin offer → private approval and deli
   assert.equal((await fetch(base+'/api/admin/requests')).status,403);
   assert.equal((await post('/api/admin/requests/'+request.requestNumber+'/approve',{price:100000,productionRange:'5-8'})).status,403);
   const approve=()=>post('/api/admin/requests/'+request.requestNumber+'/approve',{price:100000,productionRange:'5-8'},{'x-admin':'yes'});
+  if(!designer){
+   assert.equal((await approve()).status,409);
+   const vf=new FormData();vf.append('visual',new Blob([Buffer.from('R0lGODlhAQABAAAAACw=','base64')],{type:'image/gif'}),'latvanyterv.gif');
+   const up=await fetch(base+'/api/admin/requests/'+request.requestNumber+'/visual',{method:'POST',headers:{'x-admin':'yes'},body:vf});assert.equal(up.status,200,await up.clone().text());
+   const visualFile=path.join(require('../server/config').upload.dir,db.requests.find(r=>r.id===stored.id).visual.filename);t.after(()=>fs.rmSync(visualFile,{force:true}));
+   assert.equal((await fetch(base+url+'/visual',{headers})).status,404);
+  }
   const a=await approve();assert.equal(a.status,200,await a.clone().text());let approved=(await a.json()).request;
   const email=require('../server/order-email').render(db.requests.find(r=>r.id===stored.id),'approved',null);
   assert.match(email.html,/LÁTVÁNYTERV JÓVÁHAGYÁSA/);assert.ok(email.text.includes('#'+token));assert.ok(!email.text.includes('/orders'));
   const viewed=(await (await fetch(base+url,{headers})).json()).request;assert.deepEqual(viewed.design,request.design);
+  if(!designer){const v=await fetch(base+url+'/visual',{headers});assert.equal(v.status,200);assert.equal(v.headers.get('content-type'),'image/gif');assert.equal((await fetch(base+url+'/visual')).status,404);assert.equal(viewed.finalOffer.previewUrl,viewed.visual.url);}
   const terms=await fetch(base+url+'/terms',{headers});assert.equal(terms.status,200);assert.match(await terms.text(),/Általános Szerződési/);
   if(designer){const json=await (await fetch(base+url+'/design.json',{headers})).json();assert.deepEqual(json.design,stored.design.config);}
   const payload={offerId:approved.finalOffer.id,offerDigest:approved.finalOffer.digest,email:'buyer@example.test',shipping:{name:'Teszt Vásárló',country:'Magyarország',zip:'1011',city:'Budapest',street:'Teszt utca',houseNumber:'1',extra:'2/3'},designApproved:true,termsAccepted:true,priceAccepted:true,privacyRead:true,withdrawalAcknowledged:true,paymentObligation:true};

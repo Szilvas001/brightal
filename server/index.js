@@ -160,7 +160,7 @@ app.get('/uploads/:file', (req, res) => {
   if (!req.user) return res.status(401).send('Bejelentkezés szükséges.');
   const file = path.basename(String(req.params.file));
   const db_ = require('./db');
-  const owner = db_.requests.find(r => r.images.some(i => i.filename === file));
+  const owner = db_.requests.find(r => r.images.some(i => i.filename === file) || r.visual?.filename === file);
   if (!owner) return res.status(404).send('Nem található.');
   if (req.user.role !== 'admin' && owner.userId !== req.user.id) return res.status(403).send('Nincs jogosultság.');
   res.sendFile(path.join(cfg.upload.dir, file), { maxAge: '1h' });

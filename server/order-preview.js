@@ -1,7 +1,10 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),{spawn}=require('node:child_process');
 const DIR=path.join(__dirname,'../data/order-previews');
-async function attachment(r) {
+async function attachment(r, kind) {
+  // The approval email of a photo-upload order carries the visual design uploaded by the admin.
+  if (kind === 'approved' && !r.design && r.visual && path.basename(r.visual.filename) === r.visual.filename)
+    return {filename:r.requestNumber+'-latvanyterv'+path.extname(r.visual.filename),path:path.join(require('./config').upload.dir,r.visual.filename),contentType:r.visual.mime};
   if (r.design) {
     fs.mkdirSync(DIR,{recursive:true,mode:0o700});
     const target=path.join(DIR,r.design.sha256+'.gif');
