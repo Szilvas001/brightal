@@ -911,7 +911,7 @@ function Nav() {
     };
   }, [mob]);
 
-  const items = [['diamonds','SHOP'], ['builder',lang==='en'?'COLLECTIONS':'KOLLEKCIÓK'], ['about',lang==='en'?'ABOUT':'RÓLUNK'], ['inspiration',lang==='en'?'INSPIRATION':'INSPIRÁCIÓ']];
+  const items = [['builder',lang==='en'?'RING DESIGNER':'GYŰRŰTERVEZŐ'], ['upload',lang==='en'?'PHOTO UPLOAD':'KÉPFELTÖLTÉS'], ['about',lang==='en'?'ABOUT':'RÓLUNK'], ['inspiration',lang==='en'?'INSPIRATION':'INSPIRÁCIÓ']];
 
   const LangSwitch = ({ block }) => <div className={'lang-switch' + (block ? ' block' : '')}>
     <Ico.globe s={13} />
@@ -961,7 +961,7 @@ function Nav() {
     </nav>
 
     {mob && <div id="mobile-navigation" className="mobile-menu">
-      {[...items,['upload',t('nav_upload')],...(isAdmin?[['admin',t('nav_admin')]]:[])].map(([id, label]) => <button key={id} className={id === 'builder' ? 'nav-designer' : undefined} onClick={() => { setMob(false); navigate(id); }}>{id === 'builder' && <Ico.gem s={16}/>} {label}</button>)}
+      {[...items,...(isAdmin?[['admin',t('nav_admin')]]:[])].map(([id, label]) => <button key={id} className={id === 'builder' ? 'nav-designer' : undefined} onClick={() => { setMob(false); navigate(id); }}>{id === 'builder' && <Ico.gem s={16}/>} {label}</button>)}
       {user && !isAdmin && <button onClick={() => navigate('orders')}>{t('nav_orders')}</button>}
       {user && !isAdmin && <button onClick={() => navigate('account')}>{t('nav_account')}</button>}
       <div style={{ marginTop: 22, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>

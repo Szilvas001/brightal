@@ -134,3 +134,9 @@ body:not([data-page="home"]){--text-light:#4D433B;--text-mute:#4D433B;--gold-dee
   body[data-page="home"]::before{background-image:url('/assets/atelier-pages.webp?v=palm')}
   .hero .hero-title{font-size:clamp(30px,6.3vw,47px);line-height:1.17}
 }
+/* Narrow desktops: the longer menu labels (Gyűrűtervező, Képfeltöltés) must clear the centred wordmark. */
+@media(min-width:1201px) and (max-width:1399px){
+  .nav-inner{padding:0 44px}
+  .nav-links{gap:16px}
+  .nav-link,.nav-link.nav-designer{letter-spacing:.8px}
+}
