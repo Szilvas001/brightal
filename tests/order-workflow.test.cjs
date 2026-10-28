@@ -1,4 +1,5 @@
 'use strict';
+process.env.MAIL_ENABLED='false';
 const test=require('node:test'),assert=require('node:assert/strict'),express=require('express'),fs=require('node:fs'),path=require('node:path');
 const db=require('../server/db'),cfg=require('../server/config'),R=require('../server/requests'),O=require('../server/offers'),W=require('../server/order-workflow');
 const Mail=require('../server/mailer'),queue=require('../server/order-mail-queue');
@@ -28,6 +29,9 @@ test('upload and designer orders share customer/admin identifiers, manual approv
    assert.equal((await fetch(base+'/admin/requests/'+request.requestNumber+'/visual',{method:'POST',body:vf})).status,403);
    const up=await fetch(base+'/admin/requests/'+request.requestNumber+'/visual',{method:'POST',headers:{'x-role':'admin'},body:vf});assert.equal(up.status,200);const withVisual=(await up.json()).request;
    assert.match(withVisual.visual.url,/^\/uploads\/visual-.+\.gif$/);files.push(path.join(cfg.upload.dir,path.basename(withVisual.visual.url)));
+   const model=new FormData();model.append('model',new Blob([JSON.stringify({version:3,name:'Fotó alapján',design:{style:'solitaire',shape:'oval'}})],{type:'application/json'}),'model.json');
+   const modelUp=await fetch(base+'/admin/requests/'+request.requestNumber+'/photo-model',{method:'POST',headers:{'x-role':'admin'},body:model});assert.equal(modelUp.status,200);
+
   }
   assert.equal((await post('/admin/requests/'+request.requestNumber+'/approve',{price:100000,productionRange:'5-2'},true)).status,400);
   const approval=await post('/admin/requests/'+request.requestNumber+'/approve',{price:100000,productionRange:'2-5'},true);assert.equal(approval.status,200);const approved=(await approval.json()).request;

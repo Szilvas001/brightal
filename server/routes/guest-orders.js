@@ -20,7 +20,7 @@ router.get('/:number/design.json',(req,res)=>{
  res.attachment(r.requestNumber+'-design.json').json({version:3,name:r.design.name,design:r.design.config,sha256:r.design.sha256});
 });
 router.get('/:number/visual',(req,res)=>{
- const v=req.order.finalOffer&&req.order.visual;
+ const v=req.order.finalOffer&&(req.order.finalOffer.photoVisual||req.order.visual);
  if(!v||path.basename(v.filename)!==v.filename)return res.status(404).json({error:'NOT_FOUND'});
  res.type(v.mime).sendFile(path.join(require('../config').upload.dir,v.filename));
 });

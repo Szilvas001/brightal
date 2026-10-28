@@ -262,6 +262,7 @@ const I18N = {
     e_FULFILMENT_REVIEW_REQUIRED: 'A teljesítés előtti ellenőrzés és szerződés-elfogadás szükséges.',
     e_PAYMENT_IN_PROGRESS: 'Folyamatban lévő fizetés mellett az ajánlat nem módosítható.',
     e_TERMS_REQUIRED: 'Az ÁSZF elfogadása kötelező.',
+    e_PHOTO_DESIGN_REQUIRED: 'A jóváhagyás előtt töltsd fel a forgatható 3D tervet is.',
     e_VISUAL_REQUIRED: 'Jóváhagyás előtt töltsd fel a látványtervet.',
     e_VISUAL_NOT_APPLICABLE: 'Ehhez a rendeléshez nem tölthető fel látványterv.',
     e_NAME_REQUIRED: 'A név megadása kötelező.',
@@ -1840,12 +1841,16 @@ function VisualUpload({req,onChanged}){
  const {toast,te}=useA();
  const [busy,setBusy]=useState(false);
  const upload=async file=>{if(!file)return;setBusy(true);try{const fd=new FormData();fd.append('visual',file);const d=await api(`/admin/requests/${encodeURIComponent(req.requestNumber)}/visual`,{method:'POST',body:fd});onChanged(d.request);toast('Látványterv feltöltve.');}catch(e){toast(te(e.code),'err');}setBusy(false);};
+ const uploadModel=async file=>{if(!file)return;setBusy(true);try{const fd=new FormData();fd.append('model',file);const d=await api(`/admin/requests/${encodeURIComponent(req.requestNumber)}/photo-model`,{method:'POST',body:fd});onChanged(d.request);toast('Forgatható 3D terv feltöltve.');}catch(e){toast(te(e.code),'err');}setBusy(false);};
  return <div className="note-box" style={{marginBottom:20}}>
   <h4>Látványterv a vásárlónak</h4>
   <p>Képfeltöltéssel érkezett rendelés. Jóváhagyás előtt töltsd fel a látványtervet: jóváhagyáskor ez kerül a második e-mailbe és a vásárló privát rendelési oldalára.</p>
   <p className="mono-sm dim">Formátum: animált GIF (ajánlott, mint a gyűrűtervezőé: 480×400 px), PNG, JPG vagy WebP · legfeljebb 10 MB.</p>
   {req.visual&&<p><a href={req.visual.url} target="_blank" rel="noopener noreferrer"><img src={req.visual.url} alt="Feltöltött látványterv" style={{maxWidth:'100%',maxHeight:320}}/></a><br/><small>{req.visual.name} · {fmtDate(req.visual.uploadedAt)}</small></p>}
   {!req.acceptance&&<label className="btn btn-outline btn-sm" style={{cursor:busy?'wait':'pointer'}}>{busy?<Spinner size={14}/>:req.visual?'Látványterv cseréje':'Látványterv feltöltése'}<input type="file" hidden accept="image/gif,image/png,image/jpeg,image/webp" disabled={busy} onChange={e=>{upload(e.target.files[0]);e.target.value='';}}/></label>}
+  <h4>Forgatható 3D terv</h4><p>A GIF az e-mailbe kerül; a szabadon forgatható nézethez külön 3D terv kell. Töltsd fel a fotó alapján elkészített BRIGHTAL-tervfájlt (JSON, legfeljebb 20 KB). A GIF és a 3D terv ugyanazt a gyűrűt mutassa. Csere esetén újra jóvá kell hagyni az ajánlatot.</p>
+  {req.photoDesign&&<p>Feltöltve: {req.photoDesign.name||'Műhelyterv'} · {req.photoDesign.sha256.slice(0,12)}</p>}
+  {!req.acceptance&&<label className="btn btn-outline btn-sm">{req.photoDesign?'3D terv cseréje':'3D terv feltöltése'}<input type="file" hidden accept=".json,application/json" disabled={busy} onChange={e=>{uploadModel(e.target.files[0]);e.target.value='';}}/></label>}
  </div>;
 }
 function OrderingPage(){
@@ -2212,7 +2217,7 @@ function AdminRow({ req, onChanged, defaultOpen }) {
           <input className="input" value={note} onChange={e => setNote(e.target.value)} placeholder={t('ad_note_ph')} />
         </div>
         <div className="btn-row" style={{ marginTop: 12 }}>
-          {canApprove && <button className="btn btn-gold" disabled={busy || (!req.design&&!req.diamond&&!req.sourcing&&!req.visual) || !/^\d{1,3}\s*[-–]\s*\d{1,3}$/.test(productionRange) || (req.sourcing&&!req.combinationOffer?!stoneId:!price)}
+          {canApprove && <button className="btn btn-gold" disabled={busy || (!req.design&&!req.diamond&&!req.sourcing&&(!req.visual||!req.photoDesign)) || !/^\d{1,3}\s*[-–]\s*\d{1,3}$/.test(productionRange) || (req.sourcing&&!req.combinationOffer?!stoneId:!price)}
             onClick={() => call('approve', { price: Number(price), adminNote: note,finalOffer,productionRange })}>
             {busy ? <Spinner size={14} /> : <><Ico.check s={14} /> {t('ad_approve')}</>}
           </button>}
@@ -2468,6 +2473,12 @@ function OrderPaymentPage({req}){
   </section><OrderContact/>
  </div><Footer/></div>;
 }
+function PhotoOrderViewer({design,onReady}){
+ const [loaded,setLoaded]=useState(!!window.BrightalBuilder),[failed,setFailed]=useState(false);
+ useEffect(()=>{let live=true;loadRingRuntime().then(()=>{if(live)setLoaded(true);}).catch(()=>{if(live)setFailed(true);});return()=>{live=false;};},[]);
+ const Viewer=window.BrightalBuilder?.OrderViewer;
+ return <section className="photo-order-viewer"><h2 className="h-display">A fotód alapján készített 3D látványterv</h2><p>Fogd meg és húzd el a gyűrűt a forgatáshoz. Görgetéssel vagy két ujjal nagyíthatsz.</p>{failed?<p role="alert">A 3D terv nem tölthető be. Frissítsd az oldalt, vagy írj nekünk.</p>:loaded&&Viewer?<Viewer design={design} onReady={onReady}/>:<p>3D látványterv kirajzolása…</p>}</section>;
+}
 function GuestOrderPage(){
  const {toast}=useA();
  const number=decodeURIComponent(location.pathname.split('/').pop());
@@ -2476,6 +2487,7 @@ function GuestOrderPage(){
   if(/^[\w-]{43}$/.test(incoming)){try{sessionStorage.setItem(key,incoming);}catch{}history.replaceState(null,'',location.pathname);return incoming;}
   try{return sessionStorage.getItem(key)||'';}catch{return '';}
  });
+ const [photoReady,setPhotoReady]=useState(false);
  const [req,setReq]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[ready,setReady]=useState(false),[runtime,setRuntime]=useState(false);
  const [form,setForm]=useState({email:'',shipping:{name:'',country:'Magyarország',zip:'',city:'',street:'',houseNumber:'',extra:''}}),[checks,setChecks]=useState({}),[note,setNote]=useState('');
  const endpoint='/guest-orders/'+encodeURIComponent(number),headers={Authorization:'Bearer '+token};
@@ -2490,13 +2502,14 @@ function GuestOrderPage(){
  if(accepted)return <OrderPaymentPage req={req}/>;
  const Viewer=window.BrightalBuilder?.OrderViewer;
  const declarations=[['designApproved','A fenti látványtervet és a megrendelésben szereplő valamennyi termékparamétert – különösen a méretet, az anyagot, a nemesfém finomságát, a kövek adatait és az esetleges gravírozást – ellenőriztem, és azokat jóváhagyom. Tudomásul veszem, hogy az ékszer ezen jóváhagyott adatok alapján kerül egyedileg legyártásra.'],['termsAccepted','Az Általános Szerződési Feltételeket elolvastam és elfogadom.'],['priceAccepted','A szállítást is tartalmazó teljes végösszeget elfogadom.'],['privacyRead','Az Adatkezelési Tájékoztatót megismertem.'],['withdrawalAcknowledged','Tudomásul veszem az egyedileg gyártott ékszerre vonatkozó, az ÁSZF-ben ismertetett elállási feltételeket.'],['paymentObligation','A megrendelés fizetési kötelezettséggel jár.']];
- const valid=declarations.every(([k])=>checks[k])&&['name','country','zip','city','street','houseNumber'].every(k=>form.shipping[k].trim())&&form.email.trim().toLowerCase()===req.customer.email&&(!req.design||ready);
+ const valid=declarations.every(([k])=>checks[k])&&['name','country','zip','city','street','houseNumber'].every(k=>form.shipping[k].trim())&&form.email.trim().toLowerCase()===req.customer.email&&(!req.design||ready)&&(!o?.photoDesign||photoReady);
  return <div className="page"><div className="wrap-n guest-order">
   <h1 className="h-display page-title">{accepted?'Sikeres rendelés':o?'Látványterv jóváhagyása és megrendelés':'Megérkezett az elképzelésed'}</h1>
   <div className="ref-box"><span>Rendelési azonosító</span><strong>{req.requestNumber}</strong></div>
   {accepted?<><p role="status">A jóváhagyásodat és a szállítási adataidat rögzítettük.</p><BankTransfer req={req}/><p>Szállítás: {req.acceptance.shippingAddress}</p></>:!o?<p>Az ajánlat egyeztetés alatt áll. A végleges látványtervet és ajánlatot e-mailben küldjük. Most még nincs fizetési kötelezettséged.</p>:null}
   {req.design&&runtime&&Viewer?<Viewer design={req.design} onReady={setReady}/>:req.design?<p>3D látványterv betöltése…</p>:null}
-  {o&&!req.design&&req.visual&&<GuestVisual src={'/api'+endpoint+'/visual'} token={token}/>}
+  {o&&!req.design&&o.photoDesign&&<PhotoOrderViewer key={o.photoDesign.sha256} design={o.photoDesign} onReady={setPhotoReady}/>}
+  {o&&!req.design&&!o.photoDesign&&req.visual&&<GuestVisual src={'/api'+endpoint+'/visual'} token={token}/>}
   {req.design&&<button className="btn btn-outline" onClick={()=>download()}>Saját terv letöltése (JSON)</button>}
   <h2 className="h-display">Az ékszer specifikációja</h2><p style={{whiteSpace:'pre-wrap'}}>{o?.specification||req.productSummary}</p>
   {o&&<dl className="kv">{[['Ékszer vételára',money(o.productPrice)],['Szállítási díj',money(o.shippingFee)],['Fizetendő végösszeg',money(o.total)],['Várható gyártási idő',o.productionTime],['Várható átadás / feladás',o.deliveryTime],['Szállítás módja',o.shippingMethod],['Ajánlat érvényessége',fmtDate(o.validUntil)]].map(([k,v])=><React.Fragment key={k}><dt>{k}</dt><dd>{v}</dd></React.Fragment>)}</dl>}

@@ -8,6 +8,7 @@ function create(body,request,now=new Date()) {
  if(!offer.specification||!offer.previewUrl||!(/^(?:https:\/\/|\/uploads\/)/.test(offer.previewUrl))||!offer.productionTime||!offer.deliveryTime||!offer.shippingMethod||!offer.paymentTerms||!Number.isFinite(shippingFee)||shippingFee<0||!Number.isFinite(total)||total<=shippingFee||!Number.isFinite(Date.parse(offer.validUntil))||Date.parse(offer.validUntil)<=now.getTime()) throw new Error('FINAL_OFFER_REQUIRED');
  offer.productPrice=total-shippingFee;
  offer.design=request.design?.config||null;
+ if(!request.design&&custom(request)&&request.photoDesign){offer.photoDesign=JSON.parse(JSON.stringify(request.photoDesign));offer.photoVisual=JSON.parse(JSON.stringify(request.visual));}
  offer.termsVersion=cfg.company.legalEffectiveFrom;
  offer.termsText=require("./terms-document").snapshot();
  offer.digest=crypto.createHash('sha256').update(JSON.stringify(offer)).digest('hex');

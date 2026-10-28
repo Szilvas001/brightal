@@ -1,4 +1,5 @@
 'use strict';
+process.env.MAIL_ENABLED='false';
 const test=require('node:test'),assert=require('node:assert/strict'),express=require('express'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const db=require('../server/db'),cfg=require('../server/config'),access=require('../server/guest-access'),R=require('../server/requests'),Mail=require('../server/mailer');
 function memory(){let rows=[];let chain=Promise.resolve();return{all:()=>rows,find:f=>rows.find(f)||null,filter:f=>rows.filter(f),insert:async r=>{rows.push(r);return r;},update:(f,p)=>{const run=()=>{const i=rows.findIndex(f);if(i<0)return null;rows[i]=typeof p==='function'?p(rows[i]):{...rows[i],...p};return rows[i];};chain=chain.then(run,run);return chain;}};}
@@ -28,6 +29,14 @@ test('guest photo/designer enquiry → admin offer → private approval and deli
    const up=await fetch(base+'/api/admin/requests/'+request.requestNumber+'/visual',{method:'POST',headers:{'x-admin':'yes'},body:vf});assert.equal(up.status,200,await up.clone().text());
    const visualFile=path.join(require('../server/config').upload.dir,db.requests.find(r=>r.id===stored.id).visual.filename);t.after(()=>fs.rmSync(visualFile,{force:true}));
    assert.equal((await fetch(base+url+'/visual',{headers})).status,404);
+   assert.equal((await approve()).status,409);
+   const uploadModel=async(raw,admin=true)=>{const form=new FormData();form.append('model',new Blob([raw],{type:'application/json'}),'model.json');return fetch(base+'/api/admin/requests/'+request.requestNumber+'/photo-model',{method:'POST',headers:admin?{'x-admin':'yes'}:{},body:form});};
+   assert.equal((await uploadModel('{}',false)).status,403);
+   assert.equal((await uploadModel('{}')).status,409);
+   const model={version:3,name:'Fotó alapján',design:{...DEFAULT,style:'solitaire',shape:'oval',carat:2}};
+   const modelResult=await uploadModel(JSON.stringify(model));assert.equal(modelResult.status,200,await modelResult.clone().text());
+   assert.equal((await modelResult.json()).request.design,null);
+
   }
   const a=await approve();assert.equal(a.status,200,await a.clone().text());let approved=(await a.json()).request;
   const email=require('../server/order-email').render(db.requests.find(r=>r.id===stored.id),'approved',null);
@@ -36,6 +45,14 @@ test('guest photo/designer enquiry → admin offer → private approval and deli
   if(!designer){const v=await fetch(base+url+'/visual',{headers});assert.equal(v.status,200);assert.equal(v.headers.get('content-type'),'image/gif');assert.equal((await fetch(base+url+'/visual')).status,404);assert.equal(viewed.finalOffer.previewUrl,viewed.visual.url);}
   const terms=await fetch(base+url+'/terms',{headers});assert.equal(terms.status,200);assert.match(await terms.text(),/Általános Szerződési/);
   if(designer){const json=await (await fetch(base+url+'/design.json',{headers})).json();assert.deepEqual(json.design,stored.design.config);}
+  if(!designer){assert.equal(viewed.finalOffer.photoDesign.config.shape,'oval');assert.ok(viewed.finalOffer.photoVisual.filename);assert.equal(viewed.photoDesign,null);}
+  if(!designer){
+   const before=JSON.stringify(approved.finalOffer),oldDigest=approved.finalOffer.digest;
+   const replacement=new FormData();replacement.append('model',new Blob([JSON.stringify({version:3,name:'Pontosított műhelyterv',design:{...DEFAULT,style:'solitaire',shape:'oval',carat:2.1}})],{type:'application/json'}),'model.json');
+   const changed=await fetch(base+'/api/admin/requests/'+request.requestNumber+'/photo-model',{method:'POST',headers:{'x-admin':'yes'},body:replacement});assert.equal(changed.status,200);assert.equal((await changed.json()).request.finalOffer,null);
+   assert.equal(JSON.stringify(approved.finalOffer),before);
+   approved=(await (await approve()).json()).request;assert.notEqual(approved.finalOffer.digest,oldDigest);
+  }
   const payload={offerId:approved.finalOffer.id,offerDigest:approved.finalOffer.digest,email:'buyer@example.test',shipping:{name:'Teszt Vásárló',country:'Magyarország',zip:'1011',city:'Budapest',street:'Teszt utca',houseNumber:'1',extra:'2/3'},designApproved:true,termsAccepted:true,priceAccepted:true,privacyRead:true,withdrawalAcknowledged:true,paymentObligation:true};
   assert.equal((await post(url+'/accept',{...payload,termsAccepted:false},headers)).status,409);
   assert.equal((await post(url+'/accept',{...payload,shipping:{...payload.shipping,houseNumber:''}},headers)).status,409);
@@ -46,6 +63,8 @@ test('guest photo/designer enquiry → admin offer → private approval and deli
   const results=await Promise.all([post(url+'/accept',payload,headers),post(url+'/accept',payload,headers)]);assert.ok(results.every(r=>r.status===200));
   const final=(await results[0].json()).request;assert.equal(final.paymentStatus,'AwaitingTransfer');assert.equal(final.bankTransfer.reference,request.requestNumber);assert.ok(final.bankTransfer.dueAt);assert.equal(final.acceptance.shipping.houseNumber,'1');
   assert.equal(db.requests.find(r=>r.id===stored.id).history.filter(h=>h.event==='customer_ordered').length,1);
+  const locked=new FormData();locked.append('model',new Blob([JSON.stringify({version:3,design:{...DEFAULT,style:'solitaire'}})],{type:'application/json'}),'model.json');
+  assert.equal((await fetch(base+'/api/admin/requests/'+request.requestNumber+'/photo-model',{method:'POST',headers:{'x-admin':'yes'},body:locked})).status,409);
   assert.equal((await post(url+'/revision',{note:'Túl késő'},headers)).status,409);assert.equal((await approve()).status,409);
  }
  const rows=db.requests.all();assert.equal(access.allowed({headers:{authorization:'Bearer '+access.token(rows[0])}},rows[1]),false);

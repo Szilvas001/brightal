@@ -71,6 +71,7 @@ function toPublic(r, { includeInternal = false } = {}) {
     approvedAt: r.approvedAt || null,
     paidAt: r.paidAt || null,
     images: r.images.map(i => ({ url: i.url, name: i.originalName })),
+    photoDesign: includeInternal && !r.design ? r.photoDesign || null : null,
     visual: r.visual ? { url: r.visual.url, name: r.visual.originalName, mime: r.visual.mime, uploadedAt: r.visual.uploadedAt } : null,
     details: r.details,
     productSummary: require('./order-workflow').specification(r),

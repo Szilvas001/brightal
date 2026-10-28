@@ -74,6 +74,7 @@ router.post('/requests/:requestNumber/approve', async (req, res) => {
   if(r.acceptance) return res.status(409).json({error:'ORDER_ALREADY_ACCEPTED'});
   // Photo-upload orders are approved only with the visual design prepared by the workshop.
   if(offers.custom(r) && !r.design && !r.visual) return res.status(409).json({error:'VISUAL_REQUIRED'});
+  if(offers.custom(r) && !r.design && !r.photoDesign) return res.status(409).json({error:'PHOTO_DESIGN_REQUIRED'});
   if(r.paymentId && !['Failed','Canceled','Expired'].includes(r.paymentStatus)) return res.status(409).json({error:'PAYMENT_IN_PROGRESS'});
   let finalOffer, productionDays;
   try {
@@ -125,8 +126,33 @@ router.post('/requests/:requestNumber/visual',(req,res)=>visualUpload(req,res,as
   if(r.acceptance){discard();return res.status(409).json({error:'ORDER_ALREADY_ACCEPTED'});}
   const now=new Date().toISOString();
   const visual={filename:req.file.filename,url:'/uploads/'+req.file.filename,mime:req.file.mimetype,originalName:String(req.file.originalname||'').slice(0,200),size:req.file.size,uploadedAt:now};
-  const updated=await db.requests.update(x=>x.id===r.id,x=>({...x,visual,updatedAt:now,history:[...x.history,{at:now,event:'visual_uploaded',by:req.user.id,file:visual.filename}]}));
+  let updated;
+  try{updated=await db.requests.update(x=>x.id===r.id,x=>{
+   if(x.acceptance)throw Error('ORDER_ALREADY_ACCEPTED');
+   if(!['submitted','approved'].includes(x.status))throw Error('INVALID_TRANSITION');
+   return {...x,visual,status:'submitted',finalOffer:null,price:null,updatedAt:now,history:[...x.history,{at:now,event:'visual_uploaded',by:req.user.id,file:visual.filename}]};
+  });}catch(e){discard();return res.status(409).json({error:e.message});}
   res.json({request:R.toPublic(updated,{includeInternal:true})});
+}));
+
+// A workshop model belongs only to the photo-upload flow. The customer's design is never replaced.
+const photoModelUpload=require('multer')({storage:require('multer').memoryStorage(),limits:{fileSize:20000,files:1}}).single('model');
+router.post('/requests/:requestNumber/photo-model',(req,res)=>photoModelUpload(req,res,async err=>{
+ if(err)return res.status(400).json({error:'INVALID_DESIGN'});
+ if(!req.file)return res.status(400).json({error:'NO_FILES'});
+ const r=db.requests.find(x=>x.requestNumber===req.params.requestNumber);
+ if(!r)return res.status(404).json({error:'NOT_FOUND'});
+ if(r.design||!offers.custom(r))return res.status(409).json({error:'VISUAL_NOT_APPLICABLE'});
+ try{
+  const photoDesign=await require('../designs').parseDesign(req.file.buffer.toString('utf8'));
+  const now=new Date().toISOString();
+  const updated=await db.requests.update(x=>x.id===r.id,x=>{
+   if(x.acceptance)throw Error('ORDER_ALREADY_ACCEPTED');
+   if(!['submitted','approved'].includes(x.status))throw Error('INVALID_TRANSITION');
+   return {...x,photoDesign,status:'submitted',finalOffer:null,price:null,updatedAt:now,history:[...x.history,{at:now,event:'photo_model_uploaded',by:req.user.id,sha256:photoDesign.sha256}]};
+  });
+  res.json({request:R.toPublic(updated,{includeInternal:true})});
+ }catch(e){res.status(409).json({error:e.message});}
 }));
 
 // Human review remains a separate action; payment alone cannot start production.

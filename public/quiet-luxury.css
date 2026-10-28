@@ -153,3 +153,5 @@ body:not([data-page="home"]){--text-light:#4D433B;--text-mute:#4D433B;--gold-dee
 .order-3d canvas{display:block;touch-action:none}
 .order-final-preview{max-height:420px;max-width:100%;object-fit:contain;margin:24px auto}
 @media(max-width:600px){.order-3d{height:320px}}
+
+.photo-order-viewer > section > .hint { display: none; }
