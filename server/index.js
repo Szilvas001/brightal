@@ -263,7 +263,7 @@ app.get('*', (req, res, next) => {
   if(req.path.startsWith('/order/'))res.set({'Cache-Control':'private, no-store','Referrer-Policy':'no-referrer','X-Robots-Tag':'noindex, nofollow'});
   /* Ismeretlen útvonalon is az SPA-t szolgáljuk ki (ott jelenik meg a
      404 oldal), de a keresőknek helyes státuszkódot küldünk. */
-  const known = /^\/($|ring-builder|diamonds|hogyan|how|feltoltes|upload|inspiracio|inspiration|rendeleseim|orders|fiok|account|rolunk|about|kapcsolat|contact|admin|order\/BRG-[A-Z0-9-]+|payment-return|rendeles-menete|ordering|aszf|terms|adatkezeles|privacy|impresszum|impressum|elallas|refund|cookie|cookies)\/?$/;
+  const known = /^\/($|ring-builder|diamonds|hogyan|how|feltoltes|upload|gyuruterv-ajanlat|design-quote|inspiracio|inspiration|rendeleseim|orders|fiok|account|rolunk|about|kapcsolat|contact|admin|order\/BRG-[A-Z0-9-]+|payment-return|rendeles-menete|ordering|aszf|terms|adatkezeles|privacy|impresszum|impressum|elallas|refund|cookie|cookies)\/?$/;
   if (!known.test(req.path)) res.status(404);
   res.type('html').send(renderIndex());
 });

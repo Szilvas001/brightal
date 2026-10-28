@@ -610,6 +610,7 @@ const ROUTES = [
   ['builder', /^\/ring-builder\/?$/, () => '/ring-builder'],
   ['home', /^\/$/, () => '/'],
   ['how', /^\/(hogyan|how)\/?$/, () => (LANG === 'en' ? '/how' : '/hogyan')],
+  ['designerQuote', /^\/(gyuruterv-ajanlat|design-quote)\/?$/, () => (LANG === 'en' ? '/design-quote' : '/gyuruterv-ajanlat')],
   ['upload', /^\/(feltoltes|upload)\/?$/, () => (LANG === 'en' ? '/upload' : '/feltoltes')],
   ['inspiration', /^\/(inspiracio|inspiration)\/?$/, () => (LANG === 'en' ? '/inspiration' : '/inspiracio')],
   ['orders', /^\/(rendeleseim|orders)\/?$/, () => (LANG === 'en' ? '/orders' : '/rendeleseim')],
@@ -1545,11 +1546,13 @@ function readRingDraft() {
   return null;
 }
 
-function UploadPage() {
-  readRingDraft();
+function UploadPage() { return <EnquiryForm key="photo"/>; }
+function DesignerQuotePage() { return <EnquiryForm key="design" designer/>; }
+function EnquiryForm({designer = false}) {
+  const [draft] = useState(() => designer ? readRingDraft() : null);
   const { t, te, user, setAuthModal, config, toast, navigate, lang, isAdmin } = useA();
-  const [files, setFiles] = useState(() => window.brightalRingDraft ? [window.brightalRingDraft.file] : []);
-  const [previews, setPreviews] = useState(() => window.brightalRingDraft ? [URL.createObjectURL(window.brightalRingDraft.file)] : []);
+  const [files, setFiles] = useState(() => draft ? [draft.file] : []);
+  const [previews, setPreviews] = useState(() => draft ? [URL.createObjectURL(draft.file)] : []);
   const [drag, setDrag] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(null);
@@ -1558,7 +1561,7 @@ function UploadPage() {
 
   const [f, setF] = useState({
     name: '', email: '', phone: '',
-    metal: window.brightalRingDraft?.metal || '', ringSize: window.brightalRingDraft?.design.size || '', budget: '', deadline: '', engraving: window.brightalRingDraft?.design.engraving || '', note: window.brightalRingDraft?.note || '',
+    metal: draft?.metal || '', ringSize: draft?.design.size || '', budget: '', deadline: '', engraving: draft?.design.engraving || '', note: draft?.note || '',
     acceptTerms: false
   });
 
@@ -1614,11 +1617,10 @@ function UploadPage() {
       files.forEach(file => fd.append('photos', file));
       Object.entries(f).forEach(([k, v]) => fd.append(k, typeof v === 'boolean' ? String(v) : v));
       fd.append('lang', lang);
-      if (window.brightalRingDraft) fd.append('ringDesign', JSON.stringify({version:3, design:window.brightalRingDraft.design, name:window.brightalRingDraft.name || ''}));
+      if (draft) fd.append('ringDesign', JSON.stringify({version:3, design:draft.design, name:draft.name || ''}));
       const d = await api('/requests', { method: 'POST', body: fd });
       setDone(d.request);
-      window.brightalRingDraft = null;
-      try { sessionStorage.removeItem('brightal-quote-v1'); } catch (e) {}
+      if (designer) { window.brightalRingDraft = null; try { sessionStorage.removeItem('brightal-quote-v1'); } catch (e) {} }
       setFiles([]); setPreviews([]);
       window.scrollTo(0, 0);
     } catch (e) { toast(te(e.code), 'err'); }
@@ -1648,7 +1650,7 @@ function UploadPage() {
           </div>
           <p className="lead-sm">A visszaigazolást a megadott e-mail-címre küldjük. Az admin által jóváhagyott ajánlat külön levélben érkezik; a benne lévő privát linken tudod véglegesíteni a rendelést. Nézd meg a spam mappát is.</p>
           <div className="btn-row">
-            <button className="btn btn-ghost" onClick={() => { setDone(null); setF(p => ({ ...p, note: '', engraving: '' })); }}>
+            <button className="btn btn-ghost" onClick={() => { if (designer) { navigate('builder'); return; } setDone(null); setF(p => ({ ...p, note: '', engraving: '' })); }}>
               {t('ok_another')}
             </button>
           </div>
@@ -1658,16 +1660,19 @@ function UploadPage() {
     </div>;
   }
 
+  if (designer && !draft) return <div className="page"><div className="wrap-n"><h1 className="h-display">Először tervezd meg a gyűrűdet</h1><p>Az ajánlatkéréshez a gyűrűtervező utolsó lépéséből érkezhetsz ide.</p><button className="btn btn-dark" onClick={()=>navigate('builder')}>Gyűrűtervező megnyitása</button></div><Footer/></div>;
   /* --- űrlap --- */
   return <div className="page">
     <div className="page-head">
-      <p className="eyebrow-gold">{t('up_eyebrow')}</p>
-      <h1 className="h-display page-title">{t('up_title')}</h1>
+      <p className="eyebrow-gold">{designer ? 'BRIGHTAL · GYŰRŰTERVEZŐ' : t('up_eyebrow')}</p>
+      <h1 className="h-display page-title">{designer ? (lang==='en'?'Quote for your ring design':'Ajánlatkérés a saját gyűrűtervedre') : t('up_title')}</h1>
       <div className="rule" />
-      <p className="page-lead">{t('up_sub')}</p>
+      <p className="page-lead">{designer ? (lang==='en'?'Your design is attached automatically. Enter your contact details to request a personal quote.':'A megtervezett gyűrűdet automatikusan csatoljuk. Add meg az elérhetőségeidet, és személyre szabott ajánlatot küldünk.') : t('up_sub')}</p>
     </div>
 
     <div className="wrap-n" style={{ paddingBottom: 80 }}>
+      {designer && draft && <div className="panel form-panel"><h2 className="h-display">{draft.name || 'Saját gyűrűterved'}</h2><img src={draft.preview} alt="Saját gyűrűterv" style={{width:'100%',maxHeight:420,objectFit:'contain'}}/><button type="button" className="btn btn-outline" onClick={()=>navigate('builder')}>Terv szerkesztése</button></div>}
+      {!designer && <>
       {/* dropzone */}
       <div className={'dropzone' + (drag ? ' over' : '') + (errors.photos ? ' err' : '')}
         onDragOver={e => { e.preventDefault(); setDrag(true); }}
@@ -1690,16 +1695,17 @@ function UploadPage() {
         <div className="thumb-count">{files.length} / {up.maxFiles} {t('up_selected')}</div>
       </div>}
 
+      </>}
       {/* részletek */}
       <div className="panel form-panel">
         <h3 className="h-display">{t('up_details')}</h3>
-        {window.brightalRingDraft && <p className="hint">{lang === 'en' ? 'Metal, size and engraving come from your saved design. Change them in the designer before submitting.' : 'A fém, a méret és a gravírozás a tervedből származik. Módosításukhoz térj vissza a gyűrűtervezőbe.'} <button type="button" className="btn btn-ghost btn-sm" onClick={()=>navigate('builder')}>{lang === 'en' ? 'Edit design' : 'Terv szerkesztése'}</button></p>}
+        {draft && <p className="hint">{lang === 'en' ? 'Metal, size and engraving come from your saved design. Change them in the designer before submitting.' : 'A fém, a méret és a gravírozás a tervedből származik. Módosításukhoz térj vissza a gyűrűtervezőbe.'} <button type="button" className="btn btn-ghost btn-sm" onClick={()=>navigate('builder')}>{lang === 'en' ? 'Edit design' : 'Terv szerkesztése'}</button></p>}
         <div className="grid-2-gap">
           <Field label={t('up_metal')}>
-            <input className="input" readOnly={!!window.brightalRingDraft} value={f.metal} onChange={e => set('metal', e.target.value)} placeholder={t('up_metal_ph')} />
+            <input className="input" readOnly={!!draft} value={f.metal} onChange={e => set('metal', e.target.value)} placeholder={t('up_metal_ph')} />
           </Field>
           <Field label={t('up_size')}>
-            <input className="input" readOnly={!!window.brightalRingDraft} value={f.ringSize} onChange={e => set('ringSize', e.target.value)} placeholder={t('up_size_ph')} />
+            <input className="input" readOnly={!!draft} value={f.ringSize} onChange={e => set('ringSize', e.target.value)} placeholder={t('up_size_ph')} />
           </Field>
           <Field label={t('up_budget')}>
             <input className="input" value={f.budget} onChange={e => set('budget', e.target.value)} placeholder={t('up_budget_ph')} />
@@ -1709,7 +1715,7 @@ function UploadPage() {
           </Field>
         </div>
         <Field label={t('up_engraving')}>
-          <input className="input" maxLength={40} readOnly={!!window.brightalRingDraft} value={f.engraving} onChange={e => set('engraving', e.target.value)} placeholder={t('up_engraving_ph')} />
+          <input className="input" maxLength={40} readOnly={!!draft} value={f.engraving} onChange={e => set('engraving', e.target.value)} placeholder={t('up_engraving_ph')} />
         </Field>
         <Field label={t('up_note')}>
           <textarea className="textarea" rows={3} maxLength={1000} value={f.note}
@@ -1749,7 +1755,7 @@ function UploadPage() {
         {errors.acceptTerms && <div className="err-msg">{errors.acceptTerms}</div>}
 
         <button className="btn btn-gold btn-block btn-lg" style={{ marginTop: 18 }} disabled={busy} onClick={submit}>
-          {busy ? <><Spinner size={15} /> {t('up_sending')}</> : <><Ico.upload s={15} /> {t('up_submit')}</>}
+          {busy ? <><Spinner size={15} /> {t('up_sending')}</> : <><Ico.upload s={15} /> {designer ? (lang==='en'?'Send quote request':'Ajánlatkérés elküldése') : t('up_submit')}</>}
         </button>
         <p className="fine-print"><Ico.lock s={11} /> {t('ab_4_d')}</p>
       </div>
@@ -2436,7 +2442,7 @@ function BuilderPage() {
     window.brightalRingDraft = draft;
     try { localStorage.setItem('brightal-design-v1', JSON.stringify(draft.design)); } catch (e) {}
     try { const { file, ...saved } = draft; sessionStorage.setItem('brightal-quote-v1', JSON.stringify(saved)); } catch (e) {}
-    navigate('upload');
+    navigate('designerQuote');
   }}/>;
 }
 
@@ -2548,7 +2554,7 @@ const PAGES = {
   diamonds: DiamondsPage,
   builder: BuilderPage,
   'guest-order': GuestOrderPage,
-  home: HomePage, how: HowPage, upload: UploadPage, inspiration: InspirationPage,
+  home: HomePage, how: HowPage, upload: UploadPage, designerQuote: DesignerQuotePage, inspiration: InspirationPage,
   orders: GuestAccessHelp, account: GuestAccessHelp, about: AboutPage, contact: ContactPage,
   admin: AdminPage, 'payment-return': PaymentReturnPage,
   /* jogi oldalak — mind ugyanazt a komponenst használja, más tartalommal */
