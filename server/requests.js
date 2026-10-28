@@ -119,7 +119,7 @@ function build({ user, body, files, lang, design = null }) {
     lang: lang === 'en' ? 'en' : 'hu',
     status: STATUS.SUBMITTED,
     createdAt: now,
-    reviewDueAt: new Date(Date.parse(now) + 3600000).toISOString(),
+    reviewDueAt: new Date(Date.parse(now) + 48 * 3600000).toISOString(),
     paymentMethod: cfg.payment.method,
     updatedAt: now,
     customer: {
