@@ -538,7 +538,7 @@ table.admin-table tfoot td{padding:12px 14px;background:var(--bg-warm);font-weig
 
 /* A háttérkép végig látszik, de a hosszú jogi szöveg áttetsző
    elefántcsont lapon ül, hogy hibátlanul olvasható legyen. */
-.legal-body{display:grid;grid-template-columns:200px 1fr;gap:44px;align-items:start;
+.legal-body{display:grid;grid-template-columns:200px 1fr;gap:0 44px;align-items:start;
   background:rgba(255,252,249,.90);
   -webkit-backdrop-filter:blur(4px) saturate(1.03);backdrop-filter:blur(4px) saturate(1.03);
   border:1px solid rgba(255,255,255,.65);border-radius:16px;
@@ -546,7 +546,9 @@ table.admin-table tfoot td{padding:12px 14px;background:var(--bg-warm);font-weig
   padding:34px 38px 52px;margin-bottom:76px}
 
 /* tartalomjegyzék */
-.legal-toc{position:sticky;top:calc(var(--nav-h) + 22px)}
+.legal-toc{position:sticky;top:calc(var(--nav-h) + 22px);grid-column:1;grid-row:1 / span 200}
+/* every section stays in the text column; the TOC keeps the left column */
+.legal-body>.legal-section,.legal-body>.legal-actions{grid-column:2}
 .legal-toc h4{font-size:9px;letter-spacing:2.6px;text-transform:uppercase;color:var(--gold-deep);margin-bottom:12px}
 .legal-toc ol{list-style:none;counter-reset:toc}
 .legal-toc li{counter-increment:toc;margin-bottom:8px;line-height:1.45}
@@ -594,6 +596,7 @@ table.admin-table tfoot td{padding:12px 14px;background:var(--bg-warm);font-weig
   body::before,body::after{display:none!important}
   html{background:#fff}
   .legal-body{grid-template-columns:1fr;padding:0;background:none;border:0;box-shadow:none;backdrop-filter:none}
+  .legal-body>.legal-section,.legal-body>.legal-actions{grid-column:auto}
   .page{padding-top:0}
   .legal-p,.legal-list li{color:#000;font-size:11pt}
   .legal-section{page-break-inside:avoid}
@@ -635,7 +638,8 @@ table.admin-table tfoot td{padding:12px 14px;background:var(--bg-warm);font-weig
    különben a később definiált szabály felülírná. */
 @media (max-width:1000px){
   .legal-body{grid-template-columns:1fr;gap:0;padding:26px 22px 40px}
-  .legal-toc{position:static;margin-bottom:30px;padding-bottom:20px;border-bottom:1px solid var(--border-soft)}
+  .legal-toc{position:static;grid-row:auto;grid-column:auto;margin-bottom:30px;padding-bottom:20px;border-bottom:1px solid var(--border-soft)}
+  .legal-body>.legal-section,.legal-body>.legal-actions{grid-column:auto}
   .legal-toc ol{columns:2;column-gap:26px}
 }
 @media (max-width:620px){
