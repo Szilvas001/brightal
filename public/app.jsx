@@ -1098,6 +1098,55 @@ function Steps() {
   </div>;
 }
 
+/* Főoldal: a két rendelési út (gyűrűtervező / képfeltöltés) lépésről lépésre, váltható nézetben. */
+function HomeSteps() {
+  const { navigate, lang } = useA();
+  const [path, setPath] = useState('designer');
+  const hu = lang !== 'en';
+  const final = hu
+    ? ['Megvárod az elkészítést', 'Kézzel készítjük el, a végleges ajánlatban vállalt határidővel. A rendelésedet az e-mailben kapott privát linken követheted.']
+    : ['Wait for the making', 'We craft it by hand within the production time in your final offer. Follow your order on the private link from our email.'];
+  const paths = {
+    designer: {
+      label: hu ? 'Gyűrűtervező' : 'Ring designer',
+      lead: hu ? 'Megtervezed a saját gyűrűdet 3D-ben, mi pedig elkészítjük.' : 'Design your own ring in 3D and we craft it for you.',
+      cta: hu ? 'Megtervezem a gyűrűmet' : 'Design my ring', to: 'builder',
+      steps: [
+        [<Ico.ring s={22} />, hu ? 'Megtervezed a gyűrűt' : 'Design your ring', hu ? 'A gyűrűtervezőben 44 alapformából indulsz, és lépésről lépésre kiválasztod a követ, a nemesfémet és a részleteket. A tervedet 3D-ben, minden szögből megnézheted, majd az elérhetőségeddel elküldöd — regisztráció nélkül.' : 'Start from 44 base shapes and choose the stone, metal and details step by step. View your design in 3D from every angle, then send it with your contact details — no registration needed.'],
+        [<Ico.clock s={22} />, hu ? 'Jóváhagyjuk a terved' : 'We approve your design', hu ? 'Azonnal kapsz egy visszaigazoló e-mailt. Legkésőbb 48 órán belül jóváhagyjuk a tervedet, és e-mailben küldjük a végleges ajánlatot a pontos vételárral és az elkészítési idővel.' : 'You get a confirmation email right away. Within 48 hours at the latest we approve your design and email the final offer with the exact price and production time.'],
+        [<Ico.check s={22} />, hu ? 'Jóváhagyod és megrendeled' : 'Approve and order', hu ? 'Az e-mailben kapott privát linken még egyszer megnézed a terved, elfogadod az ajánlatot, és megadod a szállítási adataidat. A vételárat 2 munkanapon belül banki átutalással rendezed, a közleménybe a rendelésazonosítót írva.' : 'On the private link from our email you review your design, accept the offer and enter your delivery details. You settle the price by bank transfer within 2 working days, using your order number as the reference.'],
+        [<Ico.hammer s={22} />, final[0], final[1]]
+      ]
+    },
+    upload: {
+      label: hu ? 'Képfeltöltés' : 'Photo upload',
+      lead: hu ? 'Van egy kép az álomgyűrűdről? Töltsd fel, és látványtervet készítünk belőle.' : 'Have a picture of your dream ring? Upload it and we create a visual design from it.',
+      cta: hu ? 'Feltöltöm a képet' : 'Upload my photo', to: 'upload',
+      steps: [
+        [<Ico.camera s={22} />, hu ? 'Feltöltöd a képet' : 'Upload the photo', hu ? 'Screenshot Pinterestről, Instagramról, vagy egy fotó — bármi, amin látszik az álomgyűrű. Megadod a kívánságaidat és az elérhetőségedet — regisztráció nélkül.' : 'A screenshot from Pinterest or Instagram, or a photo — anything that shows the dream ring. Add your wishes and contact details — no registration needed.'],
+        [<Ico.clock s={22} />, hu ? 'Elkészítjük a látványtervet' : 'We create your visual design', hu ? 'Azonnal kapsz egy visszaigazoló e-mailt. Legkésőbb 48 órán belül elkészítjük a gyűrűd forgó látványtervét, és e-mailben elküldjük a végleges ajánlattal együtt.' : 'You get a confirmation email right away. Within 48 hours at the latest we create a rotating visual design of your ring and email it with the final offer.'],
+        [<Ico.check s={22} />, hu ? 'Jóváhagyod és megrendeled' : 'Approve and order', hu ? 'Az e-mailben kapott privát linken megnézed a látványtervet, elfogadod az ajánlatot, és megadod a szállítási adataidat. A vételárat 2 munkanapon belül banki átutalással rendezed, a közleménybe a rendelésazonosítót írva.' : 'On the private link from our email you review the visual design, accept the offer and enter your delivery details. You settle the price by bank transfer within 2 working days, using your order number as the reference.'],
+        [<Ico.hammer s={22} />, final[0], final[1]]
+      ]
+    }
+  };
+  const p = paths[path];
+  return <div className="home-paths">
+    <p className="home-paths-intro">{hu ? 'Kétféleképpen indulhatsz el — válaszd ki, melyik áll közelebb hozzád:' : 'There are two ways to start — choose the one that suits you:'}</p>
+    <div className="home-paths-switch" role="tablist" aria-label={hu ? 'Rendelési lehetőségek' : 'Ordering options'}>
+      {Object.entries(paths).map(([key, v]) => <button key={key} type="button" role="tab" aria-selected={path === key}
+        className={'btn ' + (path === key ? 'btn-dark' : 'btn-outline')} onClick={() => setPath(key)}>
+        {key === 'designer' ? <Ico.ring s={16} /> : <Ico.camera s={16} />} {v.label}
+      </button>)}
+    </div>
+    <p className="home-paths-lead">{p.lead}</p>
+    <div className="steps-grid" role="tabpanel">
+      {p.steps.map(([icon, title, desc], i) => <StepCard key={path + i} n={String(i + 1)} icon={icon} title={title} desc={desc} />)}
+    </div>
+    <div className="home-paths-cta"><button className="btn btn-gold" onClick={() => navigate(p.to)}>{p.cta}</button></div>
+  </div>;
+}
+
 function HomePage() {
   const { t, navigate, isAdmin, lang } = useA();
   return <div>
@@ -1124,7 +1173,7 @@ function HomePage() {
         <h2 className="h-display sec-title">{t('how_title')}</h2>
         <div className="rule" />
       </div>
-      <div className="wrap"><Steps /></div>
+      <div className="wrap"><HomeSteps /></div>
     </Section>
 
     <Section className="quote-band">

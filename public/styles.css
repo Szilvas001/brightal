@@ -255,6 +255,11 @@ summary{cursor:pointer}
 
 /* ───── lépések ───── */
 .steps-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.home-paths-intro{text-align:center;font-family:var(--serif);font-size:17px;color:var(--text-light);margin:-6px 0 18px}
+.home-paths-switch{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.home-paths-switch .btn{display:inline-flex;align-items:center;gap:8px}
+.home-paths-lead{text-align:center;font-family:var(--serif);font-style:italic;font-size:16px;color:var(--gold-deep);margin-bottom:26px}
+.home-paths-cta{display:flex;justify-content:center;margin-top:30px}
 .step-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:12px;padding:30px 24px 26px;
   position:relative;transition:var(--tr);box-shadow:var(--sh-sm)}
 .step-card:hover{transform:translateY(-6px) scale(1.012);box-shadow:var(--sh-md)}
