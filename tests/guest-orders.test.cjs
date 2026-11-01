@@ -40,7 +40,7 @@ test('guest photo/designer enquiry → admin offer → private approval and deli
   }
   const a=await approve();assert.equal(a.status,200,await a.clone().text());let approved=(await a.json()).request;
   const email=require('../server/order-email').render(db.requests.find(r=>r.id===stored.id),'approved',null);
-  assert.match(email.html,/LÁTVÁNYTERV JÓVÁHAGYÁSA/);assert.ok(email.text.includes('#'+token));assert.ok(!email.text.includes('/orders'));
+  assert.match(email.html,/LÁTVÁNYTERV ÉS AJÁNLAT MEGTEKINTÉSE/);assert.ok(email.text.includes('#'+token));assert.ok(!email.text.includes('/orders'));
   const viewed=(await (await fetch(base+url,{headers})).json()).request;assert.deepEqual(viewed.design,request.design);
   if(!designer){const v=await fetch(base+url+'/visual',{headers});assert.equal(v.status,200);assert.equal(v.headers.get('content-type'),'image/gif');assert.equal((await fetch(base+url+'/visual')).status,404);assert.equal(viewed.finalOffer.previewUrl,viewed.visual.url);}
   const terms=await fetch(base+url+'/terms',{headers});assert.equal(terms.status,200);assert.match(await terms.text(),/Általános Szerződési/);
