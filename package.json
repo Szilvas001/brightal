@@ -26,7 +26,8 @@
     "build:previews": "node scripts/diamond-thumbnails.cjs --catalogue",
     "build:ring-previews": "node scripts/thumbnails.mjs",
     "lint": "eslint server scripts tests public/builder public/app.jsx",
-    "typecheck": "tsc -p jsconfig.pricing.json"
+    "typecheck": "tsc -p jsconfig.pricing.json",
+    "test:styles-browser": "node scripts/check-styles-browser.cjs"
   },
   "dependencies": {
     "express": "^4.19.2",

@@ -341,7 +341,8 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
     }
     const start=performance.now();
     try {
-      engine.current.update(s,previewModel(s,engine.current.studioTexture));
+      // These silhouettes require Boolean geometry; render them in the worker only.
+      if(!['open','stack','signet'].includes(s.style))engine.current.update(s,previewModel(s,engine.current.studioTexture));
       host.current.dataset.previewMs=(performance.now()-start).toFixed(1);
       host.current.dataset.quality='preview';setReady(false);setRefining(true);setError(false);
       host.current.dataset.renderedStyle=s.style;

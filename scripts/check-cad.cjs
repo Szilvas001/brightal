@@ -6,7 +6,7 @@ const C=require('../server/cad');
  const cases=['cathedral','eastwest','contour','split','trilogy','duet','wavebezel','openpair','band'].map(style=>({style}));
  cases.push({style:'bezel',innerDiameter:14,width:1.8,thickness:1.2,stoneLength:3,stoneWidth:2,stoneDepth:1,settingHeight:3,underOpening:.3});
  cases.push({style:'bezel',innerDiameter:24,width:8,thickness:3.5,stoneLength:10,stoneWidth:8,stoneDepth:6,settingHeight:9,bezelWall:1.5});
- for(const [i,overrides] of cases.entries()){
+ for(const [i,overrides] of cases.filter(c=>!process.env.CAD_TEST_STYLE||c.style===process.env.CAD_TEST_STYLE).entries()){
   const config={style:overrides.style,shape:'oval',width:3.4,thickness:1.8,stoneLength:4,stoneWidth:3,stoneDepth:1.8};
   const p=await C.parameters(config,{stoneLength:4,stoneWidth:3,stoneDepth:1.8,sideSize:1.5,settingHeight:5,...overrides});
   const dir=path.join(out,String(i));fs.mkdirSync(dir);fs.writeFileSync(path.join(dir,'input.json'),JSON.stringify(p));
