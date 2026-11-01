@@ -41,7 +41,7 @@ const I18N = {
     step3_t: 'Fizetsz',
     step3_d: 'Az e-mailben kapott linken jóváhagyod az ajánlatot, majd 2 munkanapon belül banki átutalással fizetsz.',
     step4_t: 'Megvárod az elkészítést',
-    step4_d: 'Kézzel készítjük el, a végleges ajánlatban vállalt határidővel. A rendelésedet az e-mailben kapott privát linken követheted.',
+    step4_d: 'Kézzel készítjük el, a végleges ajánlatban vállalt határidővel. A fizetés beérkezése után indul a gyártás. A szállítás részleteit egyeztetjük veled; rendelésedet az e-mailben kapott privát linken követheted.',
 
     /* --- feltöltés --- */
     up_eyebrow: 'AZ ÁLOMGYŰRŰ',
@@ -918,7 +918,7 @@ function Nav() {
     };
   }, [mob]);
 
-  const items = [['builder',lang==='en'?'RING DESIGNER':'GYŰRŰTERVEZŐ'], ['upload',lang==='en'?'PHOTO UPLOAD':'KÉPFELTÖLTÉS'], ['about',lang==='en'?'ABOUT':'RÓLUNK'], ['inspiration',lang==='en'?'INSPIRATION':'INSPIRÁCIÓ']];
+  const items = [['builder',lang==='en'?'RING DESIGNER':'GYŰRŰTERVEZŐ'], ['upload',lang==='en'?'PHOTO UPLOAD':'KÉPFELTÖLTÉS'], ['how',lang==='en'?'HOW IT WORKS':'HOGYAN MŰKÖDIK?'], ['about',lang==='en'?'ABOUT':'RÓLUNK'], ['inspiration',lang==='en'?'INSPIRATION':'INSPIRÁCIÓ']];
 
   const LangSwitch = ({ block }) => <div className={'lang-switch' + (block ? ' block' : '')}>
     <Ico.globe s={13} />
@@ -934,12 +934,13 @@ function Nav() {
         </button>
 
         <div className="nav-links">
-          {items.map(([id, label]) =>
+          {items.filter(([id]) => id !== 'how').map(([id, label]) =>
             <button key={id} className={'nav-link' + (id === 'builder' ? ' nav-designer' : '') + (page === id ? ' active' : '')} onClick={() => { setMob(false); navigate(id); }}>{id === 'builder' && <Ico.gem s={16}/>} {label}</button>)}
 
         </div>
 
         <div className="nav-actions">
+          <button className={"nav-link nav-how" + (page === "how" ? " active" : "")} onClick={() => navigate("how")}>{lang === "en" ? "HOW IT WORKS" : "HOGYAN MŰKÖDIK?"}</button>
           <div className="nav-language"><LangSwitch /></div>
           {isAdmin ? <div className="user-chip" tabIndex={0} aria-label={t('nav_account')}>
             {user.picture
@@ -995,6 +996,7 @@ function Footer() {
       <div>
         <h4>{t('nav_how')}</h4>
         <button onClick={() => navigate('how')}>{t('nav_how')}</button>
+        <button onClick={() => navigate('builder')}>{lang === 'en' ? 'Ring designer' : 'Gyűrűtervező'}</button>
         {!isAdmin && <button onClick={() => navigate('upload')}>{t('nav_upload')}</button>}
         <button onClick={() => navigate('inspiration')}>{t('nav_inspiration')}</button>
       </div>
@@ -1102,11 +1104,10 @@ function Steps() {
 /* Főoldal: a két rendelési út (gyűrűtervező / képfeltöltés) lépésről lépésre, váltható nézetben. */
 function HomeSteps() {
   const { navigate, lang } = useA();
-  const [path, setPath] = useState('designer');
   const hu = lang !== 'en';
   const final = hu
-    ? ['Megvárod az elkészítést', 'Kézzel készítjük el, a végleges ajánlatban vállalt határidővel. A rendelésedet az e-mailben kapott privát linken követheted.']
-    : ['Wait for the making', 'We craft it by hand within the production time in your final offer. Follow your order on the private link from our email.'];
+    ? ['Megvárod az elkészítést', 'A fizetés beérkezése után kézzel készítjük el a gyűrűdet, az ajánlatban vállalt határidővel. A szállítás részleteiről tájékoztatunk; rendelésedet az e-mailben kapott privát linken követheted.']
+    : ['Wait for the making', 'We craft it by hand within the production time in your final offer. Production starts after payment arrives. We confirm delivery details with you; follow your order on the private link from our email.'];
   const paths = {
     designer: {
       label: hu ? 'Gyűrűtervező' : 'Ring designer',
@@ -1114,7 +1115,7 @@ function HomeSteps() {
       cta: hu ? 'Megtervezem a gyűrűmet' : 'Design my ring', to: 'builder',
       steps: [
         [<Ico.ring s={22} />, hu ? 'Megtervezed a gyűrűt' : 'Design your ring', hu ? 'A gyűrűtervezőben 44 alapformából indulsz, és lépésről lépésre kiválasztod a követ, a nemesfémet és a részleteket. A tervedet 3D-ben, minden szögből megnézheted, majd az elérhetőségeddel elküldöd — regisztráció nélkül.' : 'Start from 44 base shapes and choose the stone, metal and details step by step. View your design in 3D from every angle, then send it with your contact details — no registration needed.'],
-        [<Ico.clock s={22} />, hu ? 'Jóváhagyjuk a terved' : 'We approve your design', hu ? 'Azonnal kapsz egy visszaigazoló e-mailt. Legkésőbb 48 órán belül jóváhagyjuk a tervedet, és e-mailben küldjük a végleges ajánlatot a pontos vételárral és az elkészítési idővel.' : 'You get a confirmation email right away. Within 48 hours at the latest we approve your design and email the final offer with the exact price and production time.'],
+        [<Ico.clock s={22} />, hu ? 'Jóváhagyjuk a terved' : 'We approve your design', hu ? 'Azonnal kapsz egy visszaigazoló e-mailt. 48 órán belül visszajelzünk. Átnézzük a tervedet, és ha szükséges, egyeztetünk veled. Jóváhagyásunk után egy második e-mailben megkapod a látványtervet, a pontos árat és az elkészítési időt.' : 'You get a confirmation email right away. We respond within 48 hours, review your design and contact you if needed. After our approval, a second email includes your visual design, exact price and production time.'],
         [<Ico.check s={22} />, hu ? 'Jóváhagyod és megrendeled' : 'Approve and order', hu ? 'Az e-mailben kapott privát linken még egyszer megnézed a terved, elfogadod az ajánlatot, és megadod a szállítási adataidat. A vételárat 2 munkanapon belül banki átutalással rendezed, a közleménybe a rendelésazonosítót írva.' : 'On the private link from our email you review your design, accept the offer and enter your delivery details. You settle the price by bank transfer within 2 working days, using your order number as the reference.'],
         [<Ico.hammer s={22} />, final[0], final[1]]
       ]
@@ -1125,26 +1126,23 @@ function HomeSteps() {
       cta: hu ? 'Feltöltöm a képet' : 'Upload my photo', to: 'upload',
       steps: [
         [<Ico.camera s={22} />, hu ? 'Feltöltöd a képet' : 'Upload the photo', hu ? 'Screenshot Pinterestről, Instagramról, vagy egy fotó — bármi, amin látszik az álomgyűrű. Megadod a kívánságaidat és az elérhetőségedet — regisztráció nélkül.' : 'A screenshot from Pinterest or Instagram, or a photo — anything that shows the dream ring. Add your wishes and contact details — no registration needed.'],
-        [<Ico.clock s={22} />, hu ? 'Elkészítjük a látványtervet' : 'We create your visual design', hu ? 'Azonnal kapsz egy visszaigazoló e-mailt. Legkésőbb 48 órán belül elkészítjük a gyűrűd forgó látványtervét, és e-mailben elküldjük a végleges ajánlattal együtt.' : 'You get a confirmation email right away. Within 48 hours at the latest we create a rotating visual design of your ring and email it with the final offer.'],
+        [<Ico.clock s={22} />, hu ? 'Elkészítjük a látványtervet' : 'We create your visual design', hu ? 'Azonnal kapsz egy visszaigazoló e-mailt. 48 órán belül visszajelzünk, és egyeztetjük a részleteket. Elkészítjük és ellenőrizzük a látványtervet. Ezután egy második e-mailben elküldjük a látványterv linkjét, a pontos árat és az elkészítési időt.' : 'You get a confirmation email right away. We respond within 48 hours and discuss the details. We prepare and review your visual design, then send a second email with its link, the exact price and production time.'],
         [<Ico.check s={22} />, hu ? 'Jóváhagyod és megrendeled' : 'Approve and order', hu ? 'Az e-mailben kapott privát linken megnézed a látványtervet, elfogadod az ajánlatot, és megadod a szállítási adataidat. A vételárat 2 munkanapon belül banki átutalással rendezed, a közleménybe a rendelésazonosítót írva.' : 'On the private link from our email you review the visual design, accept the offer and enter your delivery details. You settle the price by bank transfer within 2 working days, using your order number as the reference.'],
         [<Ico.hammer s={22} />, final[0], final[1]]
       ]
     }
   };
-  const p = paths[path];
   return <div className="home-paths">
-    <p className="home-paths-intro">{hu ? 'Kétféleképpen indulhatsz el — válaszd ki, melyik áll közelebb hozzád:' : 'There are two ways to start — choose the one that suits you:'}</p>
-    <div className="home-paths-switch" role="tablist" aria-label={hu ? 'Rendelési lehetőségek' : 'Ordering options'}>
-      {Object.entries(paths).map(([key, v]) => <button key={key} type="button" role="tab" aria-selected={path === key}
-        className={'btn ' + (path === key ? 'btn-dark' : 'btn-outline')} onClick={() => setPath(key)}>
-        {key === 'designer' ? <Ico.ring s={16} /> : <Ico.camera s={16} />} {v.label}
-      </button>)}
-    </div>
-    <p className="home-paths-lead">{p.lead}</p>
-    <div className="steps-grid" role="tabpanel">
-      {p.steps.map(([icon, title, desc], i) => <StepCard key={path + i} n={String(i + 1)} icon={icon} title={title} desc={desc} />)}
-    </div>
-    <div className="home-paths-cta"><button className="btn btn-gold" onClick={() => navigate(p.to)}>{p.cta}</button></div>
+    <p className="home-paths-intro">{hu ? 'Két lehetőség, ugyanaz a személyes segítség. Válaszd ki, hogyan szeretnél elindulni!' : 'Two ways to start, with personal help along the way. Choose what suits you.'}</p>
+    <p className="home-paths-intro">{hu ? 'Nem kell regisztrálnod. Az ajánlatkérés még nem rendelés, és nem jár fizetéssel.' : 'No account needed. Requesting a quote is not an order and requires no payment.'}</p>
+    {Object.entries(paths).map(([key, p]) => <section className="how-path" key={key} aria-labelledby={'how-' + key}>
+      <h2 className="h-display" id={'how-' + key}>{p.label}</h2>
+      <p className="home-paths-lead">{p.lead}</p>
+      <div className="steps-grid">
+        {p.steps.map(([icon, title, desc], i) => <StepCard key={key + i} n={String(i + 1)} icon={icon} title={title} desc={desc} />)}
+      </div>
+      <div className="home-paths-cta"><button className="btn btn-gold" onClick={() => navigate(p.to)}>{p.cta}</button></div>
+    </section>)}
   </div>;
 }
 
@@ -1192,61 +1190,37 @@ function HomePage() {
 /* ═══════════ HOGYAN MŰKÖDIK ═══════════ */
 
 function HowPage() {
-  const { t, navigate, config, isAdmin } = useA();
-  const h = (config && config.shop && config.shop.reviewHours) || 1;
-  const days = (config && config.shop && config.shop.productionDays) || [10, 14];
-
-  const faq = LANG === 'hu' ? [
-    ['Mennyibe kerül?', `Minden gyűrű egyedi, ezért a képed alapján adunk személyre szabott árajánlatot. Az ajánlat semmire nem kötelez — csak akkor fizetsz, ha elfogadod.`],
-    ['Mi van, ha rossz a kép minősége?', 'Nem baj. Ötvösünk megnézi, és ha kell, e-mailben kérdez. Több képet is feltölthetsz különböző szögekből.'],
-    ['Nem tudom a méretét. Gond?', 'Nem. A méretet később is pontosíthatjuk, és az első méretigazítás nálunk díjmentes.'],
-    ['Mikor kell fizetnem?', `Csak azután, hogy az ötvös elfogadta a kérésed és látod a konkrét árat a fiókodban.`],
-    ['Meddig tart?', `A fizetés beérkezésétől ${days[0]}–${days[1]} munkanap.`],
-    ['Ki látja a képeimet?', 'Csak az ötvösünk. Sosem tesszük közzé, és nem használjuk marketingre.']
+  const { lang, navigate } = useA();
+  const hu = lang !== 'en';
+  const faq = hu ? [
+    ['Melyik lehetőséget válasszam?', 'Ha egy képen láttad meg az álomgyűrűdet, válaszd a képfeltöltést. Ha te szeretnéd összeállítani a formát, a követ és a részleteket, használd a gyűrűtervezőt. A tervezőben készített gyűrűhöz nem kell külön képet feltöltened.'],
+    ['Kell regisztrálnom?', 'Nem. Az ajánlatkérésnél add meg az elérhetőségedet, különösen a pontos e-mail-címedet. Ide érkezik a visszaigazolás és később az ajánlat privát linkje. A linket őrizd meg, és ne oszd meg másokkal.'],
+    ['Mi történik az ajánlatkérés után?', 'Először automatikus e-mail igazolja, hogy megkaptuk a kérésedet. Ez még nem végleges ajánlat. Mi átnézzük a részleteket, és jóváhagyásunk után külön e-mailben küldjük el a látványtervet, az árat és a határidőt.'],
+    ['Megnézhetem és módosíthatom a látványtervet?', 'Igen. A második e-mail privát linkjén megnyithatod a látványtervet, a 3D nézetet pedig forgathatod és nagyíthatod. Ha változtatnál, kérj módosítást az oldalon, mielőtt elfogadod az ajánlatot.'],
+    ['Mikor és hogyan fizetek?', 'Csak a végleges ajánlat elfogadása és a szállítási adatok megadása után. A rendelési oldalon megtalálod a pontos összeget, a bankszámlaszámot és a közleménybe írandó rendelésazonosítót. Az átutalást 2 munkanapon belül kérjük.'],
+    ['Mikor kapom meg a gyűrűmet?', 'Az elkészítési időt a végleges ajánlatban adjuk meg. A gyártás a fizetés beérkezése után indul; a szállítás részleteiről is tájékoztatunk.'],
+    ['Nem érkezett meg az e-mail, vagy segítség kell?', 'Nézd meg a Spam és a Promóciók mappát is. Ha nem találod a levelet, vagy elakadtál, írj nekünk a Kapcsolat oldalon megadott e-mail-címre.']
   ] : [
-    ['How much does it cost?', 'Every ring is unique, so we quote each photo individually. The quote carries no obligation — you only pay if you accept it.'],
-    ['What if the photo quality is poor?', 'Not a problem. Our goldsmith will look at it and email you if anything is unclear. You can upload several photos from different angles.'],
-    ['I do not know her ring size. Is that an issue?', 'No. We can confirm the size later, and your first resizing is free of charge.'],
-    ['When do I pay?', 'Only after the goldsmith has approved your request and you can see the exact price in your account.'],
-    ['How long does it take?', `${days[0]}–${days[1]} working days from the moment your payment arrives.`],
-    ['Who sees my photos?', 'Only our goldsmith. We never publish them or use them for marketing.']
+    ['Which option should I choose?', 'Upload a photo if you have a reference picture. Use the ring designer to choose the shape, stone and details yourself. A ring made in the designer needs no separate photo upload.'],
+    ['Do I need an account?', 'No. Enter your contact details and check your email address carefully. Your confirmation and private offer link arrive there. Keep the link safe and do not share it.'],
+    ['What happens after I request a quote?', 'An automatic email confirms receipt. This is not your final offer. We review the details and, after our approval, send another email with the visual design, price and production time.'],
+    ['Can I view the design and request changes?', 'Yes. Open the private link in your second email to view the design and rotate or zoom the 3D view. Request changes on that page before accepting the offer.'],
+    ['When and how do I pay?', 'After accepting the final offer and entering delivery details. Your order page shows the exact amount, bank account and order reference. Please make the bank transfer within 2 working days.'],
+    ['When will my ring arrive?', 'Your final offer specifies production time. Production starts after payment arrives, and we confirm delivery details with you.'],
+    ['Missing an email or need help?', 'Check your Spam and Promotions folders. If you still cannot find the email or need help, use the email address on our Contact page.']
   ];
-
   return <div className="page">
     <div className="page-head">
-      <p className="eyebrow-gold">{t('how_eyebrow')}</p>
-      <h1 className="h-display page-title">{t('how_title')}</h1>
+      <p className="eyebrow-gold">{hu ? 'AZ ÖTLETTŐL A SAJÁT GYŰRŰDIG' : 'FROM IDEA TO YOUR OWN RING'}</p>
+      <h1 className="h-display page-title">{hu ? 'Hogyan működik?' : 'How it works'}</h1>
       <div className="rule" />
     </div>
-    <div className="wrap" style={{ paddingBottom: 50 }}><Steps /></div>
-
-    <Section style={{ padding: '10px 40px 40px' }}>
+    <div className="wrap" style={{ paddingBottom: 50 }}><HomeSteps /></div>
+    <Section style={{ padding: '20px 24px 80px' }}>
       <div className="wrap-n">
-        <div className="timeline">
-          {[[t('step1_t'), LANG === 'hu' ? 'most' : 'now'],
-            [t('step2_t'), LANG === 'hu' ? `~${h} óra` : `~${h} hour`],
-            [t('step3_t'), LANG === 'hu' ? 'amikor neked jó' : 'whenever suits you'],
-            [t('step4_t'), `${days[0]}–${days[1]} ${LANG === 'hu' ? 'munkanap' : 'working days'}`]
-          ].map(([k, v], i) => <div className="tl-row" key={i}>
-            <span className="tl-dot" />
-            <div><strong>{k}</strong><em>{v}</em></div>
-          </div>)}
-        </div>
-      </div>
-    </Section>
-
-    <Section style={{ padding: '20px 40px 80px' }}>
-      <div className="wrap-n">
-        <h2 className="h-display" style={{ fontSize: 27, marginBottom: 22 }}>FAQ</h2>
-        {faq.map(([q, a]) => <details className="faq" key={q}>
-          <summary>{q}</summary>
-          <p>{a}</p>
-        </details>)}
-        {!isAdmin && <div style={{ textAlign: 'center', marginTop: 40 }}>
-          <button className="btn btn-gold btn-lg" onClick={() => navigate('upload')}>
-            <Ico.upload s={16} /> {t('hero_cta')}
-          </button>
-        </div>}
+        <h2 className="h-display" style={{ fontSize: 27, marginBottom: 22 }}>{hu ? 'Gyakori kérdések' : 'Frequently asked questions'}</h2>
+        {faq.map(([q, a]) => <details className="faq" key={q}><summary>{q}</summary><p>{a}</p></details>)}
+        <div className="home-paths-cta"><button className="btn btn-outline" onClick={() => navigate('contact')}>{hu ? 'Segítséget kérek' : 'Get help'}</button></div>
       </div>
     </Section>
     <Footer />

@@ -155,3 +155,5 @@ body:not([data-page="home"]){--text-light:#4D433B;--text-mute:#4D433B;--gold-dee
 @media(max-width:600px){.order-3d{height:320px}}
 
 .photo-order-viewer > section > .hint { display: none; }
+
+@media(max-width:1200px){.nav-how{display:none}}

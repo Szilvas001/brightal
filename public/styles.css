@@ -662,3 +662,7 @@ table.admin-table tfoot td{padding:12px 14px;background:var(--bg-warm);font-weig
 
 /* Keep every navigation destination reachable at intermediate widths. */
 @media (max-width:1200px){.nav-links{display:none}.burger{display:flex}}
+
+/* Both ordering paths remain visible without switching tabs. */
+.how-path{padding:30px 0 40px;border-bottom:1px solid var(--border-soft)}
+.how-path>h2{text-align:center;font-size:28px;margin-bottom:12px}
