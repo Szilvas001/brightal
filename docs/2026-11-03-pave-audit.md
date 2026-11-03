@@ -16,3 +16,13 @@ A meglévő mentett terveket nem írjuk át: a korábban sima sínnel mentett pa
 A geometriai vezérlők ellenőrzése tényleges hálóváltozást vizsgál. Az eredet, tisztaság és tanúsítvány igényelt termékspecifikáció; ezek nem feltétlenül változtatják a látványtervet. A geometriai teszt nem helyettesíti a gyárthatóság ötvösi ellenőrzését, és nem bizonyít minden lehetséges többváltozós kombinációt.
 
 A teljes tesztcsomag eredménye: **59 sikeres, 0 hibás, 0 kihagyott**. Az új geometriai különbözőség-regressziót külön futtattuk a két meglévő stílusteszttel: **3 sikeres, 0 hibás** (ebből egy új teszt). A teljes csomag a regresszió hozzáadása előtt indult, ezért az összesített futása 59 tesztet tartalmaz.
+
+## Külön opció-összehasonlítás
+
+Az ismételt stílusellenőrzés után új, páronkénti opcióellenőrzés készült (`node scripts/check-option-differences.mjs`). 2134 vizsgált változatban nem talált egyező geometriai/megjelenési eredményt az adott, alkalmazható opcióértékek között. A modell hálóját, transzformációit, fémanyagát és optikai paramétereit hasonlítja össze. A modern formáknál a közös előnézeti modellt használja, a Boolean geometriát igénylő formáknál a teljes modellt. A részletes modellek külön ellenőrzése a fent dokumentált teljes csomagban szerepel.
+
+A feltételes opciókat érvényes környezetben vizsgálja: oldalkőszín bekapcsolt oldalkövekkel, berakáshossz bekapcsolt kövezéssel, tájolás ovális kővel. Szimmetrikus kőnél a tájolás szándékosan nem választható. A „foglalat a sínnel egyező fémből” és ugyanannak a fémnek a konkrét kiválasztása természetesen azonos eredményt adhat; ez nem hibás vagy hatástalan opció.
+
+További 528 esetben a tisztaság, tanúsítvány és eredet adatának megőrzését ellenőrzi, JSON-mentés/visszaolvasás után is. Ezek rendelési specifikációk, nem külön gyűrűformák.
+
+A böngészőben a gravírozás mindhárom betűtípusa ténylegesen eltérő feliratréteget rajzolt ki, ékezetes szöveggel és szívjellel is (`node scripts/check-engraving-browser.cjs`). Új működési hibát ez a külön ellenőrzés nem talált; további termékmódosítás nem volt szükséges. Az ellenőrzés a megadott alapállapotokat és függő beállításokat fedi le, nem az összes lehetséges együttes paraméterkombináció matematikai bizonyítása.
