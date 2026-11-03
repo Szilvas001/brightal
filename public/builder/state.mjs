@@ -301,6 +301,17 @@ export function description(s) {
   );
 }
 const LEGACY_PRESETS = [
+  {
+    name: ["Pavé ragyogás", "Pavé brilliance"],
+    config: {
+      ...DEFAULT,
+      style: "pave",
+      accents: "pave",
+      coverage: "half",
+      accentSize: 1,
+      accentRows: 1,
+    },
+  },
   { name: ["Örök klasszikus", "Timeless oval"], config: { ...DEFAULT } },
   ...[
     ['Selyemfény', 'Silk diamonds', 'ribbon', 'oval', 'rose18'],
