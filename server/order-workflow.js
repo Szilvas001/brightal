@@ -27,7 +27,7 @@ function bankDetails(request) {
 function specification(r) {
   const d=r.design?.config;
   const metal={yellow14:'14 karátos sárgaarany',yellow18:'18 karátos sárgaarany',white14:'14 karátos fehérarany',white18:'18 karátos fehérarany',rose14:'14 karátos rozéarany',rose18:'18 karátos rozéarany',platinum:'Platina'};
-  if(d)return [r.design.name || d.style, `Anyag: ${metal[d.metal]||d.metal}`, `Gyűrűméret: ${d.size} mm`, `Sínszélesség: ${d.width} mm`, `Kő: ${d.shape} · ${d.carat} ct · ${d.color}/${d.clarity}`, `Gravírozás: ${d.engraving||'nincs'}`, r.note].filter(Boolean).join('\n');
+  if(d)return [r.design.name || d.style, `Anyag: ${metal[d.metal]||d.metal}`, `Gyűrűméret: ${d.size} mm`, `Sínszélesség: ${d.width} mm`, `Kő: ${d.shape} · ${d.carat} ct · ${d.color}/${d.clarity}`, `Gravírozás: ${d.engraving||'nincs'}`, d.sideMainGap ? `Távolítás a főkőtől: +${d.sideMainGap} mm` : '', d.sideSpacing ? `Oldalkövek térközének növelése: +${d.sideSpacing} mm` : '', r.note].filter(Boolean).join('\n');
   const labels={metal:'Anyag',ringSize:'Gyűrűméret',budget:'Keretösszeg',deadline:'Kért határidő',engraving:'Gravírozás'};
   return [r.note, ...Object.entries(r.details || {}).filter(([,v]) => v).map(([k,v]) => `${labels[k]||k}: ${v}`)].filter(Boolean).join('\n') || 'Egyedi ékszer a feltöltött referencia alapján';
 }

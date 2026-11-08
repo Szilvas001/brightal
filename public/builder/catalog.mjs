@@ -12,6 +12,10 @@ export function stylePreset(style) {
 // reorder or a browser cache. Bump the render version when thumbnail shading changes.
 export function thumbnailUrl(config) {
   let hash=2166136261;
-  for(const ch of JSON.stringify(['thumbnail-3',MODEL_REVISION,normalize(config)]))hash=Math.imul(hash^ch.charCodeAt(0),16777619)>>>0;
+  const design=normalize(config);
+  // Zero spacing preserves the previous geometry and its cached thumbnail.
+  if(!design.sideMainGap)delete design.sideMainGap;
+  if(!design.sideSpacing)delete design.sideSpacing;
+  for(const ch of JSON.stringify(['thumbnail-3',MODEL_REVISION,design]))hash=Math.imul(hash^ch.charCodeAt(0),16777619)>>>0;
   return `/builder/thumbnails/${config.style}-${hash.toString(16)}.webp`;
 }

@@ -1186,6 +1186,12 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                     </span>
                   </label>
                 )}
+                {(s.sideMode !== 'none' || s.style === 'duet' || s.accents !== 'none') && <>
+                  <h3>{L('Kövek közötti távolság', 'Stone spacing')}</h3>
+                  {slider('sideMainGap', L('Távolítás a főkőtől', 'Extra distance from center stone'), 0, 1, .05, 'mm')}
+                  {(['cluster','five'].includes(s.sideMode) || s.accents !== 'none') && slider('sideSpacing', L('Oldalkövek közötti térköz növelése', 'Extra spacing between side stones'), 0, .8, .05, 'mm')}
+                  <p className="rb-fine">{L('A 0 mm az alapfoglalás távolságát jelenti. A csúszkák ehhez adnak további helyet, nem a kövek szélei közti teljes hézagot mutatják. Egy oldalkőpárnál a főkőtől való távolítás mindkét követ mozgatja. Kövezett sínnél nagyobb térközzel kevesebb kő férhet el. A végleges távolságokat az ötvös ellenőrzi.', '0 mm keeps the original setting spacing. These controls add space; they do not measure the full edge-to-edge clearance. Moving a side pair away from the center moves both stones. Wider spacing on an accented band may reduce its stone count. Final clearances are checked by the goldsmith.')}</p>
+                </>}
                 {["pave", "channel"].includes(s.accents) && (
                   <>
                     {slider(
@@ -1397,6 +1403,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                         </dd>
                       </div>
                     )}
+                  {!isModern(s) && (s.sideMode !== 'none' || s.style === 'duet' || s.accents !== 'none') && <div><dt>{L('Kövek távolítása', 'Additional stone spacing')}</dt><dd>{L('Főkőtől', 'From center')}: +{s.sideMainGap} mm{(['cluster','five'].includes(s.sideMode)||s.accents!=='none')&&<> · {L('Egymástól', 'Between side stones')}: +{s.sideSpacing} mm</>}</dd></div>}
                   {s.accents !== "none" && (
                     <div>
                       <dt>{L("Berakás", "Accents")}</dt>

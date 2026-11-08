@@ -7,6 +7,7 @@ const limits={innerDiameter:[14,24],width:[1.8,8],thickness:[1.2,3.5],stoneLengt
 async function parameters(config,overrides={}){
  const {normalize}=await import('../public/builder/state.mjs');const s=normalize(config);
  if(!STYLES.includes(s.style))throw Error('CAD_STYLE_NOT_SUPPORTED');
+ if(s.sideMainGap||s.sideSpacing)throw Error('CAD_CUSTOM_SPACING_REQUIRES_MESH');
  const modern=['band','eastwest','contour','curvedoval','wavebezel','openpair'].includes(s.style);
  const side=Number(s.sideCarat||.15),dim=6.5*Math.cbrt(s.carat||1);
  const defaults={style:s.style,innerDiameter:s.size/Math.PI,width:s.width,thickness:s.thickness,profile:s.profile,setting:modern?'bezel':s.setting==='bezel'?'bezel':'claw',shape:s.shape,orientation:s.orientation,stoneLength:modern?s.stoneLength:dim*(s.shape==='oval'?1.3:1),stoneWidth:modern?s.stoneWidth:dim,stoneDepth:modern?s.stoneDepth:dim*.6,bezelWall:Math.max(.6,s.bezelWall||.7),prongDiameter:1,prongCount:4,prongRotation:45,underOpening:.8,settingHeight:6.8,sideSize:Math.min(4,6.5*Math.cbrt(side)),sideCount:s.style==='contour'?5:0,minimumWall:.6,allowance:0,tolerance:.05,sculpt:s.sculpt||1,gap:2};

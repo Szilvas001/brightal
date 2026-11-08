@@ -267,7 +267,7 @@ export function buildRing(s, environment) {
   if (!isBand) {
     if (s.style === "duet") {
       const other = 2.4 * Math.cbrt(s.sideCarat),
-        gap = (size + other) * 0.54;
+        gap = (size + other) * 0.54 + (s.sideMainGap || 0) * 0.4;
       const first=setting(s.shape, size, [-gap, top, 0.65], s.gemTone, rotation - 0.23);
       const second=setting(s.sideShape, other, [gap, top - 0.35, -0.65], s.sideTone, 0.3);
       if(s.hiddenHalo) {addHiddenHalo(first,s.shape,size);addHiddenHalo(second,s.sideShape,other);}
@@ -318,7 +318,7 @@ export function buildRing(s, environment) {
                 ),
               )
             : 1;
-        const offset = size * extent + scale * 1.05 + 0.25;
+        const offset = size * extent + scale * 1.05 + 0.25 + (s.sideMainGap || 0) * 0.8;
         for (const sign of [-1, 1]) {
           const y = top - size * 0.22;
           const side = setting(
@@ -335,7 +335,7 @@ export function buildRing(s, environment) {
               const satellite = setting(
                 "round",
                 scale * 0.45,
-                [sign * (offset + 0.3), y - 0.5, z * scale * 1.2],
+                [sign * (offset + 0.3), y - 0.5, z * (scale * 1.2 + (s.sideSpacing || 0) * 0.8)],
                 s.sideTone,
               );
               satellite.rotation.z = sign * -0.14;
@@ -344,7 +344,7 @@ export function buildRing(s, environment) {
             const o = setting(
               s.sideShape,
               scale * 0.65,
-              [sign * (offset + scale * 1.85), y - scale * 0.9, 0],
+              [sign * (offset + scale * 1.85 + (s.sideSpacing || 0) * 0.8), y - scale * 0.9, 0],
               s.sideTone,
               0,
               false,
@@ -364,7 +364,8 @@ export function buildRing(s, environment) {
           : s.coverage === "half"
             ? Math.PI / 2
             : 1.15;
-    const spacing = (gemR * 2 + 0.11) / (radius + thick + .05),
+    const prongSpacing = (gemR * 2 + 0.11) / (radius + thick + .05);
+    const spacing = (gemR * 2 + 0.11 + (s.sideSpacing || 0) * 0.8) / (radius + thick + .05),
       n = Math.floor(angleMax / spacing);
     const opening = isBand
       ? 0
@@ -375,8 +376,10 @@ export function buildRing(s, environment) {
           ),
         );
     for (let i = -n; i <= n; i++) {
-      const a = i * spacing;
-      if (!isBand && Math.abs(a) < opening) continue;
+      const baseAngle = i * spacing;
+      if (!isBand && Math.abs(baseAngle) < opening) continue;
+      const a = baseAngle + (isBand ? 0 : Math.sign(i) * (s.sideMainGap || 0) * 0.8 / (radius + thick + .05));
+      if (Math.abs(a) > angleMax) continue;
       const tracks=['split','tension'].includes(s.style)?[-1,1].map(sign=>sign*(width*.65+.55)*Math.pow(Math.max(0,Math.cos(a)),2)):[0];
       for(const track of tracks) for (let row = 0; row < s.accentRows; row++) {
         const w=['split','tension'].includes(s.style)?width*.55:width;
@@ -393,14 +396,14 @@ export function buildRing(s, environment) {
             bead(
               0.075,
               [
-                Math.sin(a + spacing * 0.46) * (radius + thick + .05),
-                Math.cos(a + spacing * 0.46) * (radius + thick + .05),
+                Math.sin(a + prongSpacing * 0.46) * (radius + thick + .05),
+                Math.cos(a + prongSpacing * 0.46) * (radius + thick + .05),
                 z + shift * gemR * 0.7,
               ],
               group,
               metal,
             );
-            tube([[Math.sin(a+spacing*.46)*radius,Math.cos(a+spacing*.46)*radius,track],[Math.sin(a+spacing*.46)*(radius+thick+.05),Math.cos(a+spacing*.46)*(radius+thick+.05),z+shift*gemR*.7]],.05,group,metal);
+            tube([[Math.sin(a+prongSpacing*.46)*radius,Math.cos(a+prongSpacing*.46)*radius,track],[Math.sin(a+prongSpacing*.46)*(radius+thick+.05),Math.cos(a+prongSpacing*.46)*(radius+thick+.05),z+shift*gemR*.7]],.05,group,metal);
           }
       }
     }
