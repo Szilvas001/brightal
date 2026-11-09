@@ -83,8 +83,8 @@ router.post('/requests', submissionLimit, handleUpload, async (req, res) => {
   if (body.acceptTerms !== 'true') { cleanup(req.files); return res.status(400).json({ error: 'TERMS_REQUIRED' }); }
 
   let design;
-  try { design = await designs.parseDesign(body.ringDesign); }
-  catch { cleanup(req.files); return res.status(400).json({ error: 'INVALID_DESIGN' }); }
+  try { design = await designs.parseDesign(body.ringDesign); await designs.validateGeometry(design); }
+  catch(e) { cleanup(req.files); return res.status(400).json({ error: e.message==='INVALID_DESIGN_GEOMETRY'?e.message:'INVALID_DESIGN' }); }
   const request = R.build({
     user: req.user,
     body: { ...body, email },

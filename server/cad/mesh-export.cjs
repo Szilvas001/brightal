@@ -10,5 +10,5 @@ const fs=require('node:fs'),path=require('node:path'),{unzipSync}=require('fflat
  fs.writeFileSync(path.join(dir,'export.zip'),zip);
  fs.writeFileSync(path.join(dir,'ring.obj'),entries['ring-concept.obj']);
  if(entries['ring-metal-mm.stl'])fs.writeFileSync(path.join(dir,'ring.stl'),entries['ring-metal-mm.stl']);
- fs.writeFileSync(path.join(dir,'report.json'),JSON.stringify({mode:'mesh',units:'mm',style:config.style,meshValidation:manifest.engineering?.meshValidation||null,warning:'A mentett terv pontos 3D geometriája. Az OBJ a köveket is tartalmazza; az STL csak validált fémgeometria. Nem parametrikus STEP. Az ötvös végső műszaki jóváhagyása szükséges.',limitations:manifest.limitations}));
+ fs.writeFileSync(path.join(dir,'report.json'),JSON.stringify({mode:'mesh',units:'mm',style:config.style,meshValidation:manifest.engineering?.meshValidation||null,assemblyValidation:manifest.engineering?.assemblyValidation||null,warning:'A mentett terv pontos 3D geometriája. Az OBJ a köveket is tartalmazza; az STL csak validált fémgeometria. Nem parametrikus STEP. Az ötvös végső műszaki jóváhagyása szükséges.',limitations:manifest.limitations}));
 })().catch(e=>{console.error(e.message);process.exitCode=1;});

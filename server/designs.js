@@ -27,11 +27,10 @@ async function parseDesign(raw) {
 async function makePackage(request, files = []) {
   const { initKernel } = await import('../public/builder/kernel.mjs');
   await initKernel();
-  const { buildRing } = await import('../public/builder/model.mjs');
+  const { buildFinishedRing } = await import('../public/builder/finished-model.mjs');
   const { Vector3 } = await import('three');
   const snapshot = request.design;
-  const { unifyLegacy } = await import('../public/builder/solidify.mjs');
-  const model = unifyLegacy(buildRing(snapshot.config, null));
+  const model = buildFinishedRing(snapshot.config);
   const lines = ['# BRIGHTAL concept mesh; not a production solid', '# Units: millimetres; renderer coordinates / 0.8. Nominal size requires workshop reconciliation.', 'o BRIGHTAL_Ring'];
   let offset = 1, part = 0;
   const meshes = [], geometries = new Set(), materials = new Set();
@@ -68,7 +67,7 @@ async function makePackage(request, files = []) {
     units: 'mm', nominalInnerCircumferenceMm: s.size, nominalInnerDiameterMm: s.size / Math.PI,
     nominalBandWidthMm: s.width, meshParts: meshes,
     engineering: model.engineering || null,
-    limitations: model.engineering?.meshValidation.valid ? [
+    limitations: model.engineering?.assemblyValidation?.valid ? [
       "Closed, connected metal mesh validated automatically. This is not production approval.",
       "Verify actual stone scans, local minimum walls, setting clearances, alloy shrinkage and polishing allowances before manufacture.",
       "Engraving is a requested workshop operation, not subtracted from the solid.",
@@ -85,10 +84,10 @@ async function makePackage(request, files = []) {
     'ring-concept.obj': strToU8(lines.join('\n') + '\n'),
     'READ-ME.txt': strToU8('BRIGHTAL – műhely-egyeztetési csomag / workshop review package\n\nNem közvetlenül gyártható CAD vagy nyomtatási fájl. / Not production CAD or a print-ready file.\n\n' + manifest.limitations.join('\n\n')),
   };
-  if(model.engineering?.meshValidation.valid) {
-    const {buildRing: rebuild}=await import('../public/builder/model.mjs');
+  if(model.engineering?.assemblyValidation?.valid) {
+    const {buildFinishedRing: rebuild}=await import('../public/builder/finished-model.mjs');
     const {STLExporter}=await import('three/addons/exporters/STLExporter.js');
-    const solid=unifyLegacy(rebuild(snapshot.config,null));
+    const solid=rebuild(snapshot.config);
     const remove=[];solid.group.traverse(o=>{if(o.userData.gem)remove.push(o);});remove.forEach(o=>o.removeFromParent());
     const stl=new STLExporter().parse(solid.group,{binary:true});
     // Renderer is in 0.8 scene units per millimetre; STL must be millimetres.
@@ -115,4 +114,13 @@ async function savePackage(request, files) {
   await fs.mkdir(DIRECTORY, { recursive: true, mode: 0o700 });
   await fs.writeFile(archivePath(request.id), content, { flag: 'wx', mode: 0o600 });
 }
-module.exports = { parseDesign, makePackage, savePackage, archivePath };
+async function validateGeometry(design) {
+ if(!design?.config)return;
+ const {initKernel}=await import('../public/builder/kernel.mjs');await initKernel();
+ const {buildFinishedRing}=await import('../public/builder/finished-model.mjs');
+ const {normalize}=await import('../public/builder/state.mjs');
+ const model=buildFinishedRing(normalize(design.config));
+ try{if(!model.engineering?.assemblyValidation?.valid)throw Error('INVALID_DESIGN_GEOMETRY');}
+ finally{model.group.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}
+}
+module.exports = { parseDesign, makePackage, savePackage, archivePath, validateGeometry };

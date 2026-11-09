@@ -1,4 +1,5 @@
 import * as T from "three";
+import {spacedOutline} from "./stone-spacing.mjs";
 import { buildContemporary, MODERN_STYLES } from './contemporary.mjs';
 import { DAILY_STYLES } from "./state.mjs";
 import { buildFashion, FASHION_STYLES } from "./fashion.mjs";
@@ -231,9 +232,8 @@ export function buildRing(s, environment) {
       const [x,z]=outline(shape,i*Math.PI/2);
       tube([[x*size*.72,-size*.32,z*size*.72],[x*size*.78,-size*.36,z*size*.78]],.085,main,head);
     }
-    for (let i = 0; i < 24; i++) {
-      const a = (i / 24) * Math.PI * 2,
-        [x, z] = outline(shape, a);
+    for (const point of spacedOutline(shape,size*.78,.44,24,24)) {
+      const [x,z]=point.map(v=>v/(size*.78));
       const o = gem(
         "round",
         0.18,
@@ -267,9 +267,13 @@ export function buildRing(s, environment) {
   if (!isBand) {
     if (s.style === "duet") {
       const other = 2.4 * Math.cbrt(s.sideCarat),
-        gap = (size + other) * 0.54 + (s.sideMainGap || 0) * 0.4;
+        gap = (size + other) * 0.54;
       const first=setting(s.shape, size, [-gap, top, 0.65], s.gemTone, rotation - 0.23);
       const second=setting(s.sideShape, other, [gap, top - 0.35, -0.65], s.sideTone, 0.3);
+      group.updateMatrixWorld(true);
+      const leftBox=new T.Box3().setFromObject(first),rightBox=new T.Box3().setFromObject(second);
+      const separation=Math.max(0,(leftBox.max.x-rightBox.min.x+.12)/2);
+      first.position.x-=separation+(s.sideMainGap||0)*.4;second.position.x+=separation+(s.sideMainGap||0)*.4;
       if(s.hiddenHalo) {addHiddenHalo(first,s.shape,size);addHiddenHalo(second,s.sideShape,other);}
     } else {
       const main = setting(s.shape, size, [0, top, 0], s.gemTone, rotation);
@@ -277,20 +281,13 @@ export function buildRing(s, environment) {
         const haloR = s.haloSize * 0.4;
         for (let row = 0; row < (s.halo === "double" ? 2 : 1); row++) {
           const perimeter = size + haloR * 1.25 + row * haloR * 2.1;
-          const n = Math.min(
-            56,
-            Math.max(
-              18,
-              Math.round((2 * Math.PI * perimeter) / (haloR * 2.15)),
-            ),
-          );
           seat(s.shape, perimeter, main, -0.22, 0.12);
           for(let i=0;i<4;i++) {
             const [x,z]=outline(s.shape,i*Math.PI/2);
             tube([[x*size*.72,-size*.32,z*size*.72],[x*perimeter,-.22,z*perimeter]],.105,main,head);
           }
-          for (let i = 0; i < n; i++) {
-            const [x, z] = outline(s.shape, (2 * Math.PI * i) / n);
+          for (const point of spacedOutline(s.shape,perimeter,haloR*2+(s.shape==='round'?.01:.08),56,Math.min(56,Math.max(18,Math.round(2*Math.PI*perimeter/(haloR*2.15)))))) {
+            const [x,z]=point.map(v=>v/perimeter);
             gem(
               "round",
               haloR,
@@ -318,7 +315,11 @@ export function buildRing(s, environment) {
                 ),
               )
             : 1;
-        const offset = size * extent + scale * 1.05 + 0.25 + (s.sideMainGap || 0) * 0.8;
+        main.updateWorldMatrix(true,true);
+        const mainBox=new T.Box3().setFromObject(main);
+        const mainExtent=Math.max(size*extent,Math.abs(mainBox.min.x),Math.abs(mainBox.max.x));
+        const offset = mainExtent + scale * 1.2 + 0.25 + (s.sideMainGap || 0) * 0.8;
+        const sideExtentZ=Math.max(...Array.from({length:64},(_,i)=>Math.abs(outline(s.sideShape,i/64*Math.PI*2)[1])));
         for (const sign of [-1, 1]) {
           const y = top - size * 0.22;
           const side = setting(
@@ -335,7 +336,7 @@ export function buildRing(s, environment) {
               const satellite = setting(
                 "round",
                 scale * 0.45,
-                [sign * (offset + 0.3), y - 0.5, z * (scale * 1.2 + (s.sideSpacing || 0) * 0.8)],
+                [sign * (offset + 0.3), y - 0.5, z * (scale * (sideExtentZ + .45) + .15 + (s.sideSpacing || 0) * 0.8)],
                 s.sideTone,
               );
               satellite.rotation.z = sign * -0.14;

@@ -273,6 +273,7 @@ const I18N = {
     e_NO_PRICE: 'Még nincs ár megadva.',
     e_INVALID_PRICE: 'Érvénytelen ár.',
     e_INVALID_DESIGN: 'Érvénytelen gyűrűterv. Nyisd meg újra a tervezőt és küldd be ismét.',
+    e_INVALID_DESIGN_GEOMETRY: 'A terv geometriai javítást igényel. Módosítsd a kőméreteket vagy a foglalatot, és próbáld újra.',
     e_PAYMENT_START_FAILED: 'A fizetés indítása sikertelen.',
     e_GOOGLE_NOT_CONFIGURED: 'A Google belépés nincs beállítva.',
     e_SERVER_ERROR: 'Szerverhiba.',
@@ -530,6 +531,7 @@ const I18N = {
     e_NO_PRICE: 'No price has been set yet.',
     e_INVALID_PRICE: 'Invalid price.',
     e_INVALID_DESIGN: 'Invalid ring design. Reopen the designer and submit again.',
+    e_INVALID_DESIGN_GEOMETRY: 'A terv geometriai javítást igényel. Módosítsd a kőméreteket vagy a foglalatot, és próbáld újra.',
     e_PAYMENT_START_FAILED: 'Could not start the payment.',
     e_GOOGLE_NOT_CONFIGURED: 'Google sign-in is not configured.',
     e_SERVER_ERROR: 'Server error.',
@@ -2461,7 +2463,7 @@ function GuestOrderPage(){
  const [req,setReq]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[ready,setReady]=useState(false),[runtime,setRuntime]=useState(false);
  const [form,setForm]=useState({email:'',shipping:{name:'',country:'Magyarország',zip:'',city:'',street:'',houseNumber:'',extra:''}}),[checks,setChecks]=useState({}),[note,setNote]=useState('');
  const endpoint='/guest-orders/'+encodeURIComponent(number),headers={Authorization:'Bearer '+token};
- const messages={ORDER_LINK_INVALID:'A hivatkozás érvénytelen. Nyisd meg a rendeléshez kapott e-mailben szereplő teljes linket.',OFFER_CHANGED:'Az ajánlat időközben megváltozott. Frissítsd az oldalt, és ellenőrizd újra.',OFFER_EXPIRED:'Az ajánlat lejárt. Kérj új ajánlatot vagy módosítást.',ADDRESS_REQUIRED:'Töltsd ki a nevet és a teljes szállítási címet.',EMAIL_MISMATCH:'A rendeléshez eredetileg megadott e-mail-címet használd.',APPROVAL_REQUIRED:'A véglegesítéshez fogadd el a nyilatkozatokat.',NOT_PAYABLE:'Ez az ajánlat jelenleg nem hagyható jóvá.'};
+ const messages={INVALID_DESIGN_GEOMETRY:'A terv geometriai javítást igényel. Kérj módosítást a műhelytől; a megrendelés addig nem véglegesíthető.',ORDER_LINK_INVALID:'A hivatkozás érvénytelen. Nyisd meg a rendeléshez kapott e-mailben szereplő teljes linket.',OFFER_CHANGED:'Az ajánlat időközben megváltozott. Frissítsd az oldalt, és ellenőrizd újra.',OFFER_EXPIRED:'Az ajánlat lejárt. Kérj új ajánlatot vagy módosítást.',ADDRESS_REQUIRED:'Töltsd ki a nevet és a teljes szállítási címet.',EMAIL_MISMATCH:'A rendeléshez eredetileg megadott e-mail-címet használd.',APPROVAL_REQUIRED:'A véglegesítéshez fogadd el a nyilatkozatokat.',NOT_PAYABLE:'Ez az ajánlat jelenleg nem hagyható jóvá.'};
  const fail=e=>setError(messages[e.code]||'A művelet nem sikerült. Kérjük, próbáld újra.');
  useEffect(()=>{let live=true;api(endpoint,{headers}).then(d=>{if(!live)return;setReq(d.request);setForm(f=>({...f,email:d.request.customer.email,shipping:{...f.shipping,name:d.request.customer.name==='Vásárlónk'?'':d.request.customer.name}}));}).catch(e=>{if(live)fail(e);});return()=>{live=false;};},[number,token]);
  useEffect(()=>{if(req?.design&&!req.acceptance)loadRingRuntime().then(()=>setRuntime(true)).catch(()=>setError('A 3D nézet nem tölthető be. Frissítsd az oldalt.'));},[req?.design?.sha256]);

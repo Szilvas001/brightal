@@ -36,6 +36,7 @@ router.post('/payment/start', auth.requireUser, async (req, res) => {
   if (!R.PAYABLE.includes(request.status)) return res.status(409).json({ error: 'NOT_PAYABLE' });
   if (!request.price || request.price <= 0) return res.status(409).json({ error: 'NO_PRICE' });
 
+  try{await require('../designs').validateGeometry(request.design||request.finalOffer?.photoDesign);}catch{return res.status(409).json({error:'INVALID_DESIGN_GEOMETRY'});}
   let acceptance=request.acceptance;
   if(offers.custom(request)) {
     try {acceptance=offers.acceptance(request,req.body,req.user.id);}catch(e){return res.status(409).json({error:e.message});}

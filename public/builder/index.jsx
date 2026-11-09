@@ -255,6 +255,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
     [notice, setNotice] = useState(""),
     [error, setError] = useState(false),
     [ready, setReady] = useState(false),
+    [geometryIssues,setGeometryIssues] = useState([]),
     [busy, setBusy] = useState(false),
     [saved, setSaved] = useState(false);
   const thumbs = PRESETS.map(p=>thumbnailUrl(p.config));
@@ -329,7 +330,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
         host.current.dataset.geometryMs=packed.buildMs.toFixed(1);
         host.current.dataset.quality='detailed';
         host.current.dataset.renderedStyle=latest.current.style;
-        setRefining(false);setError(false);setReady(true);
+        setRefining(false);setError(false);setGeometryIssues(packed.engineering?.assemblyValidation?.issues||[]);setReady(true);
       }, error => {console.error(error);setError(true);setRefining(false);});
     } catch(e) {console.error(e);setError(true);}
     return () => {worker.current?.dispose();engine.current?.dispose();engine.current=null;clearTimeout(timer.current);};
@@ -342,7 +343,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
     const start=performance.now();
     try {
       // These silhouettes require Boolean geometry; render them in the worker only.
-      if(!['open','stack','signet'].includes(s.style))engine.current.update(s,previewModel(s,engine.current.studioTexture));
+      if(isModern(s)&&!['open','stack','signet'].includes(s.style))engine.current.update(s,previewModel(s,engine.current.studioTexture));
       host.current.dataset.previewMs=(performance.now()-start).toFixed(1);
       host.current.dataset.quality='preview';setReady(false);setRefining(true);setError(false);
       host.current.dataset.renderedStyle=s.style;
@@ -493,7 +494,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
     }
   };
   const quote = async () => {
-    if (!engine.current || error) return;
+    if (!engine.current || error || !ready || refining || geometryIssues.length) return;
     setBusy(true);
     try {
       const png = engine.current.capture();
@@ -765,6 +766,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
               {L("Részletes modell betöltése…", "Opening the atelier…")}
             </div>
           )}
+          {ready&&geometryIssues.length>0&&<div className="rb-geometry-warning" role="alert"><strong>{L('Ez a beállítás még nem adható le.', 'This configuration cannot be submitted yet.')}</strong><p>{geometryIssues.map(issue=>({METAL_INTERSECTS_STONE:L('A foglalat belenyúlik a kőbe. Válassz más foglalatot vagy kőméretet.','The setting intersects a stone. Change the setting or stone dimensions.'),METAL_AUDIT_FAILED:L('A fém és a kövek illeszkedése nem igazolható. Módosítsd a tervet.','Metal/stone fit could not be verified. Revise the design.'),STONES_INTERSECT:L('Egyes kövek egymásba érnek. Csökkentsd a kőméretet vagy növeld a térközt.','Some stones overlap. Reduce stone size or increase spacing.'),METAL_NOT_CLOSED:L('A foglalat vagy a gyűrűtest nem alkot megfelelően zárt testet. Módosítsd a foglalatot vagy az arányokat.','The setting or band is not a valid closed solid. Change the setting or proportions.'),FINGER_CLEARANCE:L('A belső méretbe kő vagy foglalat nyúlik. Csökkentsd a követ vagy emeld a foglalatot.','A stone or setting intrudes into the finger opening. Reduce the stone or raise the setting.')}[issue]||issue)).join(' ')}</p><button type="button" onClick={undo}>{L('Utolsó módosítás visszavonása','Undo last change')}</button></div>}
           {error && (
             <div className="rb-fallback">
               <Icon size={40} />
@@ -1467,7 +1469,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
             </div>
             <button
               className="rb-primary"
-              disabled={step === 5 && (!ready || error || busy)}
+              disabled={step === 5 && (!ready || error || busy || refining || geometryIssues.length>0)}
               onClick={() => (step < 5 ? setStep(step + 1) : quote())}
             >
               {step === 5

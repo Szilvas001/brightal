@@ -910,3 +910,5 @@
     scroll-behavior: auto !important;
   }
 }
+
+.rb-geometry-warning{position:absolute;left:16px;right:16px;bottom:20px;z-index:5;background:#fff4e6;color:#592b13;border:1px solid #b87333;border-radius:8px;padding:16px;font:14px/1.5 sans-serif}.rb-geometry-warning button{margin-top:8px;text-decoration:underline}

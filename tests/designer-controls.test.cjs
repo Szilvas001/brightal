@@ -37,7 +37,7 @@ test('every cut and orientation renders finite geometry from every starting styl
  console.log(`Cut/orientation models: ${checks}`);
 });
 test('hidden halo can be toggled in its preset and is applied to both duet mountings',async()=>{
- const A=await setup();for(const style of A.OPTIONS.style.filter(x=>!A.isModern({style:x}))){const s=A.stylePreset(style);const off=A.normalize({...s,hiddenHalo:false}),on=A.normalize({...s,hiddenHalo:true});assert.equal(off.hiddenHalo,false);assert.equal(on.hiddenHalo,true);const a=A.buildRing(off,null),b=A.buildRing(on,null);assert.equal(b.gems.length-a.gems.length,style==='duet'?48:24,style);dispose(a);dispose(b);}
+ const A=await setup();for(const style of A.OPTIONS.style.filter(x=>!A.isModern({style:x}))){const s=A.stylePreset(style);const off=A.normalize({...s,hiddenHalo:false}),on=A.normalize({...s,hiddenHalo:true});assert.equal(off.hiddenHalo,false);assert.equal(on.hiddenHalo,true);const a=A.buildRing(off,null),b=A.buildRing(on,null);assert.ok(b.gems.length>a.gems.length,style);assert.ok(b.gems.length-a.gems.length<=(style==='duet'?48:24),style);dispose(a);dispose(b);}
 });
 test('all side layouts, cuts, tones, settings and accent combinations are applied to legacy ring models',async()=>{
  const A=await setup();let checks=0;

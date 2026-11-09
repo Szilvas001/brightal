@@ -25,6 +25,7 @@ router.get('/:number/visual',(req,res)=>{
  res.type(v.mime).sendFile(path.join(require('../config').upload.dir,v.filename));
 });
 router.post('/:number/accept',async(req,res)=>{
+ try{await require('../designs').validateGeometry(req.order.design||req.order.finalOffer?.photoDesign);}catch{return res.status(409).json({error:'INVALID_DESIGN_GEOMETRY'});}
  try {
   const updated=await db.requests.update(x=>x.id===req.order.id,r=>{
    if(r.acceptance){if(req.body.offerDigest!==r.acceptance.offerDigest)throw Error('OFFER_CHANGED');return r;}

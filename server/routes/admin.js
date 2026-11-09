@@ -75,6 +75,7 @@ router.post('/requests/:requestNumber/approve', async (req, res) => {
   // Photo-upload orders are approved only with the visual design prepared by the workshop.
   if(offers.custom(r) && !r.design && !r.visual) return res.status(409).json({error:'VISUAL_REQUIRED'});
   if(offers.custom(r) && !r.design && !r.photoDesign) return res.status(409).json({error:'PHOTO_DESIGN_REQUIRED'});
+  try{await designs.validateGeometry(r.design||r.photoDesign);}catch{return res.status(409).json({error:'INVALID_DESIGN_GEOMETRY'});}
   if(r.paymentId && !['Failed','Canceled','Expired'].includes(r.paymentStatus)) return res.status(409).json({error:'PAYMENT_IN_PROGRESS'});
   let finalOffer, productionDays;
   try {

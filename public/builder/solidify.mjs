@@ -36,13 +36,13 @@ export function unifyLegacy(model) {
    const solid=own(new Manifold(m));if(solid.status()!=='NoError')throw new Error(solid.status());return solid;
   });
   let body=own(Manifold.union(solids));
-  for(const o of gems){const p=o.geometry.attributes.position,verts=[];for(let i=0;i<p.count;i++)verts.push(new T.Vector3().fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld).toArray());body=own(body.subtract(own(Manifold.hull(verts))));}
+  for(const o of gems){const p=o.geometry.attributes.position,verts=[];const center=o.getWorldPosition(new T.Vector3());for(let i=0;i<p.count;i++){const v=new T.Vector3().fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld);v.add(v.clone().sub(center).normalize().multiplyScalar(.008));verts.push(v.toArray());}body=own(body.subtract(own(Manifold.hull(verts))));}
   const parts=body.decompose();parts.sort((a,b)=>b.volume()-a.volume());
   // Exact cavity cuts may leave minute isolated claw-tip slivers. Remove only
   // sub-0.02 scene-unit^3 debris; any structural island fails validation.
   if(body.status()!=='NoError'||body.isEmpty()||parts.slice(1).some(p=>p.volume()>.02)){parts.forEach(p=>p.delete());throw new Error('Assembly is not a single metal solid');}
   if(parts.length>1){body=own(parts[0]);parts.slice(1).forEach(p=>p.delete());}else parts.forEach(p=>p.delete());
-  body=own(body.simplify(.0001));
+  // Preserve the clearance-cut cavity boundaries without simplification.
   const mesh=body.getMesh(),geo=new T.BufferGeometry(),xyz=[];for(let i=0;i<mesh.vertProperties.length;i+=mesh.numProp)xyz.push(...mesh.vertProperties.slice(i,i+3));
   geo.setAttribute('position',new T.Float32BufferAttribute(xyz,3));geo.setIndex(Array.from(mesh.triVerts));geo.computeVertexNormals();
   const checked=validateMesh(removeCollapsedTriangles(geo));if(!checked.valid){geo.dispose();throw new Error('Triangle validation failed: '+JSON.stringify(checked));}
