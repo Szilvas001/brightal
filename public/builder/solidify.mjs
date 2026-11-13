@@ -1,8 +1,8 @@
 import * as T from 'three';
 import {getKernel} from './kernel.mjs';
-import {validateMesh,removeCollapsedTriangles} from './validation.mjs';
-// Legacy assemblies remain visible when they cannot pass a true solid check.
-// Exports explicitly carry that result rather than claiming manufacturing approval.
+import {validateMesh,removeCollapsedTriangles,removeOppositeCoincidentTriangles} from './validation.mjs';
+// Failed legacy assemblies are diagnostic concepts only. The UI must not
+// display them as finished models, and exports retain the failed validation.
 export function checkModel(model) {
  const checks=[];model.group.traverse(o=>{if(o.isMesh&&!o.userData.gem)checks.push(validateMesh(removeCollapsedTriangles(o.geometry)));});
  const valid=checks.length===1&&checks[0].valid;
@@ -42,9 +42,13 @@ export function unifyLegacy(model) {
   // sub-0.02 scene-unit^3 debris; any structural island fails validation.
   if(body.status()!=='NoError'||body.isEmpty()||parts.slice(1).some(p=>p.volume()>.02)){parts.forEach(p=>p.delete());throw new Error('Assembly is not a single metal solid');}
   if(parts.length>1){body=own(parts[0]);parts.slice(1).forEach(p=>p.delete());}else parts.forEach(p=>p.delete());
-  // Preserve the clearance-cut cavity boundaries without simplification.
+  // Collapse sub-micron Boolean slivers before Float32 export. This tolerance
+  // is 800 times smaller than the stone clearance and independently rechecked.
+  body=own(body.simplify(.00001));
   const mesh=body.getMesh(),geo=new T.BufferGeometry(),xyz=[];for(let i=0;i<mesh.vertProperties.length;i+=mesh.numProp)xyz.push(...mesh.vertProperties.slice(i,i+3));
   geo.setAttribute('position',new T.Float32BufferAttribute(xyz,3));geo.setIndex(Array.from(mesh.triVerts));geo.computeVertexNormals();
+  removeOppositeCoincidentTriangles(geo);
+  geo.computeVertexNormals();
   const checked=validateMesh(removeCollapsedTriangles(geo));if(!checked.valid){geo.dispose();throw new Error('Triangle validation failed: '+JSON.stringify(checked));}
   const material=metals[0].material.clone();
   if(sourceMaterials.length>1) {

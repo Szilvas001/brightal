@@ -227,17 +227,17 @@ export function buildRing(s, environment) {
     return assembly;
   };
   const addHiddenHalo = (main, shape, size) => {
-    seat(shape, size * 0.78, main, -size * 0.36, 0.18);
+    seat(shape, size * 0.86, main, -size * 0.42, 0.18);
     for(let i=0;i<4;i++) {
       const [x,z]=outline(shape,i*Math.PI/2);
-      tube([[x*size*.72,-size*.32,z*size*.72],[x*size*.78,-size*.36,z*size*.78]],.085,main,head);
+      tube([[x*size*.72,-size*.32,z*size*.72],[x*size*.86,-size*.42,z*size*.86]],.085,main,head);
     }
-    for (const point of spacedOutline(shape,size*.78,.44,24,24)) {
-      const [x,z]=point.map(v=>v/(size*.78));
+    for (const point of spacedOutline(shape,size*.86,.44,24,24)) {
+      const [x,z]=point.map(v=>v/(size*.86));
       const o = gem(
         "round",
         0.18,
-        [x * size * 0.78, -size * 0.33, z * size * 0.78],
+        [x * size * 0.86, -size * 0.42, z * size * 0.86],
         s.sideTone,
         false,
         main,
@@ -279,14 +279,23 @@ export function buildRing(s, environment) {
       const main = setting(s.shape, size, [0, top, 0], s.gemTone, rotation);
       if (["halo", "vintage"].includes(s.style)) {
         const haloR = s.haloSize * 0.4;
+        let previousHaloPoints=[];
         for (let row = 0; row < (s.halo === "double" ? 2 : 1); row++) {
-          const perimeter = size + haloR * 1.25 + row * haloR * 2.1;
+          let perimeter = size + haloR * 1.25 + row * haloR * 2.1;
+          const pointsAt=r=>spacedOutline(s.shape,r,haloR*2+(s.shape==='round'?.01:.08),56,Math.min(56,Math.max(18,Math.round(2*Math.PI*r/(haloR*2.15)))));
+          let haloPoints=pointsAt(perimeter);
+          // On pear and other non-circular cuts a radial row step is not the
+          // actual stone-to-stone clearance. Check both rows in the XZ plane.
+          for(let attempt=0;row&&attempt<100&&haloPoints.some(p=>previousHaloPoints.some(q=>Math.hypot(p[0]-q[0],p[1]-q[1])<haloR*2+.04));attempt++){
+            perimeter+=.02;haloPoints=pointsAt(perimeter);
+          }
+          previousHaloPoints=haloPoints;
           seat(s.shape, perimeter, main, -0.22, 0.12);
           for(let i=0;i<4;i++) {
             const [x,z]=outline(s.shape,i*Math.PI/2);
             tube([[x*size*.72,-size*.32,z*size*.72],[x*perimeter,-.22,z*perimeter]],.105,main,head);
           }
-          for (const point of spacedOutline(s.shape,perimeter,haloR*2+(s.shape==='round'?.01:.08),56,Math.min(56,Math.max(18,Math.round(2*Math.PI*perimeter/(haloR*2.15)))))) {
+          for (const point of haloPoints) {
             const [x,z]=point.map(v=>v/perimeter);
             gem(
               "round",

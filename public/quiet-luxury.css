@@ -157,3 +157,7 @@ body:not([data-page="home"]){--text-light:#4D433B;--text-mute:#4D433B;--gold-dee
 .photo-order-viewer > section > .hint { display: none; }
 
 @media(max-width:1200px){.nav-how{display:none}}
+
+/* Language selection remains available beside the main navigation. */
+.nav .nav-language{display:flex}
+@media(max-width:760px){.nav-language .lang-switch svg{display:none}.nav-language .lang-switch button{padding:8px 4px}}

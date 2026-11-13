@@ -53,7 +53,7 @@ const I18N = {
     up_remove: 'Eltávolítás',
     up_details: 'Részletek (opcionális)',
     up_metal: 'Nemesfém',
-    up_metal_ph: 'pl. fehérarany, sárgaarany, platina',
+    up_metal_ph: 'pl. fehérarany, sárgaarany, rozéarany',
     up_size: 'Gyűrűméret',
     up_size_ph: 'pl. 54 vagy US 7 — ha tudod',
     up_budget: 'Elképzelt keret',
@@ -201,7 +201,7 @@ const I18N = {
     ab_2_t: 'Őszinte árazás',
     ab_2_d: 'Egyedi árajánlatot adunk minden képre. Nincs rejtett költség, és semmi nem kötelez.',
     ab_3_t: 'Etikus kövek',
-    ab_3_d: 'Laborban növesztett gyémántokkal dolgozunk: ugyanaz a ragyogás, tisztább eredet.',
+    ab_3_d: 'Kizárólag IGI tanúsítványos, laborban növesztett gyémántokkal dolgozunk.',
     ab_4_t: 'Titoktartás',
     ab_4_d: 'A feltöltött képeket csak az ötvösünk látja. Sosem tesszük közzé.',
     ct_title: 'Kapcsolat',
@@ -325,7 +325,7 @@ const I18N = {
     up_remove: 'Remove',
     up_details: 'Details (optional)',
     up_metal: 'Metal',
-    up_metal_ph: 'e.g. white gold, yellow gold, platinum',
+    up_metal_ph: 'e.g. white gold, yellow gold, rose gold',
     up_size: 'Ring size',
     up_size_ph: 'e.g. 54 or US 7 — if you know it',
     up_budget: 'Budget in mind',
@@ -464,7 +464,7 @@ const I18N = {
     ab_2_t: 'Honest pricing',
     ab_2_d: 'We quote each photo individually. No hidden costs, and no obligation.',
     ab_3_t: 'Ethical stones',
-    ab_3_d: 'We work with lab-grown diamonds: the same brilliance, a cleaner origin.',
+    ab_3_d: 'We work exclusively with IGI-certified lab-grown diamonds.',
     ab_4_t: 'Discretion',
     ab_4_d: 'Only our goldsmith sees your uploaded photos. We never publish them.',
     ct_title: 'Contact',
@@ -513,13 +513,13 @@ const I18N = {
     e_TOO_MANY_FILES: 'Too many photos selected.',
     e_UNSUPPORTED_FILE_TYPE: 'Only JPG, PNG or WebP can be uploaded.',
     e_UPLOAD_FAILED: 'Upload failed.',
-    e_FINAL_OFFER_REQUIRED: 'A végleges ajánlat minden mezőjét ki kell tölteni.',
-    e_APPROVAL_REQUIRED: 'A végleges terv, ár és nyilatkozatok jóváhagyása szükséges.',
-    e_OFFER_CHANGED: 'Az ajánlat megváltozott. Frissítsd és ellenőrizd újra.',
-    e_OFFER_EXPIRED: 'Az ajánlat lejárt; kérj friss ajánlatot.',
-    e_ADDRESS_REQUIRED: 'Add meg a teljes számlázási és szállítási címet.',
-    e_FULFILMENT_REVIEW_REQUIRED: 'A teljesítés előtti ellenőrzés és szerződés-elfogadás szükséges.',
-    e_PAYMENT_IN_PROGRESS: 'Folyamatban lévő fizetés mellett az ajánlat nem módosítható.',
+    e_FINAL_OFFER_REQUIRED: "Complete every field of the final offer.",
+    e_APPROVAL_REQUIRED: "Approve the final design, price and declarations.",
+    e_OFFER_CHANGED: "The offer has changed. Refresh and review it again.",
+    e_OFFER_EXPIRED: "The offer has expired. Request a fresh offer.",
+    e_ADDRESS_REQUIRED: "Enter the complete billing and delivery addresses.",
+    e_FULFILMENT_REVIEW_REQUIRED: "Pre-fulfilment review and contract acceptance are required.",
+    e_PAYMENT_IN_PROGRESS: "The offer cannot change while payment is in progress.",
     e_TERMS_REQUIRED: 'You must accept the Terms and Conditions.',
     e_VISUAL_REQUIRED: 'Upload the visual design before approval.',
     e_VISUAL_NOT_APPLICABLE: 'A visual design cannot be uploaded for this order.',
@@ -531,7 +531,7 @@ const I18N = {
     e_NO_PRICE: 'No price has been set yet.',
     e_INVALID_PRICE: 'Invalid price.',
     e_INVALID_DESIGN: 'Invalid ring design. Reopen the designer and submit again.',
-    e_INVALID_DESIGN_GEOMETRY: 'A terv geometriai javítást igényel. Módosítsd a kőméreteket vagy a foglalatot, és próbáld újra.',
+    e_INVALID_DESIGN_GEOMETRY: "The design needs geometry corrections. Change the stone dimensions or setting and try again.",
     e_PAYMENT_START_FAILED: 'Could not start the payment.',
     e_GOOGLE_NOT_CONFIGURED: 'Google sign-in is not configured.',
     e_SERVER_ERROR: 'Server error.',
@@ -543,6 +543,8 @@ const I18N = {
    ──────────────────────────────────────────────────────────────────
    FORRÁSFÁJL. Módosítás után:  npm run build
    ══════════════════════════════════════════════════════════════════ */
+
+I18N.de = Object.fromEntries(Object.entries(I18N.en).map(([key, value]) => [key, BRIGHTAL_DE[value] ?? value]));
 
 const { useState, useEffect, useRef, useMemo, useCallback, createContext, useContext } = React;
 
@@ -577,7 +579,7 @@ let CUR = { code: 'HUF', symbol: 'Ft', decimals: 0 };
 function money(v) {
   if (v === null || v === undefined || isNaN(v)) return '—';
   try {
-    return new Intl.NumberFormat(LANG === 'en' ? 'en-GB' : 'hu-HU', {
+    return new Intl.NumberFormat(LANG === 'de' ? ("de-DE") : (LANG === 'en' ? 'en-GB' : 'hu-HU'), {
       style: 'currency', currency: CUR.code,
       minimumFractionDigits: CUR.decimals, maximumFractionDigits: CUR.decimals
     }).format(v);
@@ -587,11 +589,12 @@ function money(v) {
 }
 
 let LANG = 'hu';
+const customerText = text => BRIGHTAL_CUSTOMER[text]?.[LANG] ?? text;
 const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36);
 
 const fmtDate = iso => {
   if (!iso) return '—';
-  try { return new Date(iso).toLocaleString(LANG === 'en' ? 'en-GB' : 'hu-HU', { dateStyle: 'medium', timeStyle: 'short' }); }
+  try { return new Date(iso).toLocaleString(LANG === 'de' ? ("de-DE") : (LANG === 'en' ? 'en-GB' : 'hu-HU'), { dateStyle: 'medium', timeStyle: 'short' }); }
   catch (e) { return iso; }
 };
 
@@ -652,7 +655,7 @@ const useA = () => useContext(Ctx);
 
 function Prov({ children }) {
   const [page, setPage] = useState(parseLocation());
-  const [lang, setLangState] = useState(() => store.get('ssy_lang', null) || 'hu');
+  const [lang, setLangState] = useState(() => (['hu','en','de'].includes(store.get('ssy_lang', null)) ? store.get('ssy_lang', null) : 'hu'));
   const [config, setConfig] = useState(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -675,7 +678,7 @@ function Prov({ children }) {
         if (cf) {
           CUR = cf.currency;
           setConfig(cf);
-          if (!store.get('ssy_lang', null)) { setLangState(cf.defaultLang); LANG = cf.defaultLang; }
+          // Hungarian is the default; an explicit saved language choice is preserved.
         }
         setUser(me ? me.user : null);
         setLoading(false);
@@ -684,7 +687,7 @@ function Prov({ children }) {
 
   useEffect(() => { document.documentElement.lang = lang; }, [lang]);
 
-  const setLang = useCallback(l => { setLangState(l); LANG = l; store.set('ssy_lang', l); }, []);
+  const setLang = useCallback(l => { if (!['hu','en','de'].includes(l)) return; setLangState(l); LANG = l; store.set('ssy_lang', l); }, []);
 
   /* fordító függvény, {kulcs} helyettesítéssel */
   const t = useCallback((key, vars) => {
@@ -920,18 +923,18 @@ function Nav() {
     };
   }, [mob]);
 
-  const items = [['builder',lang==='en'?'RING DESIGNER':'GYŰRŰTERVEZŐ'], ['upload',lang==='en'?'PHOTO UPLOAD':'KÉPFELTÖLTÉS'], ['how',lang==='en'?'HOW IT WORKS':'HOGYAN MŰKÖDIK?'], ['about',lang==='en'?'ABOUT':'RÓLUNK'], ['inspiration',lang==='en'?'INSPIRATION':'INSPIRÁCIÓ']];
+  const items = [['builder',LANG === 'de' ? ("RINGDESIGNER") : (lang==='en'?'RING DESIGNER':'GYŰRŰTERVEZŐ')], ['upload',LANG === 'de' ? ("FOTO HOCHLADEN") : (lang==='en'?'PHOTO UPLOAD':'KÉPFELTÖLTÉS')], ['how',LANG === 'de' ? ("SO FUNKTIONIERT ES") : (lang==='en'?'HOW IT WORKS':'HOGYAN MŰKÖDIK?')], ['about',LANG === 'de' ? ("ÜBER UNS") : (lang==='en'?'ABOUT':'RÓLUNK')], ['inspiration',LANG === 'de' ? ("INSPIRATION") : (lang==='en'?'INSPIRATION':'INSPIRÁCIÓ')]];
 
   const LangSwitch = ({ block }) => <div className={'lang-switch' + (block ? ' block' : '')}>
     <Ico.globe s={13} />
-    {['hu', 'en'].map(l => <button key={l} className={lang === l ? 'on' : ''}
-      onClick={() => setLang(l)} aria-label={l}>{l.toUpperCase()}</button>)}
+    {['hu', 'en', 'de'].map(l => <button key={l} className={lang === l ? 'on' : ''}
+      onClick={() => setLang(l)} aria-label={{hu:'Magyar',en:'English',de:'Deutsch'}[l]}>{l.toUpperCase()}</button>)}
   </div>;
 
   return <>
     <nav className={'nav' + (sc || mob || page !== 'home' ? ' scrolled' : '')}>
       <div className="nav-inner">
-        <button className="brand" aria-label={lang==='en'?'BRIGHTAL — Home':'BRIGHTAL — Főoldal'} onClick={() => navigate('home')}>
+        <button className="brand" aria-label={LANG === 'de' ? ("BRIGHTAL – Startseite") : (lang==='en'?'BRIGHTAL — Home':'BRIGHTAL — Főoldal')} onClick={() => navigate('home')}>
           <img className="nav-logo" src="/brightal-logo.png" alt="Brightal" width="676" height="200" />
         </button>
 
@@ -942,7 +945,7 @@ function Nav() {
         </div>
 
         <div className="nav-actions">
-          <button className={"nav-link nav-how" + (page === "how" ? " active" : "")} onClick={() => navigate("how")}>{lang === "en" ? "HOW IT WORKS" : "HOGYAN MŰKÖDIK?"}</button>
+          <button className={"nav-link nav-how" + (page === "how" ? " active" : "")} onClick={() => navigate("how")}>{LANG === 'de' ? ("SO FUNKTIONIERT ES") : (lang === "en" ? "HOW IT WORKS" : "HOGYAN MŰKÖDIK?")}</button>
           <div className="nav-language"><LangSwitch /></div>
           {isAdmin ? <div className="user-chip" tabIndex={0} aria-label={t('nav_account')}>
             {user.picture
@@ -957,7 +960,7 @@ function Nav() {
               <button onClick={logout}>{t('nav_logout')}</button>
             </div>
           </div> : null}
-          <button className="burger" aria-label={lang==='en'?'Menu':'Menü'} aria-expanded={mob} aria-controls="mobile-navigation" onClick={() => setMob(m => !m)}>
+          <button className="burger" aria-label={LANG === 'de' ? ("Menü") : (lang==='en'?'Menu':'Menü')} aria-expanded={mob} aria-controls="mobile-navigation" onClick={() => setMob(m => !m)}>
             <span style={mob ? { transform: 'rotate(45deg) translate(3px,4px)' } : null} />
             <span style={mob ? { opacity: 0 } : null} />
             <span style={mob ? { transform: 'rotate(-45deg) translate(3px,-4px)' } : null} />
@@ -998,19 +1001,19 @@ function Footer() {
       <div>
         <h4>{t('nav_how')}</h4>
         <button onClick={() => navigate('how')}>{t('nav_how')}</button>
-        <button onClick={() => navigate('builder')}>{lang === 'en' ? 'Ring designer' : 'Gyűrűtervező'}</button>
+        <button onClick={() => navigate('builder')}>{LANG === 'de' ? ("Ringdesigner") : (lang === 'en' ? 'Ring designer' : 'Gyűrűtervező')}</button>
         {!isAdmin && <button onClick={() => navigate('upload')}>{t('nav_upload')}</button>}
         <button onClick={() => navigate('inspiration')}>{t('nav_inspiration')}</button>
       </div>
       <div>
-        <h4>{lang==='en'?'Contact':'Kapcsolat'}</h4>
+        <h4>{LANG === 'de' ? ("Kontakt") : (lang==='en'?'Contact':'Kapcsolat')}</h4>
         <button onClick={() => navigate('about')}>{t('nav_about')}</button>
         <button onClick={() => navigate('contact')}>{t('nav_contact')}</button>
       </div>
       <div>
         <h4>{t('lg_legal')}</h4>
         <button onClick={() => navigate('terms')}>{t('lg_terms')}</button>
-        <button onClick={() => navigate('ordering')}>{LANG === 'en' ? 'How ordering works' : 'A rendelés menete'}</button>
+        <button onClick={() => navigate('ordering')}>{LANG === 'de' ? ("Bestellablauf") : (LANG === 'en' ? 'How ordering works' : 'A rendelés menete')}</button>
         <button onClick={() => navigate('privacy')}>{t('lg_privacy')}</button>
         <button onClick={() => navigate('refund')}>{t('lg_refund')}</button>
         <button onClick={() => navigate('impressum')}>{t('lg_impressum')}</button>
@@ -1024,9 +1027,9 @@ function Footer() {
       {company.taxNumber ? ` · ${t('lg_tax')}: ${company.taxNumber}` : ''}
     </div>}
     <div className="footer-bottom">
-      <div className="lang-switch">{['hu','en'].map(l=><button key={l} className={lang===l?'on':''} onClick={()=>setLang(l)} aria-label={l==='hu'?'Magyar':'English'}>{l.toUpperCase()}</button>)}</div>
+      <div className="lang-switch">{['hu','en','de'].map(l=><button key={l} className={lang===l?'on':''} onClick={()=>setLang(l)} aria-label={{hu:'Magyar',en:'English',de:'Deutsch'}[l]}>{l.toUpperCase()}</button>)}</div>
       <span>© {new Date().getFullYear()} BRIGHTAL — {t('footer_rights')}</span>
-      <div className="pay-badges"><span className="pay-badge">{LANG==='en'?'BANK TRANSFER':'BANKI ÁTUTALÁS'}</span><span className="pay-badge">OTP Bank Nyrt.</span></div>
+      <div className="pay-badges"><span className="pay-badge">{LANG === 'de' ? ("BANKÜBERWEISUNG") : (LANG==='en'?'BANK TRANSFER':'BANKI ÁTUTALÁS')}</span><span className="pay-badge">OTP Bank Nyrt.</span></div>
     </div>
   </footer>;
 }
@@ -1079,7 +1082,7 @@ function AuthModal() {
  const submit=async e=>{e.preventDefault();setBusy(true);setError('');try{const d=await api('/auth/login',{method:'POST',body:f});setUser(d.user);setAuthModal(null);navigate('admin');}catch{setError('Hibás adminazonosító vagy jelszó.');}finally{setBusy(false);}};
  return <div className="modal-back"><form className="modal" onSubmit={submit}><h2 className="h-display">Admin belépés</h2><label className="field">Adminazonosító<input className="input" autoComplete="username" required value={f.email} onChange={e=>setF({...f,email:e.target.value})}/></label><label className="field">Jelszó<input className="input" type="password" autoComplete="current-password" required value={f.password} onChange={e=>setF({...f,password:e.target.value})}/></label>{error&&<p role="alert">{error}</p>}<button className="btn btn-dark" disabled={busy}>Admin belépés</button><button type="button" className="btn btn-ghost" onClick={()=>setAuthModal(null)}>Bezárás</button></form></div>;
 }
-function GuestAccessHelp(){return <div className="page"><div className="wrap-n"><h1 className="h-display">Rendelés megtekintése</h1><p>A rendelésedet az e-mailben kapott egyedi hivatkozással nyithatod meg. Vásárlói fiók és regisztráció nem szükséges.</p><OrderContact/></div><Footer/></div>;}
+function GuestAccessHelp(){return <div className="page"><div className="wrap-n"><h1 className="h-display">{customerText("Rendelés megtekintése")}</h1><p>{customerText("A rendelésedet az e-mailben kapott egyedi hivatkozással nyithatod meg. Vásárlói fiók és regisztráció nem szükséges.")}</p><OrderContact/></div><Footer/></div>;}
 /* ═══════════ FŐOLDAL ═══════════ */
 
 function StepCard({ n, icon, title, desc }) {
@@ -1106,37 +1109,37 @@ function Steps() {
 /* Főoldal: a két rendelési út (gyűrűtervező / képfeltöltés) lépésről lépésre, váltható nézetben. */
 function HomeSteps() {
   const { navigate, lang } = useA();
-  const hu = lang !== 'en';
-  const final = hu
+  const hu = lang === 'hu';
+  const final = LANG === 'de' ? (["Fertigung abwarten", "Wir fertigen deinen Ring von Hand innerhalb der im endgültigen Angebot angegebenen Zeit. Die Fertigung kann nach Zahlungseingang und Prüfung durch den Goldschmied beginnen. Die Lieferdetails stimmen wir mit dir ab. Über den privaten Link aus unserer E-Mail kannst du deine Bestellung verfolgen."]) : (hu
     ? ['Megvárod az elkészítést', 'A fizetés beérkezése és az ötvösi ellenőrzés után kézzel készítjük el a gyűrűdet, az ajánlatban vállalt határidővel. A szállítás részleteiről tájékoztatunk; rendelésedet az e-mailben kapott privát linken követheted.']
-    : ['Wait for the making', 'We craft it by hand within the production time in your final offer. Production can start after payment arrives and goldsmith review is complete. We confirm delivery details with you; follow your order on the private link from our email.'];
+    : ['Wait for the making', 'We craft it by hand within the production time in your final offer. Production can start after payment arrives and goldsmith review is complete. We confirm delivery details with you; follow your order on the private link from our email.']);
   const paths = {
     designer: {
-      label: hu ? 'Gyűrűtervező' : 'Ring designer',
-      lead: hu ? 'Megtervezed a saját gyűrűdet 3D-ben, mi pedig elkészítjük.' : 'Design your own ring in 3D and we craft it for you.',
-      cta: hu ? 'Megtervezem a gyűrűmet' : 'Design my ring', to: 'builder',
+      label: LANG === 'de' ? ("Ringdesigner") : (hu ? 'Gyűrűtervező' : 'Ring designer'),
+      lead: LANG === 'de' ? ("Gestalte deinen eigenen Ring in 3D – wir fertigen ihn für dich.") : (hu ? 'Megtervezed a saját gyűrűdet 3D-ben, mi pedig elkészítjük.' : 'Design your own ring in 3D and we craft it for you.'),
+      cta: LANG === 'de' ? ("Meinen Ring gestalten") : (hu ? 'Megtervezem a gyűrűmet' : 'Design my ring'), to: 'builder',
       steps: [
-        [<Ico.ring s={22} />, hu ? 'Megtervezed a gyűrűt' : 'Design your ring', hu ? 'A gyűrűtervezőben 44 alapformából indulsz, és lépésről lépésre kiválasztod a követ, a nemesfémet és a részleteket. A tervedet 3D-ben, minden szögből megnézheted, majd az elérhetőségeddel elküldöd — regisztráció nélkül.' : 'Start from 44 base shapes and choose the stone, metal and details step by step. View your design in 3D from every angle, then send it with your contact details — no registration needed.'],
-        [<Ico.clock s={22} />, hu ? 'Jóváhagyjuk a terved' : 'We approve your design', hu ? 'Azonnal kapsz egy visszaigazoló e-mailt. 48 órán belül visszajelzünk. Átnézzük a tervedet, és ha szükséges, egyeztetünk veled. Jóváhagyásunk után egy második e-mailben megkapod a látványtervet, a pontos árat és az elkészítési időt.' : 'You get a confirmation email right away. We respond within 48 hours, review your design and contact you if needed. After our approval, a second email includes your visual design, exact price and production time.'],
-        [<Ico.check s={22} />, hu ? 'Jóváhagyod és megrendeled' : 'Approve and order', hu ? 'Az e-mailben kapott privát linken még egyszer megnézed a terved, elfogadod az ajánlatot, és megadod a szállítási adataidat. A vételárat 2 munkanapon belül banki átutalással rendezed, a közleménybe a rendelésazonosítót írva.' : 'On the private link from our email you review your design, accept the offer and enter your delivery details. You settle the price by bank transfer within 2 working days, using your order number as the reference.'],
+        [<Ico.ring s={22} />, LANG === 'de' ? ("Gestalte deinen Ring") : (hu ? 'Megtervezed a gyűrűt' : 'Design your ring'), LANG === 'de' ? ("Wähle aus 44 Grundformen und bestimme Schritt für Schritt Stein, Metall und Details. Betrachte deinen Entwurf in 3D aus jedem Winkel und sende ihn mit deinen Kontaktdaten – ohne Registrierung.") : (hu ? 'A gyűrűtervezőben 44 alapformából indulsz, és lépésről lépésre kiválasztod a követ, a nemesfémet és a részleteket. A tervedet 3D-ben, minden szögből megnézheted, majd az elérhetőségeddel elküldöd — regisztráció nélkül.' : 'Start from 44 base shapes and choose the stone, metal and details step by step. View your design in 3D from every angle, then send it with your contact details — no registration needed.')],
+        [<Ico.clock s={22} />, LANG === 'de' ? ("Wir prüfen deinen Entwurf") : (hu ? 'Jóváhagyjuk a terved' : 'We approve your design'), LANG === 'de' ? ("Du erhältst sofort eine Bestätigung per E-Mail. Wir melden uns innerhalb von 48 Stunden, prüfen deinen Entwurf und klären bei Bedarf Fragen. Nach unserer Freigabe erhältst du eine zweite E-Mail mit Entwurf, genauem Preis und Fertigungszeit.") : (hu ? 'Azonnal kapsz egy visszaigazoló e-mailt. 48 órán belül visszajelzünk. Átnézzük a tervedet, és ha szükséges, egyeztetünk veled. Jóváhagyásunk után egy második e-mailben megkapod a látványtervet, a pontos árat és az elkészítési időt.' : 'You get a confirmation email right away. We respond within 48 hours, review your design and contact you if needed. After our approval, a second email includes your visual design, exact price and production time.')],
+        [<Ico.check s={22} />, LANG === 'de' ? ("Freigeben und bestellen") : (hu ? 'Jóváhagyod és megrendeled' : 'Approve and order'), LANG === 'de' ? ("Über den privaten Link aus unserer E-Mail prüfst du deinen Entwurf, akzeptierst das Angebot und gibst deine Lieferdaten an. Überweise den Betrag innerhalb von 2 Arbeitstagen mit deiner Bestellnummer als Verwendungszweck.") : (hu ? 'Az e-mailben kapott privát linken még egyszer megnézed a terved, elfogadod az ajánlatot, és megadod a szállítási adataidat. A vételárat 2 munkanapon belül banki átutalással rendezed, a közleménybe a rendelésazonosítót írva.' : 'On the private link from our email you review your design, accept the offer and enter your delivery details. You settle the price by bank transfer within 2 working days, using your order number as the reference.')],
         [<Ico.hammer s={22} />, final[0], final[1]]
       ]
     },
     upload: {
-      label: hu ? 'Képfeltöltés' : 'Photo upload',
-      lead: hu ? 'Van egy kép az álomgyűrűdről? Töltsd fel, és látványtervet készítünk belőle.' : 'Have a picture of your dream ring? Upload it and we create a visual design from it.',
-      cta: hu ? 'Feltöltöm a képet' : 'Upload my photo', to: 'upload',
+      label: LANG === 'de' ? ("Foto hochladen") : (hu ? 'Képfeltöltés' : 'Photo upload'),
+      lead: LANG === 'de' ? ("Hast du ein Bild deines Traumrings? Lade es hoch und wir erstellen daraus einen Entwurf.") : (hu ? 'Van egy kép az álomgyűrűdről? Töltsd fel, és látványtervet készítünk belőle.' : 'Have a picture of your dream ring? Upload it and we create a visual design from it.'),
+      cta: LANG === 'de' ? ("Mein Foto hochladen") : (hu ? 'Feltöltöm a képet' : 'Upload my photo'), to: 'upload',
       steps: [
-        [<Ico.camera s={22} />, hu ? 'Feltöltöd a képet' : 'Upload the photo', hu ? 'Screenshot Pinterestről, Instagramról, vagy egy fotó — bármi, amin látszik az álomgyűrű. Megadod a kívánságaidat és az elérhetőségedet — regisztráció nélkül.' : 'A screenshot from Pinterest or Instagram, or a photo — anything that shows the dream ring. Add your wishes and contact details — no registration needed.'],
-        [<Ico.clock s={22} />, hu ? 'Elkészítjük a látványtervet' : 'We create your visual design', hu ? 'Azonnal kapsz egy visszaigazoló e-mailt. 48 órán belül visszajelzünk, és egyeztetjük a részleteket. Elkészítjük és ellenőrizzük a látványtervet. Ezután egy második e-mailben elküldjük a látványterv linkjét, a pontos árat és az elkészítési időt.' : 'You get a confirmation email right away. We respond within 48 hours and discuss the details. We prepare and review your visual design, then send a second email with its link, the exact price and production time.'],
-        [<Ico.check s={22} />, hu ? 'Jóváhagyod és megrendeled' : 'Approve and order', hu ? 'Az e-mailben kapott privát linken megnézed a látványtervet, elfogadod az ajánlatot, és megadod a szállítási adataidat. A vételárat 2 munkanapon belül banki átutalással rendezed, a közleménybe a rendelésazonosítót írva.' : 'On the private link from our email you review the visual design, accept the offer and enter your delivery details. You settle the price by bank transfer within 2 working days, using your order number as the reference.'],
+        [<Ico.camera s={22} />, LANG === 'de' ? ("Foto hochladen") : (hu ? 'Feltöltöd a képet' : 'Upload the photo'), LANG === 'de' ? ("Ein Screenshot von Pinterest oder Instagram oder ein Foto deines Traumrings. Ergänze deine Wünsche und Kontaktdaten – ohne Registrierung.") : (hu ? 'Screenshot Pinterestről, Instagramról, vagy egy fotó — bármi, amin látszik az álomgyűrű. Megadod a kívánságaidat és az elérhetőségedet — regisztráció nélkül.' : 'A screenshot from Pinterest or Instagram, or a photo — anything that shows the dream ring. Add your wishes and contact details — no registration needed.')],
+        [<Ico.clock s={22} />, LANG === 'de' ? ("Wir erstellen deinen Entwurf") : (hu ? 'Elkészítjük a látványtervet' : 'We create your visual design'), LANG === 'de' ? ("Du erhältst sofort eine Bestätigung per E-Mail. Wir melden uns innerhalb von 48 Stunden und besprechen die Details. Wir erstellen und prüfen deinen Entwurf. Anschließend erhältst du eine zweite E-Mail mit dem Link, dem genauen Preis und der Fertigungszeit.") : (hu ? 'Azonnal kapsz egy visszaigazoló e-mailt. 48 órán belül visszajelzünk, és egyeztetjük a részleteket. Elkészítjük és ellenőrizzük a látványtervet. Ezután egy második e-mailben elküldjük a látványterv linkjét, a pontos árat és az elkészítési időt.' : 'You get a confirmation email right away. We respond within 48 hours and discuss the details. We prepare and review your visual design, then send a second email with its link, the exact price and production time.')],
+        [<Ico.check s={22} />, LANG === 'de' ? ("Freigeben und bestellen") : (hu ? 'Jóváhagyod és megrendeled' : 'Approve and order'), LANG === 'de' ? ("Über den privaten Link aus unserer E-Mail prüfst du den Entwurf, akzeptierst das Angebot und gibst deine Lieferdaten an. Überweise den Betrag innerhalb von 2 Arbeitstagen mit deiner Bestellnummer als Verwendungszweck.") : (hu ? 'Az e-mailben kapott privát linken megnézed a látványtervet, elfogadod az ajánlatot, és megadod a szállítási adataidat. A vételárat 2 munkanapon belül banki átutalással rendezed, a közleménybe a rendelésazonosítót írva.' : 'On the private link from our email you review the visual design, accept the offer and enter your delivery details. You settle the price by bank transfer within 2 working days, using your order number as the reference.')],
         [<Ico.hammer s={22} />, final[0], final[1]]
       ]
     }
   };
   return <div className="home-paths">
-    <p className="home-paths-intro">{hu ? 'Két lehetőség, ugyanaz a személyes segítség. Válaszd ki, hogyan szeretnél elindulni!' : 'Two ways to start, with personal help along the way. Choose what suits you.'}</p>
-    <p className="home-paths-intro">{hu ? 'Nem kell regisztrálnod. Az ajánlatkérés még nem rendelés, és nem jár fizetéssel.' : 'No account needed. Requesting a quote is not an order and requires no payment.'}</p>
+    <p className="home-paths-intro">{LANG === 'de' ? ("Zwei Wege zu deinem Ring, persönlich begleitet. Wähle, was zu dir passt.") : (hu ? 'Két lehetőség, ugyanaz a személyes segítség. Válaszd ki, hogyan szeretnél elindulni!' : 'Two ways to start, with personal help along the way. Choose what suits you.')}</p>
+    <p className="home-paths-intro">{LANG === 'de' ? ("Kein Konto nötig. Eine Angebotsanfrage ist keine Bestellung und verpflichtet nicht zur Zahlung.") : (hu ? 'Nem kell regisztrálnod. Az ajánlatkérés még nem rendelés, és nem jár fizetéssel.' : 'No account needed. Requesting a quote is not an order and requires no payment.')}</p>
     {Object.entries(paths).map(([key, p]) => <section className="how-path" key={key} aria-labelledby={'how-' + key}>
       <h2 className="h-display" id={'how-' + key}>{p.label}</h2>
       <p className="home-paths-lead">{p.lead}</p>
@@ -1155,14 +1158,14 @@ function HomePage() {
       <div className="hero-glow a" /><div className="hero-glow b" />
       <div className="hero-inner">
         <h1 className="fade-in d1 h-display hero-title">
-          {lang==='en'?'Timeless beauty,':'Időtlen szépség,'}<br />{lang==='en'?'for every moment.':'minden pillanatra.'}
+          {LANG === 'de' ? ("Zeitlose Schönheit,") : (lang==='en'?'Timeless beauty,':'Időtlen szépség,')}<br />{LANG === 'de' ? ("für jeden Moment.") : (lang==='en'?'for every moment.':'minden pillanatra.')}
         </h1>
         <div className="fade-in d1 rule" aria-hidden="true" />
-        <p className="fade-in d2 hero-sub">{lang==='en'?<>Fine details, premium materials,<br /> in the spirit of timeless elegance.</>:<>Finom részletek, prémium anyagok,<br /> az időtlen elegancia jegyében.</>}</p>
+        <p className="fade-in d2 hero-sub">{LANG === 'de' ? (<>Feine Details, hochwertige Materialien,<br /> im Zeichen zeitloser Eleganz.</>) : (lang==='en'?<>Fine details, premium materials,<br /> in the spirit of timeless elegance.</>:<>Finom részletek, prémium anyagok,<br /> az időtlen elegancia jegyében.</>)}</p>
         <div className="fade-in d3 hero-cta">
-          <button className="btn btn-dark btn-lg" onClick={() => navigate('builder')}>{lang==='en'?'Explore the collection':'Kollekció felfedezése'}</button>
+          <button className="btn btn-dark btn-lg" onClick={() => navigate('builder')}>{LANG === 'de' ? ("Kollektion entdecken") : (lang==='en'?'Explore the collection':'Kollekció felfedezése')}</button>
           <button className="btn btn-outline btn-lg" onClick={() => navigate('builder')}>
-            {lang==='en'?'New collection':'Új kollekció'}
+            {LANG === 'de' ? ("Neue Kollektion") : (lang==='en'?'New collection':'Új kollekció')}
           </button>
         </div>
       </div>
@@ -1193,8 +1196,16 @@ function HomePage() {
 
 function HowPage() {
   const { lang, navigate } = useA();
-  const hu = lang !== 'en';
-  const faq = hu ? [
+  const hu = lang === 'hu';
+  const faq = LANG === 'de' ? ([
+    ["Welche Möglichkeit passt zu mir?", "Lade ein Foto hoch, wenn du ein Vorbild hast. Im Ringdesigner kannst du Form, Stein und Details selbst auswählen. Für einen dort gestalteten Ring musst du kein separates Foto hochladen."],
+    ["Brauche ich ein Konto?", "Nein. Gib deine Kontaktdaten an und prüfe deine E-Mail-Adresse sorgfältig. Dorthin senden wir die Bestätigung und den privaten Angebotslink. Bewahre den Link sicher auf und teile ihn nicht."],
+    ["Was passiert nach der Angebotsanfrage?", "Eine automatische E-Mail bestätigt den Eingang. Sie ist noch kein endgültiges Angebot. Wir prüfen die Details und senden nach unserer Freigabe eine weitere E-Mail mit Entwurf, Preis und Fertigungszeit."],
+    ["Kann ich den Entwurf ansehen und Änderungen anfragen?", "Ja. Über den privaten Link in der zweiten E-Mail kannst du den Entwurf öffnen und die 3D-Ansicht drehen oder vergrößern. Frage Änderungen auf dieser Seite an, bevor du das Angebot annimmst."],
+    ["Wann und wie bezahle ich?", "Nach Annahme des endgültigen Angebots und Eingabe deiner Lieferdaten. Auf der Bestellseite stehen der genaue Betrag, die Bankverbindung und der Verwendungszweck. Bitte überweise innerhalb von 2 Arbeitstagen."],
+    ["Wann erhalte ich meinen Ring?", "Die Fertigungszeit steht im endgültigen Angebot. Die Fertigung beginnt nach Zahlungseingang; die Lieferdetails stimmen wir mit dir ab."],
+    ["Keine E-Mail erhalten oder Hilfe nötig?", "Prüfe auch deinen Spam- und Werbeordner. Falls du die E-Mail nicht findest oder Hilfe benötigst, schreibe an die Adresse auf unserer Kontaktseite."]
+  ]) : (hu ? [
     ['Melyik lehetőséget válasszam?', 'Ha egy képen láttad meg az álomgyűrűdet, válaszd a képfeltöltést. Ha te szeretnéd összeállítani a formát, a követ és a részleteket, használd a gyűrűtervezőt. A tervezőben készített gyűrűhöz nem kell külön képet feltöltened.'],
     ['Kell regisztrálnom?', 'Nem. Az ajánlatkérésnél add meg az elérhetőségedet, különösen a pontos e-mail-címedet. Ide érkezik a visszaigazolás és később az ajánlat privát linkje. A linket őrizd meg, és ne oszd meg másokkal.'],
     ['Mi történik az ajánlatkérés után?', 'Először automatikus e-mail igazolja, hogy megkaptuk a kérésedet. Ez még nem végleges ajánlat. Mi átnézzük a részleteket, és jóváhagyásunk után külön e-mailben küldjük el a látványtervet, az árat és a határidőt.'],
@@ -1210,19 +1221,19 @@ function HowPage() {
     ['When and how do I pay?', 'After accepting the final offer and entering delivery details. Your order page shows the exact amount, bank account and order reference. Please make the bank transfer within 2 working days.'],
     ['When will my ring arrive?', 'Your final offer specifies production time. Production starts after payment arrives, and we confirm delivery details with you.'],
     ['Missing an email or need help?', 'Check your Spam and Promotions folders. If you still cannot find the email or need help, use the email address on our Contact page.']
-  ];
+  ]);
   return <div className="page">
     <div className="page-head">
-      <p className="eyebrow-gold">{hu ? 'AZ ÖTLETTŐL A SAJÁT GYŰRŰDIG' : 'FROM IDEA TO YOUR OWN RING'}</p>
-      <h1 className="h-display page-title">{hu ? 'Hogyan működik?' : 'How it works'}</h1>
+      <p className="eyebrow-gold">{LANG === 'de' ? ("VON DER IDEE ZU DEINEM RING") : (hu ? 'AZ ÖTLETTŐL A SAJÁT GYŰRŰDIG' : 'FROM IDEA TO YOUR OWN RING')}</p>
+      <h1 className="h-display page-title">{LANG === 'de' ? ("So funktioniert es") : (hu ? 'Hogyan működik?' : 'How it works')}</h1>
       <div className="rule" />
     </div>
     <div className="wrap" style={{ paddingBottom: 50 }}><HomeSteps /></div>
     <Section style={{ padding: '20px 24px 80px' }}>
       <div className="wrap-n">
-        <h2 className="h-display" style={{ fontSize: 27, marginBottom: 22 }}>{hu ? 'Gyakori kérdések' : 'Frequently asked questions'}</h2>
+        <h2 className="h-display" style={{ fontSize: 27, marginBottom: 22 }}>{LANG === 'de' ? ("Häufige Fragen") : (hu ? 'Gyakori kérdések' : 'Frequently asked questions')}</h2>
         {faq.map(([q, a]) => <details className="faq" key={q}><summary>{q}</summary><p>{a}</p></details>)}
-        <div className="home-paths-cta"><button className="btn btn-outline" onClick={() => navigate('contact')}>{hu ? 'Segítséget kérek' : 'Get help'}</button></div>
+        <div className="home-paths-cta"><button className="btn btn-outline" onClick={() => navigate('contact')}>{LANG === 'de' ? ("Hilfe erhalten") : (hu ? 'Segítséget kérek' : 'Get help')}</button></div>
       </div>
     </Section>
     <Footer />
@@ -1631,7 +1642,7 @@ function EnquiryForm({designer = false}) {
   const validate = () => {
     const e = {};
     if (!files.length) e.photos = te('NO_PHOTO');
-    if (!/^[+()\d\s-]{7,40}$/.test(f.phone)) e.phone = 'Adj meg érvényes telefonszámot.';
+    if (!/^[+()\d\s-]{7,40}$/.test(f.phone)) e.phone = customerText("Adj meg érvényes telefonszámot.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email)) e.email = te('INVALID_EMAIL');
     if (!f.acceptTerms) e.acceptTerms = te('TERMS_REQUIRED');
     setErrors(e);
@@ -1672,13 +1683,13 @@ function EnquiryForm({designer = false}) {
         <div className="panel success-panel">
           <div className="success-ring"><Ico.check s={26} /></div>
           <h1 className="h-display" style={{ fontSize: 30, marginBottom: 12 }}>{t('ok_title')}</h1>
-          <p className="lead-sm">{lang==='en' ? `Your quote request has been saved. Confirmation email: ${f.email}. We will respond within 48 hours.` : `Az ajánlatkérésedet rögzítettük. Visszaigazolás címzettje: ${f.email}. 48 órán belül visszajelzünk.`}</p>
+          <p className="lead-sm">{LANG === 'de' ? (`Deine Angebotsanfrage wurde gespeichert. Bestätigung an: ${f.email}. Wir melden uns innerhalb von 48 Stunden.`) : (lang==='en' ? `Your quote request has been saved. Confirmation email: ${f.email}. We will respond within 48 hours.` : `Az ajánlatkérésedet rögzítettük. Visszaigazolás címzettje: ${f.email}. 48 órán belül visszajelzünk.`)}</p>
           <div className="ref-box">
             <span>{t('ok_ref')}</span>
             <strong>{done.requestNumber}</strong>
           </div>
-          <p className="lead-sm">Ez még nem megrendelés, most nem kell fizetned. Az első e-mail a kérés beérkezését igazolja. Ellenőrzésünk és az esetleges egyeztetés után a második e-mailben küldjük a látványtervet, a végleges árat és a határidőt. A privát linken átnézheted az ajánlatot, módosítást kérhetsz vagy megrendelheted a gyűrűt.</p>
-          <p>Nézd meg a Spam és a Promóciók mappát is. Ha elírtad az e-mail-címedet, vagy nem találod a levelet, keress minket az alábbi elérhetőségen, és add meg az azonosítót. Ne küldd be újra ugyanazt a kérést.</p><OrderContact/>
+          <p className="lead-sm">{customerText("Ez még nem megrendelés, most nem kell fizetned. Az első e-mail a kérés beérkezését igazolja. Ellenőrzésünk és az esetleges egyeztetés után a második e-mailben küldjük a látványtervet, a végleges árat és a határidőt. A privát linken átnézheted az ajánlatot, módosítást kérhetsz vagy megrendelheted a gyűrűt.")}</p>
+          <p>{customerText("Nézd meg a Spam és a Promóciók mappát is. Ha elírtad az e-mail-címedet, vagy nem találod a levelet, keress minket az alábbi elérhetőségen, és add meg az azonosítót. Ne küldd be újra ugyanazt a kérést.")}</p><OrderContact/>
           <div className="btn-row">
             <button className="btn btn-ghost" onClick={() => { if (designer) { navigate('builder'); return; } setDone(null); setF(p => ({ ...p, note: '', engraving: '' })); }}>
               {t('ok_another')}
@@ -1690,19 +1701,19 @@ function EnquiryForm({designer = false}) {
     </div>;
   }
 
-  if (designer && !draft) return <div className="page"><div className="wrap-n"><h1 className="h-display">Először tervezd meg a gyűrűdet</h1><p>Az ajánlatkéréshez a gyűrűtervező utolsó lépéséből érkezhetsz ide.</p><button className="btn btn-dark" onClick={()=>navigate('builder')}>Gyűrűtervező megnyitása</button></div><Footer/></div>;
+  if (designer && !draft) return <div className="page"><div className="wrap-n"><h1 className="h-display">{customerText("Először tervezd meg a gyűrűdet")}</h1><p>{customerText("Az ajánlatkéréshez a gyűrűtervező utolsó lépéséből érkezhetsz ide.")}</p><button className="btn btn-dark" onClick={()=>navigate('builder')}>{customerText("Gyűrűtervező megnyitása")}</button></div><Footer/></div>;
   /* --- űrlap --- */
   return <div className="page">
     <div className="page-head">
-      <p className="eyebrow-gold">{designer ? 'BRIGHTAL · GYŰRŰTERVEZŐ' : t('up_eyebrow')}</p>
-      <h1 className="h-display page-title">{designer ? (lang==='en'?'Quote for your ring design':'Ajánlatkérés a saját gyűrűtervedre') : t('up_title')}</h1>
+      <p className="eyebrow-gold">{designer ? customerText("BRIGHTAL · GYŰRŰTERVEZŐ") : t('up_eyebrow')}</p>
+      <h1 className="h-display page-title">{designer ? (LANG === 'de' ? ("Angebot für deinen Ringentwurf") : (lang==='en'?'Quote for your ring design':'Ajánlatkérés a saját gyűrűtervedre')) : t('up_title')}</h1>
       <div className="rule" />
-      <p className="page-lead">{designer ? (lang==='en'?'Your design is attached automatically. Enter your contact details to request a personal quote.':'A megtervezett gyűrűdet automatikusan csatoljuk. Add meg az elérhetőségeidet, és személyre szabott ajánlatot küldünk.') : t('up_sub')}</p>
+      <p className="page-lead">{designer ? (LANG === 'de' ? ("Dein Entwurf wird automatisch angehängt. Gib deine Kontaktdaten ein, um ein persönliches Angebot anzufragen.") : (lang==='en'?'Your design is attached automatically. Enter your contact details to request a personal quote.':'A megtervezett gyűrűdet automatikusan csatoljuk. Add meg az elérhetőségeidet, és személyre szabott ajánlatot küldünk.')) : t('up_sub')}</p>
     </div>
 
     <div className="wrap-n" style={{ paddingBottom: 80 }}>
-      <aside className="note-box"><h2>{lang==='en'?'You are requesting a quote':'Most csak ajánlatot kérsz'}</h2><p>{lang==='en'?'No registration or payment is needed now. We confirm receipt by email, then send the reviewed design and final offer separately. You can request changes before ordering. Payment is by bank transfer after you accept the offer.':'Nem kell regisztrálnod, és most nincs fizetési kötelezettséged. E-mailben visszaigazoljuk a kérést, majd ellenőrzésünk után külön küldjük a látványtervet és a végleges ajánlatot. Megrendelés előtt módosítást is kérhetsz. Fizetni az elfogadott ajánlat alapján, banki átutalással lehet.'}</p><p>{lang==='en'?'Fields marked * are required. Check your email carefully: all updates and your private order link go there.':'A *-gal jelölt mezők kötelezők. Ellenőrizd az e-mail-címedet: ide érkezik minden visszajelzés és a rendelés privát linkje.'}</p></aside>
-      {designer && draft && <div className="panel form-panel"><h2 className="h-display">{draft.name || 'Saját gyűrűterved'}</h2><img src={draft.preview} alt="Saját gyűrűterv" style={{width:'100%',maxHeight:420,objectFit:'contain'}}/><button type="button" className="btn btn-outline" onClick={()=>navigate('builder')}>Terv szerkesztése</button></div>}
+      <aside className="note-box"><h2>{LANG === 'de' ? ("Du fragst ein Angebot an") : (lang==='en'?'You are requesting a quote':'Most csak ajánlatot kérsz')}</h2><p>{LANG === 'de' ? ("Jetzt sind weder Registrierung noch Zahlung nötig. Wir bestätigen den Eingang per E-Mail und senden den geprüften Entwurf und das endgültige Angebot gesondert. Vor der Bestellung kannst du Änderungen anfragen. Bezahlt wird per Überweisung nach Annahme des Angebots.") : (lang==='en'?'No registration or payment is needed now. We confirm receipt by email, then send the reviewed design and final offer separately. You can request changes before ordering. Payment is by bank transfer after you accept the offer.':'Nem kell regisztrálnod, és most nincs fizetési kötelezettséged. E-mailben visszaigazoljuk a kérést, majd ellenőrzésünk után külön küldjük a látványtervet és a végleges ajánlatot. Megrendelés előtt módosítást is kérhetsz. Fizetni az elfogadott ajánlat alapján, banki átutalással lehet.')}</p><p>{LANG === 'de' ? ("Mit * markierte Felder sind Pflichtfelder. Prüfe deine E-Mail-Adresse: Dorthin senden wir alle Informationen und deinen privaten Bestelllink.") : (lang==='en'?'Fields marked * are required. Check your email carefully: all updates and your private order link go there.':'A *-gal jelölt mezők kötelezők. Ellenőrizd az e-mail-címedet: ide érkezik minden visszajelzés és a rendelés privát linkje.')}</p></aside>
+      {designer && draft && <div className="panel form-panel"><h2 className="h-display">{draft.name || customerText("Saját gyűrűterved")}</h2><img src={draft.preview} alt={customerText("Saját gyűrűterv")} style={{width:'100%',maxHeight:420,objectFit:'contain'}}/><button type="button" className="btn btn-outline" onClick={()=>navigate('builder')}>Terv szerkesztése</button></div>}
       {!designer && <>
       {/* dropzone */}
       <div className={'dropzone' + (drag ? ' over' : '') + (errors.photos ? ' err' : '')}
@@ -1730,7 +1741,7 @@ function EnquiryForm({designer = false}) {
       {/* részletek */}
       <div className="panel form-panel">
         <h3 className="h-display">{t('up_details')}</h3>
-        {draft && <p className="hint">{lang === 'en' ? 'Metal, size and engraving come from your saved design. Change them in the designer before submitting.' : 'A fém, a méret és a gravírozás a tervedből származik. Módosításukhoz térj vissza a gyűrűtervezőbe.'} <button type="button" className="btn btn-ghost btn-sm" onClick={()=>navigate('builder')}>{lang === 'en' ? 'Edit design' : 'Terv szerkesztése'}</button></p>}
+        {draft && <p className="hint">{LANG === 'de' ? ("Metall, Größe und Gravur werden aus deinem gespeicherten Entwurf übernommen. Ändere sie bei Bedarf vor dem Absenden im Designer.") : (lang === 'en' ? 'Metal, size and engraving come from your saved design. Change them in the designer before submitting.' : 'A fém, a méret és a gravírozás a tervedből származik. Módosításukhoz térj vissza a gyűrűtervezőbe.')} <button type="button" className="btn btn-ghost btn-sm" onClick={()=>navigate('builder')}>{LANG === 'de' ? ("Entwurf bearbeiten") : (lang === 'en' ? 'Edit design' : 'Terv szerkesztése')}</button></p>}
         <div className="grid-2-gap">
           <Field label={t('up_metal')}>
             <input className="input" readOnly={!!draft} value={f.metal} onChange={e => set('metal', e.target.value)} placeholder={t('up_metal_ph')} />
@@ -1758,7 +1769,7 @@ function EnquiryForm({designer = false}) {
       <div className="panel form-panel">
         <h3 className="h-display">{t('up_contact')}</h3>
         <div className="grid-2-gap">
-          <Field label={t('up_name') + ' (nem kötelező)'} error={errors.name}>
+          <Field label={t('up_name') + customerText(" (nem kötelező)")} error={errors.name}>
             <input className={'input' + (errors.name ? ' err' : '')} value={f.name} onChange={e => set('name', e.target.value)} />
           </Field>
           <Field label={t('up_phone') + ' *'} error={errors.phone}>
@@ -1772,7 +1783,7 @@ function EnquiryForm({designer = false}) {
         <label className="checkline">
           <input type="checkbox" checked={f.acceptTerms} onChange={e => set('acceptTerms', e.target.checked)} />
           <span>
-            Megismertem az adatkezelési tájékoztatót. Az igény elküldése nem végleges megrendelés. *
+            {customerText("Megismertem az adatkezelési tájékoztatót. Az igény elküldése nem végleges megrendelés. *")}
             {' '}
             <a className="legal-link" onClick={e => { e.preventDefault(); navigate('terms'); }} href={pathFor('terms')}>{t('lg_terms_long')}</a>
             {' · '}
@@ -1782,11 +1793,11 @@ function EnquiryForm({designer = false}) {
           </span>
         </label>
         {/* Az elállási jog kizárására a jogszabály kifejezett tájékoztatást ír elő. */}
-        <p className="legal-inline-note">A végleges látványtervet, árat és ÁSZF-et az ajánlat megérkezése után külön hagyod jóvá.</p>
+        <p className="legal-inline-note">{customerText("A végleges látványtervet, árat és ÁSZF-et az ajánlat megérkezése után külön hagyod jóvá.")}</p>
         {errors.acceptTerms && <div className="err-msg">{errors.acceptTerms}</div>}
 
         <button className="btn btn-gold btn-block btn-lg" style={{ marginTop: 18 }} disabled={busy} onClick={submit}>
-          {busy ? <><Spinner size={15} /> {t('up_sending')}</> : <><Ico.upload s={15} /> {designer ? (lang==='en'?'Send quote request':'Ajánlatkérés elküldése') : t('up_submit')}</>}
+          {busy ? <><Spinner size={15} /> {t('up_sending')}</> : <><Ico.upload s={15} /> {designer ? (LANG === 'de' ? ("Angebot anfragen") : (lang==='en'?'Send quote request':'Ajánlatkérés elküldése')) : t('up_submit')}</>}
         </button>
         <p className="fine-print"><Ico.lock s={11} /> {t('ab_4_d')}</p>
       </div>
@@ -1799,9 +1810,9 @@ function EnquiryForm({designer = false}) {
 
 function BankTransfer({req}) {
   const {lang,toast}=useA(); const bank=req.bankTransfer;
-  const copy=async(value)=>{try{await navigator.clipboard.writeText(String(value));toast(lang==='en'?'Copied.':'Másolva.');}catch{toast(lang==='en'?'Select and copy the value manually.':'Jelöld ki és másold ki kézzel az adatot.','err');}};
+  const copy=async(value)=>{try{await navigator.clipboard.writeText(String(value));toast(LANG === 'de' ? ("Kopiert.") : (lang==='en'?'Copied.':'Másolva.'));}catch{toast(LANG === 'de' ? ("Markiere und kopiere den Wert manuell.") : (lang==='en'?'Select and copy the value manually.':'Jelöld ki és másold ki kézzel az adatot.'),'err');}};
   if(!bank)return null;
-  return <section className="bank-transfer note-box"><h3>{lang==='en'?'Bank transfer':'Banki átutalás'}</h3><dl className="kv">{[[lang==='en'?'Beneficiary':'Kedvezményezett',bank.beneficiary],['Bank',bank.bank],[lang==='en'?'Account number':'Számlaszám',bank.account],[lang==='en'?'Reference':'Közlemény',bank.reference],[lang==='en'?'Amount':'Összeg',money(bank.amount)]].map(([key,value])=><React.Fragment key={key}><dt>{key}</dt><dd>{value}{bank.configured&&<button type="button" className="btn btn-ghost btn-sm" aria-label={(lang==='en'?'Copy: ':'Másolás: ')+key} onClick={()=>copy(key===(lang==='en'?'Amount':'Összeg')?bank.amount:value)}>{lang==='en'?'Copy':'Másolás'}</button>}</dd></React.Fragment>)}</dl><p>{bank.dueAt && !req.paidAt && <>Fizetési határidő: <strong>{fmtDate(bank.dueAt)}</strong> (2 munkanap). </>}{lang==='en'?'Use the exact order number as the payment reference. Production time starts when the transfer arrives.':'A közleménybe pontosan a rendelésazonosítót írd. Az elkészítési idő az átutalás beérkezésétől indul.'}</p>{!bank.configured&&<p role="status">{lang==='en'?'Bank details are being completed. Please wait for the final account number before paying.':'A számlaszám kitöltés alatt áll. A végleges számlaszám megadásáig ne indíts átutalást.'}</p>}</section>;
+  return <section className="bank-transfer note-box"><h3>{LANG === 'de' ? ("Banküberweisung") : (lang==='en'?'Bank transfer':'Banki átutalás')}</h3><dl className="kv">{[[LANG === 'de' ? ("Empfänger") : (lang==='en'?'Beneficiary':'Kedvezményezett'),bank.beneficiary],['Bank',bank.bank],[LANG === 'de' ? ("Kontonummer") : (lang==='en'?'Account number':'Számlaszám'),bank.account],[LANG === 'de' ? ("Bestellnummer") : (lang==='en'?'Reference':'Közlemény'),bank.reference],[LANG === 'de' ? ("Betrag") : (lang==='en'?'Amount':'Összeg'),money(bank.amount)]].map(([key,value])=><React.Fragment key={key}><dt>{key}</dt><dd>{value}{bank.configured&&<button type="button" className="btn btn-ghost btn-sm" aria-label={(LANG === 'de' ? ("Kopieren: ") : (lang==='en'?'Copy: ':'Másolás: '))+key} onClick={()=>copy(key===(LANG === 'de' ? ("Betrag") : (lang==='en'?'Amount':'Összeg'))?bank.amount:value)}>{LANG === 'de' ? ("Kopieren") : (lang==='en'?'Copy':'Másolás')}</button>}</dd></React.Fragment>)}</dl><p>{bank.dueAt && !req.paidAt && <>{customerText("Fizetési határidő:")} <strong>{fmtDate(bank.dueAt)}</strong> {customerText("(2 munkanap).")} </>}{LANG === 'de' ? ("Gib als Verwendungszweck die genaue Bestellnummer an. Die Fertigungszeit beginnt mit dem Zahlungseingang.") : (lang==='en'?'Use the exact order number as the payment reference. Production time starts when the transfer arrives.':'A közleménybe pontosan a rendelésazonosítót írd. Az elkészítési idő az átutalás beérkezésétől indul.')}</p>{!bank.configured&&<p role="status">{LANG === 'de' ? ("Die Bankverbindung wird noch ergänzt. Bitte warte mit der Überweisung auf die endgültige Kontonummer.") : (lang==='en'?'Bank details are being completed. Please wait for the final account number before paying.':'A számlaszám kitöltés alatt áll. A végleges számlaszám megadásáig ne indíts átutalást.')}</p>}</section>;
 }
 function OrderCad({req}) {
   const [job,setJob]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[styles,setStyles]=useState([]);
@@ -1870,7 +1881,7 @@ function OrderCard({ req, onPay, onRevise, paying }) {
     </div>}
 
     <p className="order-desc">{desc}</p><p style={{whiteSpace:'pre-wrap'}}>{req.productSummary}</p>
-    {req.productionDays && <div className="note-box"><strong>{lang==='en'?'Production time':'Elkészülési idő'}: {req.productionDays.join('–')} {lang==='en'?'working days after payment arrives':'munkanap az átutalás beérkezésétől'}</strong></div>}
+    {req.productionDays && <div className="note-box"><strong>{LANG === 'de' ? ("Fertigungszeit") : (lang==='en'?'Production time':'Elkészülési idő')}: {req.productionDays.join('–')} {LANG === 'de' ? ("Arbeitstage nach Zahlungseingang") : (lang==='en'?'working days after payment arrives':'munkanap az átutalás beérkezésétől')}</strong></div>}
     {req.status==='approved' && <BankTransfer req={req}/>}
 
 
@@ -1880,14 +1891,14 @@ function OrderCard({ req, onPay, onRevise, paying }) {
     </div>}
 
     {req.finalOffer&&<div className="final-offer">
-      <h3>{lang==='en'?'Final design and offer':'Végleges látványterv és ajánlat'}</h3>
-      <img src={req.finalOffer.previewUrl} alt={lang==='en'?'Final design':'Végleges látványterv'} style={{maxWidth:'100%',maxHeight:360}}/>
+      <h3>{LANG === 'de' ? ("Endgültiger Entwurf und Angebot") : (lang==='en'?'Final design and offer':'Végleges látványterv és ajánlat')}</h3>
+      <img src={req.finalOffer.previewUrl} alt={LANG === 'de' ? ("Endgültiger Entwurf") : (lang==='en'?'Final design':'Végleges látványterv')} style={{maxWidth:'100%',maxHeight:360}}/>
       <p style={{whiteSpace:'pre-wrap'}}>{req.finalOffer.specification}</p>
       <dl className="kv">{[['Ékszer ára',money(req.finalOffer.productPrice)],['Szállítási díj',money(req.finalOffer.shippingFee)],['Gyártási idő',req.finalOffer.productionTime],['Átadás / feladás',req.finalOffer.deliveryTime],['Szállítás módja',req.finalOffer.shippingMethod],['Fizetési feltételek',req.finalOffer.paymentTerms],['Ajánlat érvényessége',fmtDate(req.finalOffer.validUntil)]].map(([k,v])=><React.Fragment key={k}><dt>{k}</dt><dd>{v}</dd></React.Fragment>)}</dl>
-      {!req.acceptance&&req.payable&&<details><summary>{lang==='en'?'Request a correction before approval':'Módosítást kérek a jóváhagyás előtt'}</summary><label className="field">{lang==='en'?'Requested changes':'Kért módosítások'}<textarea className="input" maxLength={2000} value={revision} onChange={e=>setRevision(e.target.value)}/></label><button className="btn btn-outline" disabled={revision.trim().length<3||paying} onClick={()=>onRevise(req,revision)}>{lang==='en'?'Send correction request':'Módosítási kérés elküldése'}</button></details>}
+      {!req.acceptance&&req.payable&&<details><summary>{LANG === 'de' ? ("Änderung vor der Freigabe anfragen") : (lang==='en'?'Request a correction before approval':'Módosítást kérek a jóváhagyás előtt')}</summary><label className="field">{LANG === 'de' ? ("Gewünschte Änderungen") : (lang==='en'?'Requested changes':'Kért módosítások')}<textarea className="input" maxLength={2000} value={revision} onChange={e=>setRevision(e.target.value)}/></label><button className="btn btn-outline" disabled={revision.trim().length<3||paying} onClick={()=>onRevise(req,revision)}>{LANG === 'de' ? ("Änderungsanfrage senden") : (lang==='en'?'Send correction request':'Módosítási kérés elküldése')}</button></details>}
       {req.payable&&!req.acceptance&&<>
-        <fieldset><legend>{lang==='en'?'Billing details':'Számlázási adatok'}</legend>{[['name','Név','Name'],['country','Ország','Country'],['zip','Irányítószám','Postal code'],['city','Település','City'],['street','Utca, házszám','Street and house number']].map(([key,hu,en])=><label className="field" key={key}>{lang==='en'?en:hu}<input className="input" maxLength={250} value={approval.billing?.[key]||''} onChange={e=>setApproval(a=>({...a,billing:{...a.billing,[key]:e.target.value}}))}/></label>)}</fieldset>
-        <label className="field">{lang==='en'?'Recipient and complete delivery address':'Címzett és teljes szállítási cím'}<textarea className="input" maxLength={1000} value={approval.shippingAddress||''} onChange={e=>setApproval(a=>({...a,shippingAddress:e.target.value}))}/></label>
+        <fieldset><legend>{LANG === 'de' ? ("Rechnungsdaten") : (lang==='en'?'Billing details':'Számlázási adatok')}</legend>{[['name','Név','Name'],['country','Ország','Country'],['zip','Irányítószám','Postal code'],['city','Település','City'],['street','Utca, házszám','Street and house number']].map(([key,hu,en])=><label className="field" key={key}>{lang==='de'?(BRIGHTAL_DE[en]||en):lang==='en'?en:hu}<input className="input" maxLength={250} value={approval.billing?.[key]||''} onChange={e=>setApproval(a=>({...a,billing:{...a.billing,[key]:e.target.value}}))}/></label>)}</fieldset>
+        <label className="field">{LANG === 'de' ? ("Empfänger und vollständige Lieferadresse") : (lang==='en'?'Recipient and complete delivery address':'Címzett és teljes szállítási cím')}<textarea className="input" maxLength={1000} value={approval.shippingAddress||''} onChange={e=>setApproval(a=>({...a,shippingAddress:e.target.value}))}/></label>
         {[['designApproved','A végleges látványtervet és valamennyi termékparamétert – méret, anyag, finomság, kövek és gravírozás – ellenőriztem és jóváhagyom.'],['priceAccepted','A feltüntetett teljes, szállítási díjat is tartalmazó végleges árat elfogadom.'],['termsAccepted','Az Általános Szerződési Feltételeket elolvastam és elfogadom.'],['privacyRead','Az Adatkezelési Tájékoztatót megismertem.'],['withdrawalAcknowledged','Tudomásul veszem, hogy a jóváhagyott látványterv és egyedi paramétereim alapján készülő ékszernél a 45/2014. (II. 26.) Korm. rendelet 29. § (1) c) pontja alapján nincs 14 napos indokolás nélküli elállási jog. Ez nem érinti szavatossági és jótállási jogaimat.'],['paymentObligation','Az ékszert a fenti feltételekkel megrendelem; nyilatkozatom fizetési kötelezettséggel jár.']].map(([key,label])=><label key={key} className="check-label"><input type="checkbox" checked={approval[key]===true} onChange={e=>setApproval(a=>({...a,[key]:e.target.checked}))}/><span>{label}</span></label>)}
         <p><a href="/aszf" target="_blank" rel="noopener noreferrer">ÁSZF – menthető / nyomtatható</a> · <a href="/adatkezeles" target="_blank" rel="noopener noreferrer">Adatkezelési tájékoztató</a></p>
       </>}
@@ -2132,7 +2143,7 @@ function AdminRow({ req, onChanged, defaultOpen }) {
         {req.images.length > 2 && <span className="more">+{req.images.length - 2}</span>}
       </div>
       <div className="admin-main">
-        <p className="mono-sm"><strong>{req.requestNumber}</strong>{req.design && <span> · ◇ {lang === 'en' ? '3D design' : '3D gyűrűterv'}</span>}</p>
+        <p className="mono-sm"><strong>{req.requestNumber}</strong>{req.design && <span> · ◇ {LANG === 'de' ? ("3D-Entwurf") : (lang === 'en' ? '3D design' : '3D gyűrűterv')}</span>}</p>
         <p className="mono-sm dim">{req.customer.name} · {req.customer.email}</p>
         <p className="mono-sm dim">{fmtDate(req.createdAt)}</p>
       </div>
@@ -2146,8 +2157,8 @@ function AdminRow({ req, onChanged, defaultOpen }) {
     {open && <div className="admin-body">
       {req.diamond && <div className="note-box"><h4>Laboratóriumi gyémánt · {req.diamond.id}</h4><p>{req.diamond.shape} · {req.diamond.carat} ct · {req.diamond.color}/{req.diamond.clarity}</p><a href={req.diamond.certificate.url} target="_blank" rel="noopener noreferrer">IGI {req.diamond.certificate.number}</a></div>}
       {req.design && <div className="note-box" style={{marginBottom:20}}>
-        <h4>{req.design.name || req.design.config.style} · {lang === 'en' ? 'Saved ring design' : 'Mentett gyűrűterv'}</h4>
-        <p>{lang === 'en' ? 'The ZIP contains the submitted configuration, 3D concept (OBJ), reference images and a printable workshop brief. Production CAD preparation and goldsmith review are required.' : 'A ZIP tartalmazza a beküldött konfigurációt, a 3D látványtervet (OBJ), a referenciaképeket és a nyomtatható műhelylapot. Gyártási CAD-előkészítést és ötvösi ellenőrzést igényel.'}</p>
+        <h4>{req.design.name || req.design.config.style} · {LANG === 'de' ? ("Gespeicherter Ringentwurf") : (lang === 'en' ? 'Saved ring design' : 'Mentett gyűrűterv')}</h4>
+        <p>{LANG === 'de' ? ("Die ZIP-Datei enthält die Konfiguration, das 3D-Konzept (OBJ), Referenzbilder und eine druckbare Werkstattbeschreibung. Eine CAD-Aufbereitung für die Fertigung und eine Prüfung durch den Goldschmied sind erforderlich.") : (lang === 'en' ? 'The ZIP contains the submitted configuration, 3D concept (OBJ), reference images and a printable workshop brief. Production CAD preparation and goldsmith review are required.' : 'A ZIP tartalmazza a beküldött konfigurációt, a 3D látványtervet (OBJ), a referenciaképeket és a nyomtatható műhelylapot. Gyártási CAD-előkészítést és ötvösi ellenőrzést igényel.')}</p>
         <OrderCad req={req}/>
       </div>}
       <div className="admin-grid">
@@ -2370,10 +2381,10 @@ function AdminPage() {
       </div>
 
       <div className="admin-toolbar">
-        <label>{lang === 'en' ? 'Order source' : 'Rendelés forrása'} <select className="input" value={source} onChange={e=>setSource(e.target.value)}>
-          <option value="all">{lang === 'en' ? 'All orders' : 'Minden rendelés'}</option>
+        <label>{LANG === 'de' ? ("Herkunft der Bestellung") : (lang === 'en' ? 'Order source' : 'Rendelés forrása')} <select className="input" value={source} onChange={e=>setSource(e.target.value)}>
+          <option value="all">{LANG === 'de' ? ("Alle Bestellungen") : (lang === 'en' ? 'All orders' : 'Minden rendelés')}</option>
           <option value="diamond">Laboratóriumi gyémánt</option>
-          <option value="designer">{lang === 'en' ? 'Ring designer' : 'Gyűrűtervező'}</option>
+          <option value="designer">{LANG === 'de' ? ("Ringdesigner") : (lang === 'en' ? 'Ring designer' : 'Gyűrűtervező')}</option>
         </select></label>
         <input className="input" value={q} onChange={e => setQ(e.target.value)} placeholder={t('ad_search')} />
         <div className="view-switch">
@@ -2417,31 +2428,31 @@ function loadRingRuntime(){
 }
 function OrderContact(){
  const {config}=useA(),c=config?.company||{},s=config?.shop||{},email=c.email||s.email,phone=c.phone||s.phone;
- return <aside className="note-box"><h3>Kérdésed van? Keress minket!</h3><p>Az ajánlatkéréstől a kézbesítésig bármilyen kérdés esetén írj nekünk{phone?' vagy hívj minket telefonon':''}. Hivatkozz a rendelési azonosítódra, hogy gyorsan segíthessünk.</p>{email&&<p>E-mail: <a href={'mailto:'+email}>{email}</a></p>}{phone&&<p>Telefon: <a href={'tel:'+phone.replace(/[^+\d]/g,'')}>{phone}</a></p>}</aside>;
+ return <aside className="note-box"><h3>{customerText("Kérdésed van? Keress minket!")}</h3><p>{customerText("Az ajánlatkéréstől a kézbesítésig bármilyen kérdés esetén írj nekünk")}{phone?customerText(" vagy hívj minket telefonon"):''}{customerText(". Hivatkozz a rendelési azonosítódra, hogy gyorsan segíthessünk.")}</p>{email&&<p>E-mail: <a href={'mailto:'+email}>{email}</a></p>}{phone&&<p>{customerText("Telefon:")} <a href={'tel:'+phone.replace(/[^+\d]/g,'')}>{phone}</a></p>}</aside>;
 }
 function OrderPaymentPage({req}){
  const bank=req.bankTransfer,offer=req.acceptance?.offer||req.finalOffer,paid=!!req.paidAt;
  return <div className="page"><div className="wrap-n guest-order">
-  <h1 className="h-display page-title">{paid?'Köszönjük a fizetésedet!':'Sikeres rendelés – fizetési tudnivalók'}</h1>
-  <p>{paid?'Az átutalásod beérkezését rögzítettük.':'A rendelésedet rögzítettük. A következő lépés a teljes vételár banki átutalása.'}</p>
-  <div className="ref-box"><span>Rendelési azonosító</span><strong>{req.requestNumber}</strong></div>
-  <p role="status">Állapot: <strong>{({paid:'Fizetés beérkezett',in_production:'Gyártás alatt',completed:'Elkészült'})[req.status] || (paid?'Fizetés beérkezett':'Átutalásra vagy a befizetés ellenőrzésére vár')}</strong>. Az elkészült állapot önmagában nem jelenti a csomag kézbesítését.</p>
-  {!paid&&<section className="panel form-panel"><h2 className="h-display">Hogyan tudsz fizetni?</h2>
-   {bank?.configured?<><p>A fizetés banki átutalással történik. A fizetendő végösszeg a szállítási díjat is tartalmazza.</p><ol>
-    <li>Nyisd meg a bankod mobilalkalmazását vagy internetbankját, és válassz új forintátutalást.</li>
-    <li>Másold be az alábbi kedvezményezett nevét és bankszámlaszámát.</li>
-    <li>Összegként pontosan <strong>{money(bank.amount)}</strong> értéket adj meg.</li>
-    <li>A közlemény mezőbe ezt írd: <strong>{bank.reference}</strong>. Ez alapján azonosítjuk a befizetésedet.</li>
-    <li>Ellenőrizd az adatokat, majd hagyd jóvá az átutalást a bankod felületén. Őrizd meg az átutalási bizonylatot.</li>
-   </ol><p>Kérjük, a jóváhagyástól számított <strong>2 munkanapon belül</strong> utald el a teljes összeget. A banki jóváhagyás önmagában még nem jelenti, hogy az összeg hozzánk is beérkezett.</p></>:<p role="status">Az átutaláshoz szükséges bankszámlaszámot még véglegesítjük. Kérjük, egyelőre ne indíts utalást; a fizetési adatokért írj nekünk az alábbi elérhetőségen.</p>}
+  <h1 className="h-display page-title">{paid?customerText("Köszönjük a fizetésedet!"):customerText("Sikeres rendelés – fizetési tudnivalók")}</h1>
+  <p>{paid?customerText("Az átutalásod beérkezését rögzítettük."):customerText("A rendelésedet rögzítettük. A következő lépés a teljes vételár banki átutalása.")}</p>
+  <div className="ref-box"><span>{customerText("Rendelési azonosító")}</span><strong>{req.requestNumber}</strong></div>
+  <p role="status">{customerText("Állapot:")} <strong>{({paid:customerText("Fizetés beérkezett"),in_production:customerText("Gyártás alatt"),completed:customerText("Elkészült")})[req.status] || (paid?customerText("Fizetés beérkezett"):customerText("Átutalásra vagy a befizetés ellenőrzésére vár"))}</strong>{customerText(". Az elkészült állapot önmagában nem jelenti a csomag kézbesítését.")}</p>
+  {!paid&&<section className="panel form-panel"><h2 className="h-display">{customerText("Hogyan tudsz fizetni?")}</h2>
+   {bank?.configured?<><p>{customerText("A fizetés banki átutalással történik. A fizetendő végösszeg a szállítási díjat is tartalmazza.")}</p><ol>
+    <li>{customerText("Nyisd meg a bankod mobilalkalmazását vagy internetbankját, és válassz új forintátutalást.")}</li>
+    <li>{customerText("Másold be az alábbi kedvezményezett nevét és bankszámlaszámát.")}</li>
+    <li>{customerText("Összegként pontosan")} <strong>{money(bank.amount)}</strong> {customerText("értéket adj meg.")}</li>
+    <li>{customerText("A közlemény mezőbe ezt írd:")} <strong>{bank.reference}</strong>{customerText(". Ez alapján azonosítjuk a befizetésedet.")}</li>
+    <li>{customerText("Ellenőrizd az adatokat, majd hagyd jóvá az átutalást a bankod felületén. Őrizd meg az átutalási bizonylatot.")}</li>
+   </ol><p>{customerText("Kérjük, a jóváhagyástól számított")} <strong>{customerText("2 munkanapon belül")}</strong> {customerText("utald el a teljes összeget. A banki jóváhagyás önmagában még nem jelenti, hogy az összeg hozzánk is beérkezett.")}</p></>:<p role="status">{customerText("Az átutaláshoz szükséges bankszámlaszámot még véglegesítjük. Kérjük, egyelőre ne indíts utalást; a fizetési adatokért írj nekünk az alábbi elérhetőségen.")}</p>}
    <BankTransfer req={req}/>
   </section>}
-  <section className="note-box"><h2>Mi történik az utalás után?</h2><p>Az utalás beérkezését ellenőrizzük, majd e-mailben visszaigazoljuk. Az oldal állapota az ellenőrzés után frissül; a banki utalás elküldésétől még nem vált azonnal fizetettre. Ha már utaltál, ne fizess újra. Kérdés esetén az azonosítóddal és az utalás bizonylatával keress minket.</p><p>A gyártás a jóváhagyott terv, a fizetés beérkezése és az ötvösi ellenőrzés után kezdődhet meg. Őrizd meg a privát linket, ezen az oldalon is követheted a rendelést.</p></section>
-  <section className="panel form-panel"><h2 className="h-display">Mikor érkezik a csomagod?</h2>
-   <p>Várható elkészítési idő: <strong>{offer?.productionTime||'Az ajánlatban egyeztetett határidő szerint'}</strong>. A határidő az összeg bankszámlánkra történő beérkezésétől indul.</p>
-   <p>Az elkészítési idő nem tartalmazza automatikusan a kézbesítés idejét. Az átadás vagy feladás módját és határidejét az alábbi elfogadott ajánlat tartalmazza. Ha a kézbesítés napja nincs külön megadva, kérj tőlünk pontosítást.</p>
-   {offer?.deliveryTime&&<p>Egyeztetett szállítás: {offer.deliveryTime}</p>}
-   <h3>Szállítási cím</h3><p style={{whiteSpace:'pre-wrap'}}>{req.acceptance.shippingAddress}</p>
+  <section className="note-box"><h2>{customerText("Mi történik az utalás után?")}</h2><p>{customerText("Az utalás beérkezését ellenőrizzük, majd e-mailben visszaigazoljuk. Az oldal állapota az ellenőrzés után frissül; a banki utalás elküldésétől még nem vált azonnal fizetettre. Ha már utaltál, ne fizess újra. Kérdés esetén az azonosítóddal és az utalás bizonylatával keress minket.")}</p><p>{customerText("A gyártás a jóváhagyott terv, a fizetés beérkezése és az ötvösi ellenőrzés után kezdődhet meg. Őrizd meg a privát linket, ezen az oldalon is követheted a rendelést.")}</p></section>
+  <section className="panel form-panel"><h2 className="h-display">{customerText("Mikor érkezik a csomagod?")}</h2>
+   <p>{customerText("Várható elkészítési idő:")} <strong>{offer?.productionTime||customerText("Az ajánlatban egyeztetett határidő szerint")}</strong>{customerText(". A határidő az összeg bankszámlánkra történő beérkezésétől indul.")}</p>
+   <p>{customerText("Az elkészítési idő nem tartalmazza automatikusan a kézbesítés idejét. Az átadás vagy feladás módját és határidejét az alábbi elfogadott ajánlat tartalmazza. Ha a kézbesítés napja nincs külön megadva, kérj tőlünk pontosítást.")}</p>
+   {offer?.deliveryTime&&<p>{customerText("Egyeztetett szállítás:")} {offer.deliveryTime}</p>}
+   <h3>{customerText("Szállítási cím")}</h3><p style={{whiteSpace:'pre-wrap'}}>{req.acceptance.shippingAddress}</p>
   </section><OrderContact/>
  </div><Footer/></div>;
 }
@@ -2449,7 +2460,7 @@ function PhotoOrderViewer({design,onReady}){
  const [loaded,setLoaded]=useState(!!window.BrightalBuilder),[failed,setFailed]=useState(false);
  useEffect(()=>{let live=true;loadRingRuntime().then(()=>{if(live)setLoaded(true);}).catch(()=>{if(live)setFailed(true);});return()=>{live=false;};},[]);
  const Viewer=window.BrightalBuilder?.OrderViewer;
- return <section className="photo-order-viewer"><h2 className="h-display">A fotód alapján készített 3D látványterv</h2><p>Fogd meg és húzd el a gyűrűt a forgatáshoz. Görgetéssel vagy két ujjal nagyíthatsz.</p>{failed?<p role="alert">A 3D terv nem tölthető be. Frissítsd az oldalt, vagy írj nekünk.</p>:loaded&&Viewer?<Viewer design={design} onReady={onReady}/>:<p>3D látványterv kirajzolása…</p>}</section>;
+ return <section className="photo-order-viewer"><h2 className="h-display">{customerText("A fotód alapján készített 3D látványterv")}</h2><p>{customerText("Fogd meg és húzd el a gyűrűt a forgatáshoz. Görgetéssel vagy két ujjal nagyíthatsz.")}</p>{failed?<p role="alert">{customerText("A 3D terv nem tölthető be. Frissítsd az oldalt, vagy írj nekünk.")}</p>:loaded&&Viewer?<Viewer lang={LANG} design={design} onReady={onReady}/>:<p>{customerText("3D látványterv kirajzolása…")}</p>}</section>;
 }
 function GuestOrderPage(){
  const {toast}=useA();
@@ -2463,39 +2474,39 @@ function GuestOrderPage(){
  const [req,setReq]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[ready,setReady]=useState(false),[runtime,setRuntime]=useState(false);
  const [form,setForm]=useState({email:'',shipping:{name:'',country:'Magyarország',zip:'',city:'',street:'',houseNumber:'',extra:''}}),[checks,setChecks]=useState({}),[note,setNote]=useState('');
  const endpoint='/guest-orders/'+encodeURIComponent(number),headers={Authorization:'Bearer '+token};
- const messages={INVALID_DESIGN_GEOMETRY:'A terv geometriai javítást igényel. Kérj módosítást a műhelytől; a megrendelés addig nem véglegesíthető.',ORDER_LINK_INVALID:'A hivatkozás érvénytelen. Nyisd meg a rendeléshez kapott e-mailben szereplő teljes linket.',OFFER_CHANGED:'Az ajánlat időközben megváltozott. Frissítsd az oldalt, és ellenőrizd újra.',OFFER_EXPIRED:'Az ajánlat lejárt. Kérj új ajánlatot vagy módosítást.',ADDRESS_REQUIRED:'Töltsd ki a nevet és a teljes szállítási címet.',EMAIL_MISMATCH:'A rendeléshez eredetileg megadott e-mail-címet használd.',APPROVAL_REQUIRED:'A véglegesítéshez fogadd el a nyilatkozatokat.',NOT_PAYABLE:'Ez az ajánlat jelenleg nem hagyható jóvá.'};
- const fail=e=>setError(messages[e.code]||'A művelet nem sikerült. Kérjük, próbáld újra.');
+ const messages={INVALID_DESIGN_GEOMETRY:customerText("A terv geometriai javítást igényel. Kérj módosítást a műhelytől; a megrendelés addig nem véglegesíthető."),ORDER_LINK_INVALID:customerText("A hivatkozás érvénytelen. Nyisd meg a rendeléshez kapott e-mailben szereplő teljes linket."),OFFER_CHANGED:customerText("Az ajánlat időközben megváltozott. Frissítsd az oldalt, és ellenőrizd újra."),OFFER_EXPIRED:customerText("Az ajánlat lejárt. Kérj új ajánlatot vagy módosítást."),ADDRESS_REQUIRED:customerText("Töltsd ki a nevet és a teljes szállítási címet."),EMAIL_MISMATCH:customerText("A rendeléshez eredetileg megadott e-mail-címet használd."),APPROVAL_REQUIRED:customerText("A véglegesítéshez fogadd el a nyilatkozatokat."),NOT_PAYABLE:customerText("Ez az ajánlat jelenleg nem hagyható jóvá.")};
+ const fail=e=>setError(messages[e.code]||customerText("A művelet nem sikerült. Kérjük, próbáld újra."));
  useEffect(()=>{let live=true;api(endpoint,{headers}).then(d=>{if(!live)return;setReq(d.request);setForm(f=>({...f,email:d.request.customer.email,shipping:{...f.shipping,name:d.request.customer.name==='Vásárlónk'?'':d.request.customer.name}}));}).catch(e=>{if(live)fail(e);});return()=>{live=false;};},[number,token]);
- useEffect(()=>{if(req?.design&&!req.acceptance)loadRingRuntime().then(()=>setRuntime(true)).catch(()=>setError('A 3D nézet nem tölthető be. Frissítsd az oldalt.'));},[req?.design?.sha256]);
- const post=async(action,body)=>{setBusy(true);setError('');try{const d=await api(endpoint+'/'+action,{method:'POST',headers,body});setReq(d.request);setChecks({});if(action==='revision'){setNote('');toast('A módosítási kérésedet elküldtük. Új ajánlatot küldünk e-mailben; addig ne utalj.');}}catch(e){fail(e);}finally{setBusy(false);}};
- const download=async(kind='design.json')=>{try{const res=await fetch('/api'+endpoint+'/'+kind,{headers});if(!res.ok)throw Error();const url=URL.createObjectURL(await res.blob()),a=document.createElement('a');a.href=url;a.download=number+(kind==='terms'?'-ASZF.txt':'-design.json');a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch{setError('A terv letöltése nem sikerült.');}};
- if(!req)return <div className="page"><div className="wrap-n"><h1 className="h-display">Rendelés megtekintése</h1>{error?<p role="alert">{error}</p>:<Spinner dark/>}<OrderContact/></div><Footer/></div>;
+ useEffect(()=>{if(req?.design&&!req.acceptance)loadRingRuntime().then(()=>setRuntime(true)).catch(()=>setError(customerText("A 3D nézet nem tölthető be. Frissítsd az oldalt.")));},[req?.design?.sha256]);
+ const post=async(action,body)=>{setBusy(true);setError('');try{const d=await api(endpoint+'/'+action,{method:'POST',headers,body});setReq(d.request);setChecks({});if(action==='revision'){setNote('');toast(customerText("A módosítási kérésedet elküldtük. Új ajánlatot küldünk e-mailben; addig ne utalj."));}}catch(e){fail(e);}finally{setBusy(false);}};
+ const download=async(kind='design.json')=>{try{const res=await fetch('/api'+endpoint+'/'+kind,{headers});if(!res.ok)throw Error();const url=URL.createObjectURL(await res.blob()),a=document.createElement('a');a.href=url;a.download=number+(kind==='terms'?'-ASZF.txt':'-design.json');a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch{setError(customerText("A terv letöltése nem sikerült."));}};
+ if(!req)return <div className="page"><div className="wrap-n"><h1 className="h-display">{customerText("Rendelés megtekintése")}</h1>{error?<p role="alert">{error}</p>:<Spinner dark/>}<OrderContact/></div><Footer/></div>;
  const o=req.finalOffer,accepted=!!req.acceptance,expired=o&&Date.parse(o.validUntil)<=Date.now();
  if(accepted)return <OrderPaymentPage req={req}/>;
  const Viewer=window.BrightalBuilder?.OrderViewer;
- const declarations=[['designApproved','A fenti látványtervet és a megrendelésben szereplő valamennyi termékparamétert – különösen a méretet, az anyagot, a nemesfém finomságát, a kövek adatait és az esetleges gravírozást – ellenőriztem, és azokat jóváhagyom. Tudomásul veszem, hogy az ékszer ezen jóváhagyott adatok alapján kerül egyedileg legyártásra.'],['termsAccepted','Az Általános Szerződési Feltételeket elolvastam és elfogadom.'],['priceAccepted','A szállítást is tartalmazó teljes végösszeget elfogadom.'],['privacyRead','Az Adatkezelési Tájékoztatót megismertem.'],['withdrawalAcknowledged','Tudomásul veszem az egyedileg gyártott ékszerre vonatkozó, az ÁSZF-ben ismertetett elállási feltételeket.'],['paymentObligation','A megrendelés fizetési kötelezettséggel jár.']];
+ const declarations=[['designApproved',customerText("A fenti látványtervet és a megrendelésben szereplő valamennyi termékparamétert – különösen a méretet, az anyagot, a nemesfém finomságát, a kövek adatait és az esetleges gravírozást – ellenőriztem, és azokat jóváhagyom. Tudomásul veszem, hogy az ékszer ezen jóváhagyott adatok alapján kerül egyedileg legyártásra.")],['termsAccepted',customerText("Az Általános Szerződési Feltételeket elolvastam és elfogadom.")],['priceAccepted',customerText("A szállítást is tartalmazó teljes végösszeget elfogadom.")],['privacyRead',customerText("Az Adatkezelési Tájékoztatót megismertem.")],['withdrawalAcknowledged',customerText("Tudomásul veszem az egyedileg gyártott ékszerre vonatkozó, az ÁSZF-ben ismertetett elállási feltételeket.")],['paymentObligation',customerText("A megrendelés fizetési kötelezettséggel jár.")]];
  const valid=declarations.every(([k])=>checks[k])&&['name','country','zip','city','street','houseNumber'].every(k=>form.shipping[k].trim())&&form.email.trim().toLowerCase()===req.customer.email&&(!req.design||ready)&&(!o?.photoDesign||photoReady);
  return <div className="page"><div className="wrap-n guest-order">
-  <h1 className="h-display page-title">{accepted?'Sikeres rendelés':o?'Látványterv jóváhagyása és megrendelés':'Megérkezett az elképzelésed'}</h1>
-  <div className="ref-box"><span>Rendelési azonosító</span><strong>{req.requestNumber}</strong></div>
-  {accepted?<><p role="status">A jóváhagyásodat és a szállítási adataidat rögzítettük.</p><BankTransfer req={req}/><p>Szállítás: {req.acceptance.shippingAddress}</p></>:!o?<p>Az ajánlat egyeztetés alatt áll. A végleges látványtervet és ajánlatot e-mailben küldjük. Most még nincs fizetési kötelezettséged.</p>:null}
-  {req.design&&runtime&&Viewer?<Viewer design={req.design} onReady={setReady}/>:req.design?<p>3D látványterv betöltése…</p>:null}
+  <h1 className="h-display page-title">{accepted?customerText("Sikeres rendelés"):o?customerText("Látványterv jóváhagyása és megrendelés"):customerText("Megérkezett az elképzelésed")}</h1>
+  <div className="ref-box"><span>{customerText("Rendelési azonosító")}</span><strong>{req.requestNumber}</strong></div>
+  {accepted?<><p role="status">{customerText("A jóváhagyásodat és a szállítási adataidat rögzítettük.")}</p><BankTransfer req={req}/><p>{customerText("Szállítás:")} {req.acceptance.shippingAddress}</p></>:!o?<p>{customerText("Az ajánlat egyeztetés alatt áll. A végleges látványtervet és ajánlatot e-mailben küldjük. Most még nincs fizetési kötelezettséged.")}</p>:null}
+  {req.design&&runtime&&Viewer?<Viewer lang={LANG} design={req.design} onReady={setReady}/>:req.design?<p>{customerText("3D látványterv betöltése…")}</p>:null}
   {o&&!req.design&&o.photoDesign&&<PhotoOrderViewer key={o.photoDesign.sha256} design={o.photoDesign} onReady={setPhotoReady}/>}
   {o&&!req.design&&!o.photoDesign&&req.visual&&<GuestVisual src={'/api'+endpoint+'/visual'} token={token}/>}
 
-  <h2 className="h-display">A gyűrűd részletei</h2><p style={{whiteSpace:'pre-wrap'}}>{o?.specification||req.productSummary}</p>
-  {o&&<dl className="kv">{[['Ékszer vételára',money(o.productPrice)],['Szállítási díj',money(o.shippingFee)],['Fizetendő végösszeg',money(o.total)],['Várható gyártási idő',o.productionTime],['Várható átadás / feladás',o.deliveryTime],['Szállítás módja',o.shippingMethod],['Ajánlat érvényessége',fmtDate(o.validUntil)]].map(([k,v])=><React.Fragment key={k}><dt>{k}</dt><dd>{v}</dd></React.Fragment>)}</dl>}
-  {o&&<aside className="note-box"><h2>Előbb ellenőrizd az ajánlatot</h2><p>A megtekintés nem jelent megrendelést. Ellenőrizd a tervet, a gyűrű méretét, anyagát, köveit, a szállítással együtt fizetendő végösszeget és a határidőket. A gyártási idő és a kézbesítés ideje külön értendő. Ha bármi hiányzik vagy nem megfelelő, az alábbi mezőben kérj módosítást.</p><p>Ha mindent rendben találtál, töltsd ki a szállítási adatokat és fogadd el a nyilatkozatokat. A „Megrendelem – fizetési kötelezettséggel” gomb hozza létre a megrendelést. Ezután megmutatjuk a banki átutalás adatait; itt nem történik automatikus pénzlevonás.</p></aside>}
+  <h2 className="h-display">{customerText("A gyűrűd részletei")}</h2><p style={{whiteSpace:'pre-wrap'}}>{o?.specification||req.productSummary}</p>
+  {o&&<dl className="kv">{[[customerText("Ékszer vételára"),money(o.productPrice)],[customerText("Szállítási díj"),money(o.shippingFee)],[customerText("Fizetendő végösszeg"),money(o.total)],[customerText("Várható gyártási idő"),o.productionTime],[customerText("Várható átadás / feladás"),o.deliveryTime],[customerText("Szállítás módja"),o.shippingMethod],[customerText("Ajánlat érvényessége"),fmtDate(o.validUntil)]].map(([k,v])=><React.Fragment key={k}><dt>{k}</dt><dd>{v}</dd></React.Fragment>)}</dl>}
+  {o&&<aside className="note-box"><h2>{customerText("Előbb ellenőrizd az ajánlatot")}</h2><p>{customerText("A megtekintés nem jelent megrendelést. Ellenőrizd a tervet, a gyűrű méretét, anyagát, köveit, a szállítással együtt fizetendő végösszeget és a határidőket. A gyártási idő és a kézbesítés ideje külön értendő. Ha bármi hiányzik vagy nem megfelelő, az alábbi mezőben kérj módosítást.")}</p><p>{customerText("Ha mindent rendben találtál, töltsd ki a szállítási adatokat és fogadd el a nyilatkozatokat. A „Megrendelem – fizetési kötelezettséggel” gomb hozza létre a megrendelést. Ezután megmutatjuk a banki átutalás adatait; itt nem történik automatikus pénzlevonás.")}</p></aside>}
   {o&&!accepted&&req.status==='approved'&&!expired&&<form onSubmit={e=>{e.preventDefault();post('accept',{...form,...checks,offerId:o.id,offerDigest:o.digest});}}>
-   <h2 className="h-display">Szállítási adatok</h2><div className="grid-2-gap">{[['name','Teljes név'],['country','Ország'],['zip','Irányítószám'],['city','Város / település'],['street','Utca'],['houseNumber','Házszám'],['extra','Emelet, ajtó (nem kötelező)']].map(([k,label])=><label className="field" key={k}>{label}<input className="input" required={k!=='extra'} maxLength={250} value={form.shipping[k]} onChange={e=>setForm(f=>({...f,shipping:{...f.shipping,[k]:e.target.value}}))}/></label>)}</div>
-   <label className="field">E-mail-cím<input className="input" type="email" required value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))}/></label>
-   <p>A megadott név és cím a számlázási cím is. Eltérő számlázási adatokhoz kérj egyeztetést a véglegesítés előtt.</p>
-   {declarations.map(([k,label])=><label key={k} className="checkline"><input type="checkbox" checked={!!checks[k]} onChange={e=>setChecks(c=>({...c,[k]:e.target.checked}))}/><span>{label}{k==='termsAccepted'&&<> <a href="/aszf" target="_blank" rel="noopener noreferrer">ÁSZF megnyitása</a> · <button type="button" className="legal-link" onClick={()=>download('terms')}>ÁSZF letöltése</button></>}{k==='privacyRead'&&<> <a href="/adatkezeles" target="_blank" rel="noopener noreferrer">Adatkezelési tájékoztató</a></>}</span></label>)}
-   {!valid&&<p role="status">A megrendeléshez töltsd ki az összes kötelező címadatot, használd az ajánlatkéréskor megadott e-mail-címedet és jelöld be valamennyi nyilatkozatot.{((req.design&&!ready)||(o?.photoDesign&&!photoReady))&&' A 3D látványterv betöltését is meg kell várnod. Ha nem jelenik meg, frissítsd az oldalt, vagy kérj segítséget; addig ne rendeld meg.'}</p>}
-   <button className="btn btn-dark btn-block" disabled={!valid||busy}>{busy?'Megrendelés rögzítése…':'Megrendelem – fizetési kötelezettséggel'}</button>
+   <h2 className="h-display">{customerText("Szállítási adatok")}</h2><div className="grid-2-gap">{[['name',customerText("Teljes név")],['country',customerText("Ország")],['zip',customerText("Irányítószám")],['city',customerText("Város / település")],['street',customerText("Utca")],['houseNumber',customerText("Házszám")],['extra',customerText("Emelet, ajtó (nem kötelező)")]].map(([k,label])=><label className="field" key={k}>{label}<input className="input" required={k!=='extra'} maxLength={250} value={form.shipping[k]} onChange={e=>setForm(f=>({...f,shipping:{...f.shipping,[k]:e.target.value}}))}/></label>)}</div>
+   <label className="field">{customerText("E-mail-cím")}<input className="input" type="email" required value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))}/></label>
+   <p>{customerText("A megadott név és cím a számlázási cím is. Eltérő számlázási adatokhoz kérj egyeztetést a véglegesítés előtt.")}</p>
+   {declarations.map(([k,label])=><label key={k} className="checkline"><input type="checkbox" checked={!!checks[k]} onChange={e=>setChecks(c=>({...c,[k]:e.target.checked}))}/><span>{label}{k==='termsAccepted'&&<> <a href="/aszf" target="_blank" rel="noopener noreferrer">{customerText("ÁSZF megnyitása")}</a> · <button type="button" className="legal-link" onClick={()=>download('terms')}>{customerText("ÁSZF letöltése")}</button></>}{k==='privacyRead'&&<> <a href="/adatkezeles" target="_blank" rel="noopener noreferrer">{customerText("Adatkezelési tájékoztató")}</a></>}</span></label>)}
+   {!valid&&<p role="status">{customerText("A megrendeléshez töltsd ki az összes kötelező címadatot, használd az ajánlatkéréskor megadott e-mail-címedet és jelöld be valamennyi nyilatkozatot.")}{((req.design&&!ready)||(o?.photoDesign&&!photoReady))&&customerText(" A 3D látványterv betöltését is meg kell várnod. Ha nem jelenik meg, frissítsd az oldalt, vagy kérj segítséget; addig ne rendeld meg.")}</p>}
+   <button className="btn btn-dark btn-block" disabled={!valid||busy}>{busy?customerText("Megrendelés rögzítése…"):customerText("Megrendelem – fizetési kötelezettséggel")}</button>
   </form>}
-  {expired&&!accepted&&<p role="status">Az ajánlat lejárt. Kérj frissített ajánlatot az alábbi mezőben.</p>}
-  {!accepted&&['submitted','approved'].includes(req.status)&&<section><h2 className="h-display">Módosítást kérek</h2><p>Írd le, min változtatnál, vagy kérj friss ajánlatot, ha a korábbi lejárt. A kérés elküldése után a jelenlegi ajánlat már nem fogadható el: egyeztetünk veled, majd új ajánlatot küldünk e-mailben. Addig ne indíts utalást.</p><label className="field">Kért módosítások<textarea className="textarea" maxLength={2000} value={note} onChange={e=>setNote(e.target.value)}/></label><button className="btn btn-outline" disabled={busy||note.trim().length<3} onClick={()=>post('revision',{note})}>Módosítási kérés elküldése</button></section>}
+  {expired&&!accepted&&<p role="status">{customerText("Az ajánlat lejárt. Kérj frissített ajánlatot az alábbi mezőben.")}</p>}
+  {!accepted&&['submitted','approved'].includes(req.status)&&<section><h2 className="h-display">{customerText("Módosítást kérek")}</h2><p>{customerText("Írd le, min változtatnál, vagy kérj friss ajánlatot, ha a korábbi lejárt. A kérés elküldése után a jelenlegi ajánlat már nem fogadható el: egyeztetünk veled, majd új ajánlatot küldünk e-mailben. Addig ne indíts utalást.")}</p><label className="field">{customerText("Kért módosítások")}<textarea className="textarea" maxLength={2000} value={note} onChange={e=>setNote(e.target.value)}/></label><button className="btn btn-outline" disabled={busy||note.trim().length<3} onClick={()=>post('revision',{note})}>{customerText("Módosítási kérés elküldése")}</button></section>}
   {error&&<p role="alert" className="err-msg">{error}</p>}<OrderContact/>
  </div><Footer/></div>;
 }
@@ -2516,7 +2527,7 @@ function BuilderPage() {
     builderLoad.then(() => { if (live) setLoaded(true); }).catch(() => { if (live) setFailed(true); });
     return () => { live = false; };
   }, []);
-  if (failed) return <div className="center-screen"><p>{lang === 'en' ? 'The designer could not load. Please reload.' : 'A tervező nem töltődött be. Kérjük, töltsd újra az oldalt.'}</p><button className="btn btn-dark" onClick={() => location.reload()}>{lang === 'en' ? 'Reload' : 'Újratöltés'}</button></div>;
+  if (failed) return <div className="center-screen"><p>{LANG === 'de' ? ("Der Designer konnte nicht geladen werden. Bitte lade die Seite neu.") : (lang === 'en' ? 'The designer could not load. Please reload.' : 'A tervező nem töltődött be. Kérjük, töltsd újra az oldalt.')}</p><button className="btn btn-dark" onClick={() => location.reload()}>{LANG === 'de' ? ("Neu laden") : (lang === 'en' ? 'Reload' : 'Újratöltés')}</button></div>;
   if (!loaded) return <div className="center-screen"><Spinner dark size={28}/></div>;
   const Builder = window.BrightalBuilder.RingBuilder;
   return <Builder lang={lang} onUpload={() => navigate('upload')} onQuote={draft => {
@@ -2580,7 +2591,7 @@ function SupplierAdmin(){
 }
 function DiamondsPage() {
  const {user,isAdmin,setAuthModal,navigate,lang}=useA();const [data,setData]=useState(null),[error,setError]=useState(''),[q,setQ]=useState({}),[selected,setSelected]=useState(null),[cart,setCart]=useState(()=>store.get('brightal-diamond-cart',[])),[busy,setBusy]=useState(false),[terms,setTerms]=useState(false);
- const dialog=useRef(null),opener=useRef(null),orderKey=useRef(null);const money=x=>x==null?'Ár egyeztetés alatt':new Intl.NumberFormat(lang==='en'?'en-GB':'hu-HU',{style:'currency',currency:'HUF',maximumFractionDigits:0}).format(x);
+ const dialog=useRef(null),opener=useRef(null),orderKey=useRef(null);const money=x=>x==null?'Ár egyeztetés alatt':new Intl.NumberFormat(LANG === 'de' ? ("de-DE") : (lang==='en'?'en-GB':'hu-HU'),{style:'currency',currency:'HUF',maximumFractionDigits:0}).format(x);
  useEffect(()=>{let alive=true;const timer=setTimeout(()=>api('/diamonds/configured?'+new URLSearchParams(Object.entries(q).filter(([,v])=>v!==''))).then(x=>{if(alive){setData(x);setError('');}}).catch(()=>{if(alive)setError('A választott paraméterekhez nem tölthető be az ár. Ellenőrizd a karátot és az admin árfolyam-beállítását.');}),180);return()=>{alive=false;clearTimeout(timer);};},[q]);
  useEffect(()=>{store.set('brightal-diamond-cart',cart);},[cart]);
  useEffect(()=>{const focus=()=>{const id=location.hash.slice(1);if(['diamond-search','diamond-cart'].includes(id)){const el=document.getElementById(id);el?.scrollIntoView({block:'start'});el?.focus({preventScroll:true});}};focus();window.addEventListener('hashchange',focus);return()=>window.removeEventListener('hashchange',focus);},[]);

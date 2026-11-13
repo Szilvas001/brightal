@@ -1,3 +1,4 @@
+import DE from "../locales/de.json";
 import {
   OPTIONS,
   singleStone, applyDesignPatch, minStoneLength, maxStoneWidth, maxStoneLength, maxStoneDepth, minBandThickness, minBandWidth, maxAccentSize,
@@ -15,7 +16,7 @@ import {
 } from "./state.mjs";
 import { GeometryClient } from './geometry-client.mjs';
 import { RingRenderer } from "./renderer.js";
-import { previewModel, unpackModel } from './progressive.mjs';
+import { unpackModel } from './progressive.mjs';
 import { modernLayout } from './contemporary.mjs';
 import { COLLECTION } from './collection.mjs';
 import { CATEGORIES, inCategory } from './categories.mjs';
@@ -87,7 +88,6 @@ const names = {
   white18: ["18K fehérarany", "18K white gold"],
   rose14: ["14K rozéarany", "14K rose gold"],
   rose18: ["18K rozéarany", "18K rose gold"],
-  platinum: ["Platina 950", "Platinum 950"],
   polished: ["Tükörfényes", "Polished"],
   satin: ["Selyemfényű", "Satin"],
   brushed: ["Szálcsiszolt", "Brushed"],
@@ -100,7 +100,6 @@ const names = {
   daylight: ["Nappali fény", "Daylight"],
   evening: ["Esti fény", "Evening"],
   lab: ["Laboratóriumi", "Lab grown"],
-  natural: ["Természetes", "Natural"],
 };
 Object.assign(names, Object.fromEntries(COLLECTION.map(c=>[c.style,c.name])));
 function Icon({ type = "gem", size = 20 }) {
@@ -242,9 +241,8 @@ function download(data, name) {
 }
 
 function RingBuilder({ lang = "hu", onQuote, onUpload }) {
-  const en = lang === "en",
-    L = (hu, eng) => (en ? eng : hu),
-    label = (k) => (names[k] ? names[k][en ? 1 : 0] : k);
+  const L = (hu, eng) => lang === "de" ? (DE[eng] ?? eng) : lang === "en" ? eng : hu,
+    label = (k) => (names[k] ? L(...names[k]) : k);
   const [history, setHistory] = useState(() => ({
     past: [],
     present: readDesign(),
@@ -326,11 +324,13 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
       engine.current = new RingRenderer(host.current, () => setError(true));
       worker.current = new GeometryClient(packed => {
         if(!engine.current)return;
-        engine.current.update(latest.current,unpackModel(packed,engine.current.studioTexture));
+        const issues=packed.engineering?.assemblyValidation?.issues||['METAL_AUDIT_FAILED'];
+        if(!issues.length){engine.current.update(latest.current,unpackModel(packed,engine.current.studioTexture));engine.current.group.visible=true;}
+        else {engine.current.disposeModel();engine.current.config=null;}
         host.current.dataset.geometryMs=packed.buildMs.toFixed(1);
-        host.current.dataset.quality='detailed';
+        host.current.dataset.quality=issues.length?'invalid':'detailed';
         host.current.dataset.renderedStyle=latest.current.style;
-        setRefining(false);setError(false);setGeometryIssues(packed.engineering?.assemblyValidation?.issues||[]);setReady(true);
+        setRefining(false);setError(false);setGeometryIssues(issues);setReady(!issues.length);
       }, error => {console.error(error);setError(true);setRefining(false);});
     } catch(e) {console.error(e);setError(true);}
     return () => {worker.current?.dispose();engine.current?.dispose();engine.current=null;clearTimeout(timer.current);};
@@ -342,8 +342,8 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
     }
     const start=performance.now();
     try {
-      // These silhouettes require Boolean geometry; render them in the worker only.
-      if(isModern(s)&&!['open','stack','signet'].includes(s.style))engine.current.update(s,previewModel(s,engine.current.studioTexture));
+      // Never show uncut preview metal or a stale design while checking seats.
+      engine.current.group.visible=false;
       host.current.dataset.previewMs=(performance.now()-start).toFixed(1);
       host.current.dataset.quality='preview';setReady(false);setRefining(true);setError(false);
       host.current.dataset.renderedStyle=s.style;
@@ -384,7 +384,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
               />
             )}
             <span>{label(value)}</span>
-            {key==='style'&&COLLECTION.find(c=>c.style===value)&&<small className="rb-style-story">{COLLECTION.find(c=>c.style===value).story[lang==='en'?1:0]}</small>}
+            {key==='style'&&COLLECTION.find(c=>c.style===value)&&<small className="rb-style-story">{L(...COLLECTION.find(c=>c.style===value).story)}</small>}
             {s[key] === value && <i aria-hidden="true">✓</i>}
           </button>
         ))}
@@ -634,7 +634,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
   const palettes = [
     {name:L('Meleg klasszikus','Warm classic'), hint:L('Sárgaarany · fehér kő · tükörfény','Yellow gold · white stone · polished'),patch:{metal:'yellow18',gemTone:'ice',finish:'polished'}},
     {name:L('Lágy romantika','Soft romance'),hint:L('Rozéarany · rózsaszín kő · selyemfény','Rose gold · pink stone · satin'),patch:{metal:'rose18',gemTone:'blush',finish:'satin'}},
-    {name:L('Hűvös karakter','Cool character'),hint:L('Platina · zafír · tükörfény','Platinum · sapphire · polished'),patch:{metal:'platinum',gemTone:'sapphire',finish:'polished'}}
+    {name:L('Hűvös karakter','Cool character'),hint:L('Fehérarany · zafír · tükörfény','White gold · sapphire · polished'),patch:{metal:'white18',gemTone:'sapphire',finish:'polished'}}
   ];
   const guides = [
     L('Kezdd egy sziluettel. A 44 alapforma közül választhatsz; a következő lépésekben a részleteket te alakítod.', 'Start with a silhouette. Choose from 44 base styles, then make the details yours.'),
@@ -919,8 +919,8 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                           "Shape, proportion and character. A diamond your way.",
                         ),
                     L(
-                      "Meleg arany, finom rozé vagy hűvös platina.",
-                      "Warm gold, soft rose or cool platinum.",
+                      "Meleg arany, finom rozé vagy hűvös fehérarany.",
+                      "Warm gold, soft rose or cool white gold.",
                     ),
                     isFashion(s)
                       ? L(
@@ -1048,13 +1048,13 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                     {select("origin", L("Eredet", "Origin"))}
                     {select(
                       "certificate",
-                      L("Kért tanúsítvány", "Requested certificate"),
+                      L("Tanúsítvány", "Certificate"),
                     )}
                   </div>
                   <p className="rb-fine">
                     {L(
-                      "A minősítés a keresett kő specifikációja. A tényleges készletet és tanúsítványt az ötvös erősíti meg.",
-                      "Grades describe your desired stone. Availability and certification are confirmed by the goldsmith.",
+                      "Minden gyémánt laborban növesztett, IGI tanúsítvánnyal. A választott minősítés elérhetőségét az ötvös erősíti meg.",
+                      "All diamonds are lab grown and IGI certified. The goldsmith confirms the availability of your chosen grades.",
                     )}
                   </p>
                 </>
@@ -1368,7 +1368,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                           ["origin", L("Eredet", "Origin")],
                           [
                             "certificate",
-                            L("Kért tanúsítvány", "Requested certificate"),
+                            L("Tanúsítvány", "Certificate"),
                           ],
                         ]),
                     ["metal", L("Nemesfém", "Metal")],
@@ -1508,7 +1508,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                 {thumbs[i] ? (
                   <img
                     src={thumbs[i]}
-                    alt={p.name[en ? 1 : 0]}
+                    alt={L(...p.name)}
                     loading="lazy"
                   />
                 ) : (
@@ -1516,7 +1516,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                 )}
               </div>
               <span>
-                {p.name[en ? 1 : 0]} <i>↗</i>
+                {L(...p.name)} <i>↗</i>
               </span>
             </button>
           ))}

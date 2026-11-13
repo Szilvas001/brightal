@@ -1,0 +1,470 @@
+{
+  "Rendelés megtekintése": {
+    "en": "View order",
+    "de": "Bestellung ansehen"
+  },
+  "A rendelésedet az e-mailben kapott egyedi hivatkozással nyithatod meg. Vásárlói fiók és regisztráció nem szükséges.": {
+    "en": "Open your order using the private link in your email. No customer account or registration is required.",
+    "de": "Öffne deine Bestellung über den privaten Link in deiner E-Mail. Kein Kundenkonto und keine Registrierung nötig."
+  },
+  "Adj meg érvényes telefonszámot.": {
+    "en": "Enter a valid phone number.",
+    "de": "Gib eine gültige Telefonnummer ein."
+  },
+  "Ez még nem megrendelés, most nem kell fizetned. Az első e-mail a kérés beérkezését igazolja. Ellenőrzésünk és az esetleges egyeztetés után a második e-mailben küldjük a látványtervet, a végleges árat és a határidőt. A privát linken átnézheted az ajánlatot, módosítást kérhetsz vagy megrendelheted a gyűrűt.": {
+    "en": "This is not an order yet and no payment is due. The first email confirms receipt. After our review and any discussion, a second email includes the design, final price and schedule. Use the private link to review the offer, request changes or order your ring.",
+    "de": "Dies ist noch keine Bestellung; du musst jetzt nichts bezahlen. Die erste E-Mail bestätigt den Eingang. Nach unserer Prüfung und gegebenenfalls Rücksprache senden wir den Entwurf, den endgültigen Preis und den Zeitplan in einer zweiten E-Mail. Über den privaten Link kannst du das Angebot prüfen, Änderungen anfragen oder den Ring bestellen."
+  },
+  "Nézd meg a Spam és a Promóciók mappát is. Ha elírtad az e-mail-címedet, vagy nem találod a levelet, keress minket az alábbi elérhetőségen, és add meg az azonosítót. Ne küldd be újra ugyanazt a kérést.": {
+    "en": "Check Spam and Promotions too. If your email address was mistyped or you cannot find our message, contact us below with your reference. Do not submit the same request again.",
+    "de": "Prüfe auch Spam und Werbung. Falls deine E-Mail-Adresse falsch war oder du die Nachricht nicht findest, kontaktiere uns unten mit deiner Referenznummer. Sende dieselbe Anfrage nicht erneut."
+  },
+  "Először tervezd meg a gyűrűdet": {
+    "en": "Design your ring first",
+    "de": "Gestalte zuerst deinen Ring"
+  },
+  "Az ajánlatkéréshez a gyűrűtervező utolsó lépéséből érkezhetsz ide.": {
+    "en": "Open this page from the final step of the ring designer to request a quote.",
+    "de": "Öffne diese Seite im letzten Schritt des Ringdesigners, um ein Angebot anzufragen."
+  },
+  "Gyűrűtervező megnyitása": {
+    "en": "Open ring designer",
+    "de": "Ringdesigner öffnen"
+  },
+  "BRIGHTAL · GYŰRŰTERVEZŐ": {
+    "en": "BRIGHTAL · RING DESIGNER",
+    "de": "BRIGHTAL · RINGDESIGNER"
+  },
+  "Saját gyűrűterved": {
+    "en": "Your ring design",
+    "de": "Dein Ringentwurf"
+  },
+  "Saját gyűrűterv": {
+    "en": "Your ring design",
+    "de": "Dein Ringentwurf"
+  },
+  " (nem kötelező)": {
+    "en": " (optional)",
+    "de": " (optional)"
+  },
+  "Megismertem az adatkezelési tájékoztatót. Az igény elküldése nem végleges megrendelés. *": {
+    "en": "I have read the Privacy Policy. Submitting this request is not a final order. *",
+    "de": "Ich habe die Datenschutzerklärung gelesen. Das Absenden dieser Anfrage ist keine verbindliche Bestellung. *"
+  },
+  "A végleges látványtervet, árat és ÁSZF-et az ajánlat megérkezése után külön hagyod jóvá.": {
+    "en": "You approve the final design, price and Terms separately after receiving the offer.",
+    "de": "Den endgültigen Entwurf, den Preis und die AGB bestätigst du gesondert nach Erhalt des Angebots."
+  },
+  "Fizetési határidő:": {
+    "en": "Payment deadline:",
+    "de": "Zahlungsfrist:"
+  },
+  "(2 munkanap).": {
+    "en": "(2 working days).",
+    "de": "(2 Arbeitstage)."
+  },
+  "Kérdésed van? Keress minket!": {
+    "en": "Questions? Contact us!",
+    "de": "Fragen? Kontaktiere uns!"
+  },
+  "Az ajánlatkéréstől a kézbesítésig bármilyen kérdés esetén írj nekünk": {
+    "en": "From your quote request to delivery, email us with any questions",
+    "de": "Von der Angebotsanfrage bis zur Lieferung kannst du uns bei Fragen schreiben"
+  },
+  " vagy hívj minket telefonon": {
+    "en": " or call us",
+    "de": " oder uns anrufen"
+  },
+  ". Hivatkozz a rendelési azonosítódra, hogy gyorsan segíthessünk.": {
+    "en": ". Include your order number so we can help quickly.",
+    "de": ". Gib deine Bestellnummer an, damit wir dir schnell helfen können."
+  },
+  "Telefon:": {
+    "en": "Phone:",
+    "de": "Telefon:"
+  },
+  "Köszönjük a fizetésedet!": {
+    "en": "Thank you for your payment!",
+    "de": "Vielen Dank für deine Zahlung!"
+  },
+  "Sikeres rendelés – fizetési tudnivalók": {
+    "en": "Order received – payment instructions",
+    "de": "Bestellung eingegangen – Zahlungshinweise"
+  },
+  "Az átutalásod beérkezését rögzítettük.": {
+    "en": "We have recorded receipt of your transfer.",
+    "de": "Wir haben den Eingang deiner Überweisung erfasst."
+  },
+  "A rendelésedet rögzítettük. A következő lépés a teljes vételár banki átutalása.": {
+    "en": "Your order is saved. Next, transfer the full purchase price by bank transfer.",
+    "de": "Deine Bestellung wurde gespeichert. Überweise als Nächstes den vollständigen Kaufpreis."
+  },
+  "Rendelési azonosító": {
+    "en": "Order number",
+    "de": "Bestellnummer"
+  },
+  "Állapot:": {
+    "en": "Status:",
+    "de": "Status:"
+  },
+  "Fizetés beérkezett": {
+    "en": "Payment received",
+    "de": "Zahlung eingegangen"
+  },
+  "Gyártás alatt": {
+    "en": "In production",
+    "de": "In Fertigung"
+  },
+  "Elkészült": {
+    "en": "Completed",
+    "de": "Fertiggestellt"
+  },
+  "Átutalásra vagy a befizetés ellenőrzésére vár": {
+    "en": "Awaiting transfer or payment verification",
+    "de": "Überweisung oder Zahlungsprüfung ausstehend"
+  },
+  ". Az elkészült állapot önmagában nem jelenti a csomag kézbesítését.": {
+    "en": ". Completed does not by itself mean that the parcel has been delivered.",
+    "de": ". Fertiggestellt bedeutet nicht automatisch, dass das Paket zugestellt wurde."
+  },
+  "Hogyan tudsz fizetni?": {
+    "en": "How to pay",
+    "de": "So bezahlst du"
+  },
+  "A fizetés banki átutalással történik. A fizetendő végösszeg a szállítási díjat is tartalmazza.": {
+    "en": "Payment is by bank transfer. The total includes shipping.",
+    "de": "Die Zahlung erfolgt per Überweisung. Der Gesamtbetrag enthält die Versandkosten."
+  },
+  "Nyisd meg a bankod mobilalkalmazását vagy internetbankját, és válassz új forintátutalást.": {
+    "en": "Open your banking app or online bank and start a new transfer in Hungarian forints.",
+    "de": "Öffne deine Banking-App oder dein Onlinebanking und starte eine Überweisung in ungarischen Forint."
+  },
+  "Másold be az alábbi kedvezményezett nevét és bankszámlaszámát.": {
+    "en": "Copy the beneficiary name and account number shown below.",
+    "de": "Kopiere den unten angegebenen Empfängernamen und die Kontonummer."
+  },
+  "Összegként pontosan": {
+    "en": "Enter exactly",
+    "de": "Gib genau"
+  },
+  "értéket adj meg.": {
+    "en": "as the amount.",
+    "de": "als Betrag ein."
+  },
+  "A közlemény mezőbe ezt írd:": {
+    "en": "Use this payment reference:",
+    "de": "Gib diesen Verwendungszweck an:"
+  },
+  ". Ez alapján azonosítjuk a befizetésedet.": {
+    "en": ". This identifies your payment.",
+    "de": ". Damit ordnen wir deine Zahlung zu."
+  },
+  "Ellenőrizd az adatokat, majd hagyd jóvá az átutalást a bankod felületén. Őrizd meg az átutalási bizonylatot.": {
+    "en": "Check the details, approve the transfer in your banking app and keep the receipt.",
+    "de": "Prüfe die Angaben, bestätige die Überweisung bei deiner Bank und bewahre den Beleg auf."
+  },
+  "Kérjük, a jóváhagyástól számított": {
+    "en": "Please transfer the full amount within",
+    "de": "Bitte überweise den vollständigen Betrag innerhalb von"
+  },
+  "2 munkanapon belül": {
+    "en": "2 working days",
+    "de": "2 Arbeitstagen"
+  },
+  "utald el a teljes összeget. A banki jóváhagyás önmagában még nem jelenti, hogy az összeg hozzánk is beérkezett.": {
+    "en": "of approval. Bank confirmation alone does not mean the money has reached us.",
+    "de": "nach der Freigabe. Die Bestätigung der Bank bedeutet noch nicht, dass das Geld bei uns eingegangen ist."
+  },
+  "Az átutaláshoz szükséges bankszámlaszámot még véglegesítjük. Kérjük, egyelőre ne indíts utalást; a fizetési adatokért írj nekünk az alábbi elérhetőségen.": {
+    "en": "We are finalising the account details. Please do not transfer yet; contact us below for payment details.",
+    "de": "Wir ergänzen noch die Bankverbindung. Bitte überweise noch nicht; kontaktiere uns unten wegen der Zahlungsdaten."
+  },
+  "Mi történik az utalás után?": {
+    "en": "What happens after the transfer?",
+    "de": "Was passiert nach der Überweisung?"
+  },
+  "Az utalás beérkezését ellenőrizzük, majd e-mailben visszaigazoljuk. Az oldal állapota az ellenőrzés után frissül; a banki utalás elküldésétől még nem vált azonnal fizetettre. Ha már utaltál, ne fizess újra. Kérdés esetén az azonosítóddal és az utalás bizonylatával keress minket.": {
+    "en": "We verify receipt and confirm it by email. This page updates after verification, not immediately when you send the transfer. If you have already paid, do not pay again. Contact us with your order number and transfer receipt if needed.",
+    "de": "Wir prüfen den Zahlungseingang und bestätigen ihn per E-Mail. Der Status wird nach der Prüfung aktualisiert, nicht sofort nach Absenden der Überweisung. Wenn du bereits überwiesen hast, bezahle nicht erneut. Bei Fragen kontaktiere uns mit Bestellnummer und Überweisungsbeleg."
+  },
+  "A gyártás a jóváhagyott terv, a fizetés beérkezése és az ötvösi ellenőrzés után kezdődhet meg. Őrizd meg a privát linket, ezen az oldalon is követheted a rendelést.": {
+    "en": "Production can begin after design approval, receipt of payment and goldsmith review. Keep your private link to follow the order here.",
+    "de": "Die Fertigung kann nach Entwurfsfreigabe, Zahlungseingang und Prüfung durch den Goldschmied beginnen. Bewahre den privaten Link auf, um deine Bestellung hier zu verfolgen."
+  },
+  "Mikor érkezik a csomagod?": {
+    "en": "When will your parcel arrive?",
+    "de": "Wann kommt dein Paket an?"
+  },
+  "Várható elkészítési idő:": {
+    "en": "Expected production time:",
+    "de": "Voraussichtliche Fertigungszeit:"
+  },
+  "Az ajánlatban egyeztetett határidő szerint": {
+    "en": "As agreed in the offer",
+    "de": "Gemäß der im Angebot vereinbarten Frist"
+  },
+  ". A határidő az összeg bankszámlánkra történő beérkezésétől indul.": {
+    "en": ". The period starts when payment reaches our account.",
+    "de": ". Die Frist beginnt mit dem Zahlungseingang auf unserem Konto."
+  },
+  "Az elkészítési idő nem tartalmazza automatikusan a kézbesítés idejét. Az átadás vagy feladás módját és határidejét az alábbi elfogadott ajánlat tartalmazza. Ha a kézbesítés napja nincs külön megadva, kérj tőlünk pontosítást.": {
+    "en": "Production time does not automatically include delivery. The accepted offer below specifies handover or dispatch details. Ask us for clarification if the delivery date is not specified.",
+    "de": "Die Fertigungszeit enthält nicht automatisch die Lieferzeit. Das angenommene Angebot unten nennt Art und Termin der Übergabe oder des Versands. Frage nach, wenn kein Zustelldatum angegeben ist."
+  },
+  "Egyeztetett szállítás:": {
+    "en": "Agreed delivery:",
+    "de": "Vereinbarte Lieferung:"
+  },
+  "Szállítási cím": {
+    "en": "Delivery address",
+    "de": "Lieferadresse"
+  },
+  "A fotód alapján készített 3D látványterv": {
+    "en": "3D design based on your photo",
+    "de": "3D-Entwurf nach deinem Foto"
+  },
+  "Fogd meg és húzd el a gyűrűt a forgatáshoz. Görgetéssel vagy két ujjal nagyíthatsz.": {
+    "en": "Drag the ring to rotate it. Scroll or use two fingers to zoom.",
+    "de": "Ziehe den Ring, um ihn zu drehen. Zoome durch Scrollen oder mit zwei Fingern."
+  },
+  "A 3D terv nem tölthető be. Frissítsd az oldalt, vagy írj nekünk.": {
+    "en": "The 3D design could not load. Refresh the page or contact us.",
+    "de": "Der 3D-Entwurf konnte nicht geladen werden. Lade die Seite neu oder kontaktiere uns."
+  },
+  "3D látványterv kirajzolása…": {
+    "en": "Rendering 3D design…",
+    "de": "3D-Entwurf wird aufgebaut …"
+  },
+  "A terv geometriai javítást igényel. Kérj módosítást a műhelytől; a megrendelés addig nem véglegesíthető.": {
+    "en": "The design needs a geometry correction. Ask the workshop for changes before finalising your order.",
+    "de": "Die Geometrie muss korrigiert werden. Bitte die Werkstatt um eine Änderung, bevor du die Bestellung abschließt."
+  },
+  "A hivatkozás érvénytelen. Nyisd meg a rendeléshez kapott e-mailben szereplő teljes linket.": {
+    "en": "Invalid link. Open the complete link in your order email.",
+    "de": "Ungültiger Link. Öffne den vollständigen Link aus deiner Bestell-E-Mail."
+  },
+  "Az ajánlat időközben megváltozott. Frissítsd az oldalt, és ellenőrizd újra.": {
+    "en": "The offer has changed. Refresh the page and review it again.",
+    "de": "Das Angebot hat sich geändert. Aktualisiere die Seite und prüfe es erneut."
+  },
+  "Az ajánlat lejárt. Kérj új ajánlatot vagy módosítást.": {
+    "en": "The offer has expired. Request a new offer or a revision.",
+    "de": "Das Angebot ist abgelaufen. Frage ein neues Angebot oder eine Änderung an."
+  },
+  "Töltsd ki a nevet és a teljes szállítási címet.": {
+    "en": "Enter your name and complete delivery address.",
+    "de": "Gib deinen Namen und die vollständige Lieferadresse an."
+  },
+  "A rendeléshez eredetileg megadott e-mail-címet használd.": {
+    "en": "Use the original email address for this order.",
+    "de": "Verwende die ursprünglich angegebene E-Mail-Adresse."
+  },
+  "A véglegesítéshez fogadd el a nyilatkozatokat.": {
+    "en": "Accept the declarations to finalise your order.",
+    "de": "Bestätige die Erklärungen, um die Bestellung abzuschließen."
+  },
+  "Ez az ajánlat jelenleg nem hagyható jóvá.": {
+    "en": "This offer cannot currently be accepted.",
+    "de": "Dieses Angebot kann derzeit nicht angenommen werden."
+  },
+  "A művelet nem sikerült. Kérjük, próbáld újra.": {
+    "en": "The action failed. Please try again.",
+    "de": "Die Aktion ist fehlgeschlagen. Bitte versuche es erneut."
+  },
+  "A 3D nézet nem tölthető be. Frissítsd az oldalt.": {
+    "en": "The 3D view could not load. Refresh the page.",
+    "de": "Die 3D-Ansicht konnte nicht geladen werden. Lade die Seite neu."
+  },
+  "A módosítási kérésedet elküldtük. Új ajánlatot küldünk e-mailben; addig ne utalj.": {
+    "en": "Your revision request was sent. We will email a new offer; do not transfer payment until then.",
+    "de": "Deine Änderungsanfrage wurde gesendet. Wir schicken ein neues Angebot per E-Mail. Überweise bis dahin nicht."
+  },
+  "A terv letöltése nem sikerült.": {
+    "en": "Could not download the design.",
+    "de": "Der Entwurf konnte nicht heruntergeladen werden."
+  },
+  "A fenti látványtervet és a megrendelésben szereplő valamennyi termékparamétert – különösen a méretet, az anyagot, a nemesfém finomságát, a kövek adatait és az esetleges gravírozást – ellenőriztem, és azokat jóváhagyom. Tudomásul veszem, hogy az ékszer ezen jóváhagyott adatok alapján kerül egyedileg legyártásra.": {
+    "en": "I have checked and approve the design above and all product parameters in this order, particularly size, material, metal fineness, stone details and any engraving. I acknowledge that the jewellery will be custom-made according to these approved details.",
+    "de": "Ich habe den obigen Entwurf und alle Produktparameter dieser Bestellung, insbesondere Größe, Material, Edelmetallfeingehalt, Steindaten und gegebenenfalls Gravur, geprüft und genehmige sie. Mir ist bekannt, dass das Schmuckstück nach diesen freigegebenen Angaben individuell gefertigt wird."
+  },
+  "Az Általános Szerződési Feltételeket elolvastam és elfogadom.": {
+    "en": "I have read and accept the Terms and Conditions.",
+    "de": "Ich habe die AGB gelesen und akzeptiere sie."
+  },
+  "A szállítást is tartalmazó teljes végösszeget elfogadom.": {
+    "en": "I accept the total price including delivery.",
+    "de": "Ich akzeptiere den Gesamtpreis einschließlich Versand."
+  },
+  "Az Adatkezelési Tájékoztatót megismertem.": {
+    "en": "I have read the Privacy Policy.",
+    "de": "Ich habe die Datenschutzerklärung gelesen."
+  },
+  "Tudomásul veszem az egyedileg gyártott ékszerre vonatkozó, az ÁSZF-ben ismertetett elállási feltételeket.": {
+    "en": "I acknowledge the withdrawal conditions for custom-made jewellery described in the Terms.",
+    "de": "Ich nehme die in den AGB beschriebenen Widerrufsbedingungen für individuell angefertigten Schmuck zur Kenntnis."
+  },
+  "A megrendelés fizetési kötelezettséggel jár.": {
+    "en": "This order entails an obligation to pay.",
+    "de": "Diese Bestellung ist zahlungspflichtig."
+  },
+  "Sikeres rendelés": {
+    "en": "Order received",
+    "de": "Bestellung eingegangen"
+  },
+  "Látványterv jóváhagyása és megrendelés": {
+    "en": "Approve design and place order",
+    "de": "Entwurf freigeben und bestellen"
+  },
+  "Megérkezett az elképzelésed": {
+    "en": "We received your idea",
+    "de": "Deine Idee ist angekommen"
+  },
+  "A jóváhagyásodat és a szállítási adataidat rögzítettük.": {
+    "en": "Your approval and delivery details are saved.",
+    "de": "Deine Freigabe und Lieferdaten wurden gespeichert."
+  },
+  "Szállítás:": {
+    "en": "Delivery:",
+    "de": "Lieferung:"
+  },
+  "Az ajánlat egyeztetés alatt áll. A végleges látványtervet és ajánlatot e-mailben küldjük. Most még nincs fizetési kötelezettséged.": {
+    "en": "Your offer is under review. We will email the final design and offer. No payment is due yet.",
+    "de": "Dein Angebot wird abgestimmt. Den endgültigen Entwurf und das Angebot senden wir per E-Mail. Du musst jetzt noch nichts bezahlen."
+  },
+  "3D látványterv betöltése…": {
+    "en": "Loading 3D design…",
+    "de": "3D-Entwurf wird geladen …"
+  },
+  "A gyűrűd részletei": {
+    "en": "Your ring details",
+    "de": "Details zu deinem Ring"
+  },
+  "Ékszer vételára": {
+    "en": "Jewellery price",
+    "de": "Schmuckpreis"
+  },
+  "Szállítási díj": {
+    "en": "Shipping fee",
+    "de": "Versandkosten"
+  },
+  "Fizetendő végösszeg": {
+    "en": "Total payable",
+    "de": "Zu zahlender Gesamtbetrag"
+  },
+  "Várható gyártási idő": {
+    "en": "Expected production time",
+    "de": "Voraussichtliche Fertigungszeit"
+  },
+  "Várható átadás / feladás": {
+    "en": "Expected handover / dispatch",
+    "de": "Voraussichtliche Übergabe / Versand"
+  },
+  "Szállítás módja": {
+    "en": "Delivery method",
+    "de": "Versandart"
+  },
+  "Ajánlat érvényessége": {
+    "en": "Offer valid until",
+    "de": "Angebot gültig bis"
+  },
+  "Előbb ellenőrizd az ajánlatot": {
+    "en": "Review the offer first",
+    "de": "Prüfe zuerst das Angebot"
+  },
+  "A megtekintés nem jelent megrendelést. Ellenőrizd a tervet, a gyűrű méretét, anyagát, köveit, a szállítással együtt fizetendő végösszeget és a határidőket. A gyártási idő és a kézbesítés ideje külön értendő. Ha bármi hiányzik vagy nem megfelelő, az alábbi mezőben kérj módosítást.": {
+    "en": "Viewing is not ordering. Check the design, ring size, material, stones, total including delivery and deadlines. Production and delivery times are separate. Request changes below if anything is missing or incorrect.",
+    "de": "Das Ansehen ist keine Bestellung. Prüfe Entwurf, Ringgröße, Material, Steine, Gesamtpreis einschließlich Versand und Fristen. Fertigungs- und Lieferzeit sind getrennt zu betrachten. Frage unten Änderungen an, falls etwas fehlt oder nicht stimmt."
+  },
+  "Ha mindent rendben találtál, töltsd ki a szállítási adatokat és fogadd el a nyilatkozatokat. A „Megrendelem – fizetési kötelezettséggel” gomb hozza létre a megrendelést. Ezután megmutatjuk a banki átutalás adatait; itt nem történik automatikus pénzlevonás.": {
+    "en": "If everything is correct, enter your delivery details and accept the declarations. “Order with obligation to pay” places your order. We then display the bank transfer details; no money is deducted automatically here.",
+    "de": "Wenn alles stimmt, gib deine Lieferdaten ein und bestätige die Erklärungen. Mit „Zahlungspflichtig bestellen“ gibst du die Bestellung auf. Danach zeigen wir die Überweisungsdaten; hier wird kein Geld automatisch abgebucht."
+  },
+  "Szállítási adatok": {
+    "en": "Delivery details",
+    "de": "Lieferdaten"
+  },
+  "Teljes név": {
+    "en": "Full name",
+    "de": "Vollständiger Name"
+  },
+  "Ország": {
+    "en": "Country",
+    "de": "Land"
+  },
+  "Irányítószám": {
+    "en": "Postal code",
+    "de": "Postleitzahl"
+  },
+  "Város / település": {
+    "en": "City / town",
+    "de": "Ort"
+  },
+  "Utca": {
+    "en": "Street",
+    "de": "Straße"
+  },
+  "Házszám": {
+    "en": "House number",
+    "de": "Hausnummer"
+  },
+  "Emelet, ajtó (nem kötelező)": {
+    "en": "Floor, apartment (optional)",
+    "de": "Etage, Wohnung (optional)"
+  },
+  "E-mail-cím": {
+    "en": "Email address",
+    "de": "E-Mail-Adresse"
+  },
+  "A megadott név és cím a számlázási cím is. Eltérő számlázási adatokhoz kérj egyeztetést a véglegesítés előtt.": {
+    "en": "This name and address are also used for billing. Contact us before finalising if your billing details differ.",
+    "de": "Dieser Name und diese Adresse werden auch für die Rechnung verwendet. Bei abweichenden Rechnungsdaten kontaktiere uns vor dem Abschluss."
+  },
+  "ÁSZF megnyitása": {
+    "en": "Open Terms",
+    "de": "AGB öffnen"
+  },
+  "ÁSZF letöltése": {
+    "en": "Download Terms",
+    "de": "AGB herunterladen"
+  },
+  "Adatkezelési tájékoztató": {
+    "en": "Privacy Policy",
+    "de": "Datenschutzerklärung"
+  },
+  "A megrendeléshez töltsd ki az összes kötelező címadatot, használd az ajánlatkéréskor megadott e-mail-címedet és jelöld be valamennyi nyilatkozatot.": {
+    "en": "To order, complete all required address fields, use the email from your quote request and accept every declaration.",
+    "de": "Fülle alle Pflichtfelder der Adresse aus, verwende die E-Mail-Adresse deiner Angebotsanfrage und bestätige alle Erklärungen."
+  },
+  " A 3D látványterv betöltését is meg kell várnod. Ha nem jelenik meg, frissítsd az oldalt, vagy kérj segítséget; addig ne rendeld meg.": {
+    "en": " Wait for the 3D design to load too. If it does not appear, refresh or ask for help; do not order until then.",
+    "de": " Warte auch, bis der 3D-Entwurf geladen ist. Falls er nicht erscheint, lade die Seite neu oder bitte um Hilfe. Bestelle bis dahin nicht."
+  },
+  "Megrendelés rögzítése…": {
+    "en": "Saving order…",
+    "de": "Bestellung wird gespeichert …"
+  },
+  "Megrendelem – fizetési kötelezettséggel": {
+    "en": "Order with obligation to pay",
+    "de": "Zahlungspflichtig bestellen"
+  },
+  "Az ajánlat lejárt. Kérj frissített ajánlatot az alábbi mezőben.": {
+    "en": "The offer has expired. Request an updated offer below.",
+    "de": "Das Angebot ist abgelaufen. Frage unten ein aktualisiertes Angebot an."
+  },
+  "Módosítást kérek": {
+    "en": "Request changes",
+    "de": "Änderungen anfragen"
+  },
+  "Írd le, min változtatnál, vagy kérj friss ajánlatot, ha a korábbi lejárt. A kérés elküldése után a jelenlegi ajánlat már nem fogadható el: egyeztetünk veled, majd új ajánlatot küldünk e-mailben. Addig ne indíts utalást.": {
+    "en": "Describe your changes or request a fresh offer if it has expired. Sending this request makes the current offer unavailable for acceptance. We will discuss it with you and email a new offer. Do not transfer payment until then.",
+    "de": "Beschreibe deine Änderungen oder frage ein neues Angebot an, falls das bisherige abgelaufen ist. Nach dem Absenden kann das aktuelle Angebot nicht mehr angenommen werden. Wir stimmen uns mit dir ab und senden ein neues Angebot per E-Mail. Überweise bis dahin nicht."
+  },
+  "Kért módosítások": {
+    "en": "Requested changes",
+    "de": "Gewünschte Änderungen"
+  },
+  "Módosítási kérés elküldése": {
+    "en": "Send revision request",
+    "de": "Änderungsanfrage senden"
+  }
+}

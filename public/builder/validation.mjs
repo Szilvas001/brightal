@@ -24,3 +24,22 @@ export function validateMesh(geometry) {
  const boundaryEdges=[...edges.values()].filter(x=>x.count!==2).length,inconsistentEdges=[...edges.values()].filter(x=>x.balance!==0).length;
  return {valid:nonFinite===0&&degenerate===0&&boundaryEdges===0&&inconsistentEdges===0&&components===1&&volume>0,vertices:vertices.size,triangles:count/3,nonFinite,degenerate,boundaryEdges,inconsistentEdges,components,signedVolume:volume};
 }
+
+// Float32 conversion can collapse a Boolean sliver into two exactly coincident,
+// oppositely wound triangles. Cancel only those pairs; same-winding duplicates
+// remain invalid and are caught by validateMesh. No vertex is moved.
+export function removeOppositeCoincidentTriangles(geometry) {
+ const p=geometry.attributes.position,idx=geometry.index,faces=new Map();
+ for(let i=0;i<(idx?idx.count:p.count);i+=3){
+  const raw=[0,1,2].map(k=>idx?idx.getX(i+k):i+k);
+  const keys=raw.map(k=>[p.getX(k),p.getY(k),p.getZ(k)].join(','));
+  if(new Set(keys).size<3)continue;
+  const sorted=[...keys].sort(),key=sorted.join('|');
+  const start=keys.indexOf(sorted[0]),sign=keys[(start+1)%3]===sorted[1]?1:-1;
+  const pending=faces.get(key)||[],opposite=pending.findIndex(f=>f.sign!==sign);
+  if(opposite>=0)pending.splice(opposite,1);else pending.push({raw,sign});
+  faces.set(key,pending);
+ }
+ geometry.setIndex([...faces.values()].flatMap(list=>list.flatMap(f=>f.raw)));
+ return geometry;
+}

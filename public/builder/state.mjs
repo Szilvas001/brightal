@@ -79,13 +79,12 @@ export const OPTIONS = {
     "white18",
     "rose14",
     "rose18",
-    "platinum",
   ],
   finish: ["polished", "satin", "brushed"],
   color: ["D", "E", "F", "G", "H", "I", "J"],
   clarity: ["FL", "IF", "VVS1", "VVS2", "VS1", "VS2", "SI1"],
-  certificate: ["GIA", "IGI", "HRD"],
-  origin: ["lab", "natural"],
+  certificate: ["IGI"],
+  origin: ["lab"],
   accents: ["none", "pave", "channel"],
   profile: ["round", "flat", "knife"],
   light: ["studio", "daylight", "evening"],
@@ -119,13 +118,13 @@ export const OPTIONS = {
   sideMode: ["none", "pair", "cluster", "five"],
   setting: ["claw", "bezel", "doubleclaw"],
   orientation: ["north", "east"],
-  headMetal: ["match", "platinum", "yellow18", "rose18"],
+  headMetal: ["match", "white18", "yellow18", "rose18"],
   coverage: ["shoulders", "half", "full"],
   halo: ["single", "double"],
   engravingFont: ["serif", "script", "modern"],
   face: ["oval", "cushion", "round"],
   inlay: ["metal", "onyx", "ivory", "teal", "coral"],
-  secondaryMetal: ["platinum", "yellow18", "rose18"],
+  secondaryMetal: ["white18", "yellow18", "rose18"],
 };
 export const DEFAULT = Object.freeze({
   style: "solitaire",
@@ -171,7 +170,7 @@ export const DEFAULT = Object.freeze({
   faceSize: 7,
   face: "oval",
   inlay: "metal",
-  secondaryMetal: "platinum",
+  secondaryMetal: "white18",
   mixedMetal: false,
   dailyCount: 5,
   dailyCarat: .1,
@@ -189,6 +188,10 @@ export const DEFAULT = Object.freeze({
 });
 export function normalize(input = {}) {
   if (!input || typeof input !== "object" || Array.isArray(input)) input = {};
+  // Preserve the white-metal appearance of older saved platinum designs.
+  input = { ...input };
+  for (const key of ["metal", "headMetal", "secondaryMetal"])
+    if (input[key] === "platinum") input[key] = "white18";
   const s = { ...DEFAULT };
   for (const [key, choices] of Object.entries(OPTIONS))
     if (choices.includes(input[key])) s[key] = input[key];
@@ -320,13 +323,13 @@ const LEGACY_PRESETS = [
   ...[
     ['Selyemfény', 'Silk diamonds', 'ribbon', 'oval', 'rose18'],
     ['Fénylépcső', 'Crescendo', 'graduated', 'round', 'yellow18'],
-    ['Horizont', 'Horizon', 'eastwest', 'emerald', 'platinum'],
+    ['Horizont', 'Horizon', 'eastwest', 'emerald', 'white18'],
     ['Ritmus', 'Diamond rhythm', 'alternating', 'oval', 'yellow18'],
     ['Fénykorona', 'Light crown', 'crown', 'pear', 'rose18'],
   ].map(([hu,en,style,shape,metal])=>({name:[hu,en],config:{...DEFAULT,style,shape,metal,dailyCarat:.1,dailyCount:5,setting:'bezel',sideShape:'round',width:2.5}})),
   {name:['Mindennapi ragyogás','Everyday light'],config:{...DEFAULT,style:'bezelrow',setting:'bezel',dailyCount:5,dailyCarat:.1,metal:'yellow18'}},
   {name:['Csillagtérkép','Star map'],config:{...DEFAULT,style:'scatter',dailyCount:5,shape:'round',dailyCarat:.08,alternateGems:true,sideTone:'sapphire',width:3.2}},
-  {name:['Diamond V','Diamond V'],config:{...DEFAULT,style:'chevron',dailyCount:5,dailyCarat:.07,sculpt:1.6,metal:'platinum'}},
+  {name:['Diamond V','Diamond V'],config:{...DEFAULT,style:'chevron',dailyCount:5,dailyCarat:.07,sculpt:1.6,metal:'white18'}},
   {
     name: ["Liquid Wave", "Liquid Wave"],
     config: {
@@ -369,7 +372,7 @@ const LEGACY_PRESETS = [
       gap: 0.7,
       mixedMetal: true,
       metal: "yellow18",
-      secondaryMetal: "platinum",
+      secondaryMetal: "white18",
     },
   },
   {
@@ -391,7 +394,7 @@ const LEGACY_PRESETS = [
       sculpt: 1.4,
       gap: 1.1,
       width: 2.4,
-      metal: "platinum",
+      metal: "white18",
       mixedMetal: true,
     },
   },
@@ -401,7 +404,7 @@ const LEGACY_PRESETS = [
       ...DEFAULT,
       style: "halo",
       shape: "round",
-      metal: "platinum",
+      metal: "white18",
       accents: "pave",
       carat: 2,
     },
@@ -448,7 +451,7 @@ const LEGACY_PRESETS = [
       shape: "cushion",
       sideMode: "pair",
       sideCarat: 0.4,
-      metal: "platinum",
+      metal: "white18",
     },
   },
   {
@@ -470,7 +473,7 @@ const LEGACY_PRESETS = [
       style: "split",
       shape: "radiant",
       setting: "bezel",
-      headMetal: "platinum",
+      headMetal: "white18",
       accents: "pave",
       width: 3,
     },
