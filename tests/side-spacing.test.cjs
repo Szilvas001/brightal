@@ -1,5 +1,5 @@
 const test=require('node:test'),assert=require('node:assert/strict');
-async function setup(){return {...await import('../public/builder/state.mjs'),...await import('../public/builder/model.mjs'),T:await import('three')};}
+async function setup(){await(await import('../public/builder/kernel.mjs')).initKernel();return {...await import('../public/builder/state.mjs'),...await import('../public/builder/model.mjs'),T:await import('three')};}
 function positions(A,c){const m=A.buildRing(A.normalize(c),null);m.group.updateMatrixWorld(true);const p=m.gems.map(g=>g.getWorldPosition(new A.T.Vector3()));const gs=new Set(),ms=new Set();m.group.traverse(o=>{if(o.geometry)gs.add(o.geometry);if(o.material)ms.add(o.material)});gs.forEach(g=>g.dispose());ms.forEach(m=>m.dispose());return p;}
 test('side spacing moves actual stones independently and keeps old defaults',async()=>{
  const A=await setup();assert.equal(A.normalize({}).sideMainGap,0);assert.equal(A.normalize({sideMainGap:99,sideSpacing:-1}).sideMainGap,1);assert.equal(A.normalize({sideSpacing:-1}).sideSpacing,0);

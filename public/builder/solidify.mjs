@@ -37,10 +37,27 @@ export function unifyLegacy(model) {
   });
   let body=own(Manifold.union(solids));
   for(const o of gems){const p=o.geometry.attributes.position,verts=[];const center=o.getWorldPosition(new T.Vector3());for(let i=0;i<p.count;i++){const v=new T.Vector3().fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld);v.add(v.clone().sub(center).normalize().multiplyScalar(.008));verts.push(v.toArray());}body=own(body.subtract(own(Manifold.hull(verts))));}
+  // Small pavé/halo seats need an opening on the visible crown side. An
+  // entirely enclosed subtraction is a negative cavity shell, not removable
+  // debris; deleting it would silently fill the gemstone volume back in.
+  const shells=body.decompose();
+  const enclosed=shells.filter(p=>p.volume()<-.000000001).map(p=>p.boundingBox());
+  shells.forEach(p=>p.delete());
+  for(const o of gems.filter(g=>!g.userData.hero)){
+    const center=o.getWorldPosition(new T.Vector3()).toArray();
+    if(!enclosed.some(box=>center.every((v,i)=>v>=box.min[i]-.01&&v<=box.max[i]+.01)))continue;
+    const p=o.geometry.attributes.position,verts=[];
+    const scale=o.getWorldScale(new T.Vector3()).y;
+    for(let i=0;i<p.count;i++)if(Math.abs(p.getY(i))<.03){
+      for(const y of [.018,.22/scale])
+        verts.push(new T.Vector3(p.getX(i)*1.01,y,p.getZ(i)*1.01).applyMatrix4(o.matrixWorld).toArray());
+    }
+    if(verts.length)body=own(body.subtract(own(Manifold.hull(verts))));
+  }
   const parts=body.decompose();parts.sort((a,b)=>b.volume()-a.volume());
   // Exact cavity cuts may leave minute isolated claw-tip slivers. Remove only
   // sub-0.02 scene-unit^3 debris; any structural island fails validation.
-  if(body.status()!=='NoError'||body.isEmpty()||parts.slice(1).some(p=>p.volume()>.02)){parts.forEach(p=>p.delete());throw new Error('Assembly is not a single metal solid');}
+  if(body.status()!=='NoError'||body.isEmpty()||parts.slice(1).some(p=>p.volume()>.02||p.volume()<-.000000001)){const volumes=parts.map(p=>Number((p.volume()/(.8**3)).toFixed(6)));parts.forEach(p=>p.delete());throw new Error('Assembly is not a single metal solid; component volumes mm3: '+volumes.join(', '));}
   if(parts.length>1){body=own(parts[0]);parts.slice(1).forEach(p=>p.delete());}else parts.forEach(p=>p.delete());
   // Collapse sub-micron Boolean slivers before Float32 export. This tolerance
   // is 800 times smaller than the stone clearance and independently rechecked.
@@ -49,7 +66,17 @@ export function unifyLegacy(model) {
   geo.setAttribute('position',new T.Float32BufferAttribute(xyz,3));geo.setIndex(Array.from(mesh.triVerts));geo.computeVertexNormals();
   removeOppositeCoincidentTriangles(geo);
   geo.computeVertexNormals();
-  const checked=validateMesh(removeCollapsedTriangles(geo));if(!checked.valid){geo.dispose();throw new Error('Triangle validation failed: '+JSON.stringify(checked));}
+  let checked=validateMesh(removeCollapsedTriangles(geo));
+  if(!checked.valid&&checked.nonFinite===0&&checked.components===1){
+    // Float32 exports can separate the ends of a collapsed edge by one ULP.
+    // Snap only as a fallback, at a 0.000001 scene-unit grid (0.00000125 mm).
+    // Keep original indices for material provenance, and recheck every surface.
+    const p=geo.attributes.position,grid=.000001;
+    for(let i=0;i<p.count;i++)p.setXYZ(i,Math.round(p.getX(i)/grid)*grid,Math.round(p.getY(i)/grid)*grid,Math.round(p.getZ(i)/grid)*grid);
+    removeOppositeCoincidentTriangles(geo);removeCollapsedTriangles(geo);geo.computeVertexNormals();
+    checked=validateMesh(geo);
+  }
+  if(!checked.valid){geo.dispose();throw new Error('Triangle validation failed: '+JSON.stringify(checked));}
   const material=metals[0].material.clone();
   if(sourceMaterials.length>1) {
    // Preserve the alloy of each original face through the Boolean union.

@@ -53,7 +53,7 @@ test('all metal, finish, gemstone palette and light options reach the finished m
  const A=await setup();let checks=0;
  // Detailed finish/material checks for every starting style; the expensive
  // Boolean geometry is shared across material-only specifications.
- for(const {config:s}of A.PRESETS){for(const finish of A.OPTIONS.finish){const m=A.buildFinishedRing(A.normalize({...s,finish}));const metals=[];m.group.traverse(o=>{if(o.isMesh&&!o.userData.gem)metals.push(o.material);});assert.ok(metals.every(m=>m.roughness===(A.isModern(s)?{polished:.13,satin:.3,brushed:.4}:{polished:.105,satin:.29,brushed:.4})[finish]),s.style+'/'+finish);dispose(m);checks++;}
+ for(const {config:s}of A.PRESETS){for(const finish of A.OPTIONS.finish){const m=A.buildFinishedRing(A.normalize({...s,finish}));assert.equal(m.engineering.assemblyValidation.valid,true,JSON.stringify({style:s.style,finish,reason:m.engineering.reason}));const metals=[];m.group.traverse(o=>{if(o.isMesh&&!o.userData.gem)metals.push(o.material);});assert.ok(metals.every(m=>m.roughness===(A.isModern(s)?{polished:.13,satin:.3,brushed:.4}:{polished:.105,satin:.29,brushed:.4})[finish]),s.style+'/'+finish);dispose(m);checks++;}
   for(const key of ['metal','gemTone','light','color','clarity','origin','certificate'])for(const value of A.OPTIONS[key]){const c=A.normalize({...s,[key]:value});assert.equal(c[key],value,s.style+'/'+key);assert.deepEqual(A.normalize(JSON.parse(JSON.stringify(c))),c);
    if(['metal','gemTone','light','color'].includes(key)){
     const model=A.previewModel(c,null),T=await import('three');

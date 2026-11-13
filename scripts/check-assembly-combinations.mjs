@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {createHash} from 'node:crypto';
 import {PRESETS} from '../public/builder/catalog.mjs';
 import {normalize,OPTIONS,isModern} from '../public/builder/state.mjs';
 import {buildRing} from '../public/builder/model.mjs';
@@ -9,7 +10,10 @@ import {initKernel} from '../public/builder/kernel.mjs';
 // Diagnostic matrix, not a manufacturing certificate. --finished also checks
 // the final metal and finger opening. Independent shards make it practical to
 // run the same matrix on multiple CPU cores without changing its coverage.
-const finished=process.argv.includes('--finished');
+const finished=process.argv.includes('--finished'),supports=process.argv.includes('--supports');
+const sourceHash=createHash('sha256');
+for(const file of ['model.mjs','solidify.mjs','validation.mjs','assembly-audit.mjs','finished-model.mjs','contemporary.mjs','state.mjs','optics.mjs'])sourceHash.update(fs.readFileSync(new URL('../public/builder/'+file,import.meta.url)));
+const geometryRevision=sourceHash.digest('hex');
 const [shard,shards]=(process.argv.find(a=>a.startsWith('--shard='))||'--shard=0/1')
  .split('=')[1].split('/').map(Number);
 if(!Number.isInteger(shard)||!Number.isInteger(shards)||shard<0||shard>=shards)
@@ -17,9 +21,9 @@ if(!Number.isInteger(shard)||!Number.isInteger(shards)||shard<0||shard>=shards)
 const output=process.env.ASSEMBLY_AUDIT_OUTPUT||'/tmp/brightal-assembly-combinations.json';
 let total=0;
 const failures=[];
-const save=completed=>fs.writeFileSync(output,JSON.stringify({total,finished,shard,shards,completed,failures}));
+const save=completed=>fs.writeFileSync(output,JSON.stringify({total,finished,supports,geometryRevision,shard,shards,completed,failures}));
 await initKernel();
-for(const {config} of PRESETS.filter((_,i)=>i%shards===shard)){
+for(const {config} of PRESETS.filter((p,i)=>i%shards===shard&&(!supports||!isModern(p.config)))){
  const variants=[];
  for(const shape of OPTIONS.shape)
   for(const setting of isModern(config)?['bezel']:OPTIONS.setting)
@@ -32,14 +36,19 @@ for(const {config} of PRESETS.filter((_,i)=>i%shards===shard)){
     hiddenHalo:true,sideMode:'cluster',halo:'double'});
  for(const variant of variants){
   const c=normalize({...config,...variant});
-  const model=finished?buildFinishedRing(c):buildRing(c,null);
+  let model;
   try{
-   const audit=finished?model.engineering.assemblyValidation:auditStoneCollisions(model);
+   model=finished?buildFinishedRing(c):buildRing(c,null);
+   const blocked=(model.contacts||[]).filter(c=>!c.support.userData.stoneClearanceValid).length;
+   const audit=finished?model.engineering.assemblyValidation:supports?{valid:blocked===0,issues:blocked?['SUPPORT_INTERSECTS_STONE']:[]}:auditStoneCollisions(model);
    if(!audit.valid)failures.push({config:c,collisions:audit.collisions||audit.stones?.collisions,
     issues:audit.issues,reason:model.engineering?.reason});
-   total++;
-   if(total%15===0){save(false);console.log('PROGRESS',total,failures.length);}
-  }finally{model.group.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}
+  }catch(error){failures.push({config:c,issues:['BUILD_FAILED'],reason:error.message});}
+  finally{model?.group.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}
+  total++;
+  globalThis.gc?.();
+  save(false);
+  if(total%15===0)console.log('PROGRESS',total,failures.length);
  }
  console.log('DONE',config.style,total,failures.length);
 }

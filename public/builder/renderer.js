@@ -147,6 +147,7 @@ export class RingRenderer {
     this.disposeModel();
     const model = prepared || buildRing(s, this.studioTexture);
     this.group.add(model.group);
+    this.modelBounds=new T.Box3().setFromObject(model.group);
     this.gems = model.gems;
     const { radius, width } = model;
     const mesh = (geometry, material) => {
@@ -203,6 +204,7 @@ export class RingRenderer {
     this.key.color.set(s.light === "evening" ? 0xffd7ae : 0xffffff);
     this.renderer.toneMappingExposure = s.light === "evening" ? 0.95 : 1.15;
     this.shadow.position.y = -radius - 0.75;
+    if(!this.framed){this.view("hero");this.framed=true;}
     this.dirty = true;
   }
   frame(time) {
@@ -250,14 +252,21 @@ export class RingRenderer {
       front: [0, 4, 36],
       side: [36, 7, 0],
     }[name] || [18, 17, 25];
-    this.camera.position.set(...v);
-    this.controls.target.set(0, 1, 0);
+    const sphere=this.modelBounds?.getBoundingSphere(new T.Sphere());
+    const center=sphere?.center||new T.Vector3(0,1,0);
+    const vertical=T.MathUtils.degToRad(this.camera.fov)/2;
+    const horizontal=Math.atan(Math.tan(vertical)*this.camera.aspect);
+    const distance=sphere?sphere.radius/Math.sin(Math.min(vertical,horizontal))*1.12:new T.Vector3(...v).length();
+    this.controls.maxDistance=Math.max(55,distance*1.5);
+    this.camera.far=Math.max(150,distance+(sphere?.radius||10)*3);this.camera.updateProjectionMatrix();
+    this.controls.target.copy(center);
+    this.camera.position.copy(center).add(new T.Vector3(...v).normalize().multiplyScalar(distance));
     this.controls.update();
     this.dirty = true;
   }
   zoom(factor) {
     const d = this.camera.position.clone().sub(this.controls.target);
-    d.setLength(T.MathUtils.clamp(d.length() * factor, 3, 55));
+    d.setLength(T.MathUtils.clamp(d.length() * factor, 3, this.controls.maxDistance));
     this.camera.position.copy(this.controls.target).add(d);
     this.dirty = true;
   }

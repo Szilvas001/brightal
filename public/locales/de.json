@@ -701,5 +701,6 @@
   "Enter the complete billing and delivery addresses.": "Bitte gib die vollständige Rechnungs- und Lieferadresse an.",
   "Pre-fulfilment review and contract acceptance are required.": "Prüfung und Vertragsannahme vor Ausführung erforderlich.",
   "The offer cannot change while payment is in progress.": "Während einer laufenden Zahlung kann das Angebot nicht geändert werden.",
-  "The design needs geometry corrections. Change the stone dimensions or setting and try again.": "Die Geometrie des Entwurfs muss korrigiert werden. Ändere die Steinmaße oder die Fassung und versuche es erneut."
+  "The design needs geometry corrections. Change the stone dimensions or setting and try again.": "Die Geometrie des Entwurfs muss korrigiert werden. Ändere die Steinmaße oder die Fassung und versuche es erneut.",
+  "A support route is obstructed by a stone. Change the stone size or spacing.": "Ein Stein versperrt den Verlauf einer Stütze. Ändere die Steingröße oder den Abstand."
 }

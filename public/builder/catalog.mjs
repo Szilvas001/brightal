@@ -16,6 +16,6 @@ export function thumbnailUrl(config) {
   // Zero spacing preserves the previous geometry and its cached thumbnail.
   if(!design.sideMainGap)delete design.sideMainGap;
   if(!design.sideSpacing)delete design.sideSpacing;
-  for(const ch of JSON.stringify(['thumbnail-6',MODEL_REVISION,design]))hash=Math.imul(hash^ch.charCodeAt(0),16777619)>>>0;
+  for(const ch of JSON.stringify(['thumbnail-7',MODEL_REVISION,design]))hash=Math.imul(hash^ch.charCodeAt(0),16777619)>>>0;
   return `/builder/thumbnails/${config.style}-${hash.toString(16)}.webp`;
 }

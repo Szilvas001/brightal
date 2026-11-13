@@ -11,7 +11,7 @@ for(const [i,p] of PRESETS.entries()) {
  if(requestedStyle>=0&&p.config.style!==process.argv[requestedStyle+1])continue;
  const destination='public'+thumbnailUrl(p.config);
  if(process.argv.includes('--missing')&&fs.existsSync(destination))continue;
- const model=buildFinishedRing(p.config);model.group.updateMatrixWorld(true);
+ const model=buildFinishedRing(p.config);if(!model.engineering.assemblyValidation.valid)throw new Error(`Invalid thumbnail geometry: ${p.config.style}: ${model.engineering.reason||model.engineering.assemblyValidation.issues.join(",")}`);model.group.updateMatrixWorld(true);
  const camera=new T.PerspectiveCamera(32,1.2,.1,150);camera.position.set(22,19,31);camera.lookAt(0,1.5,0);camera.updateMatrixWorld();
  const faces=[];const light=new T.Vector3(-.4,.8,1).normalize();
  model.group.traverse(o=>{if(!o.isMesh)return;const g=o.geometry,pos=g.attributes.position,idx=g.index,count=idx?idx.count:pos.count;
@@ -24,5 +24,5 @@ for(const [i,p] of PRESETS.entries()) {
  faces.sort((a,b)=>a.z-b.z);
  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 250"><rect width="300" height="250" fill="#fcfaf7"/>${faces.map(f=>`<polygon points="${f.path}" fill="${f.fill}"/>`).join('')}</svg>`;
  await sharp(Buffer.from(svg)).webp({quality:86}).toFile(destination);
- model.group.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});console.log(i,p.config.style);
+ model.group.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});console.log(i,p.config.style);globalThis.gc?.();
 }

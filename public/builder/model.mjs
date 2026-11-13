@@ -1,4 +1,5 @@
 import * as T from "three";
+import {getKernel} from "./kernel.mjs";
 import {spacedOutline} from "./stone-spacing.mjs";
 import { buildContemporary, MODERN_STYLES } from './contemporary.mjs';
 import { DAILY_STYLES } from "./state.mjs";
@@ -33,7 +34,7 @@ export function buildRing(s, environment) {
   const group = new T.Group(),
     gems = [],
     materials = new Map();
-  const mountings = [], contacts = [], bands = [];
+  const mountings = [], contacts = [], bands = [], stonePlanes = new Map();
   const metalFor = (key) => {
     if (!materials.has(key))
       materials.set(
@@ -64,23 +65,29 @@ export function buildRing(s, environment) {
     o.scale.setScalar(Math.max(.16,r));
     return o;
   };
-  const tube = (points, r, parent = group, mat = metal, closed = false) =>
-    mesh(
-      new T.TubeGeometry(
-        new T.CatmullRomCurve3(
-          points.map((p) => new T.Vector3(...p)),
-          closed,
-          "centripetal",
-        ),
-        Math.max(24, points.length * 3),
-        Math.max(.16,r),
-        12,
-        closed,
-      ),
-      mat,
-      null,
-      parent,
-    );
+  const tube = (points, r, parent = group, mat = metal, closed = false) => {
+    r=Math.max(.16,r);
+    const vectors=points.map(p=>new T.Vector3(...p));
+    if(closed)return mesh(new T.TubeGeometry(new T.CatmullRomCurve3(vectors,true,'centripetal'),Math.max(24,points.length*3),r,12,true),mat,null,parent);
+    // Construct open rods from unions of closed rounded segments. Sweeping a
+    // thick tube around a tight bend can invert its inner surface even though
+    // its edge counts still look closed after a Boolean operation.
+    const {Manifold}=getKernel(),owned=[],own=o=>(owned.push(o),o),parts=[];
+    try {
+      for(const point of vectors)parts.push(own(own(Manifold.sphere(r,12)).translate(point.toArray())));
+      for(let i=1;i<vectors.length;i++){
+        const delta=vectors[i].clone().sub(vectors[i-1]);if(delta.length()<1e-8)continue;
+        const q=new T.Quaternion().setFromUnitVectors(new T.Vector3(0,0,1),delta.clone().normalize());
+        const transform=new T.Matrix4().makeRotationFromQuaternion(q).setPosition(vectors[i-1]);
+        parts.push(own(own(Manifold.cylinder(delta.length(),r,r,12)).transform(transform.elements)));
+      }
+      const solid=own(Manifold.union(parts)),data=solid.getMesh(),geo=new T.BufferGeometry(),xyz=[];
+      for(let i=0;i<data.vertProperties.length;i+=data.numProp)xyz.push(...data.vertProperties.slice(i,i+3));
+      geo.setAttribute('position',new T.Float32BufferAttribute(xyz,3));geo.setIndex(Array.from(data.triVerts));geo.computeVertexNormals();
+      const path=new T.CurvePath();for(let i=1;i<vectors.length;i++)path.add(new T.LineCurve3(vectors[i-1],vectors[i]));geo.parameters={path};
+      return mesh(geo,mat,null,parent);
+    }finally{owned.reverse().forEach(o=>o.delete());}
+  };
   const thick = s.thickness * .4,
     radius = (s.size / (2 * Math.PI)) * .8 + thick,
     width = s.width * .8,
@@ -170,14 +177,31 @@ export function buildRing(s, environment) {
     o.userData.gem = true;
     o.userData.tone = tone;
     o.userData.hero = hero;
+    stonePlanes.set(o,planes);
     gems.push(o);
     return o;
   };
   const seat = (shape, scale, parent, y = -0.25, r = 0.12) => {
+    r=Math.max(.16,r);
     const points = Array.from({ length: 64 }, (_, i) => {
       const [x, z] = outline(shape, (i / 64) * Math.PI * 2);
       return [x * scale, y, z * scale];
     });
+    if(shape==='marquise') {
+      // A swept tube folds over itself at the two acute tips. Offset a planar
+      // section instead, so even pointed seats are closed, non-crossing solids.
+      const {CrossSection}=getKernel(),owned=[],own=o=>(owned.push(o),o);
+      try {
+        const section=own(new CrossSection([points.map(([x,,z])=>[x,z])]));
+        const outer=own(section.offset(r,'Round',2,64)),inner=own(section.offset(-r,'Round',2,64));
+        const rim=own(outer.subtract(inner)),solid=own(rim.extrude(2*r));
+        const turned=own(solid.rotate([90,0,0])),placed=own(turned.translate([0,y+r,0]));
+        const data=placed.getMesh(),geo=new T.BufferGeometry(),xyz=[];
+        for(let i=0;i<data.vertProperties.length;i+=data.numProp)xyz.push(...data.vertProperties.slice(i,i+3));
+        geo.setAttribute('position',new T.Float32BufferAttribute(xyz,3));geo.setIndex(Array.from(data.triVerts));geo.computeVertexNormals();
+        return mesh(geo,head,null,parent);
+      }finally{owned.reverse().forEach(o=>o.delete());}
+    }
     return tube(points, r, parent, head, true);
   };
   const setting = (shape, scale, pos, tone, rotation = 0, hero = true) => {
@@ -192,19 +216,24 @@ export function buildRing(s, environment) {
       seat(shape, scale * 0.94, assembly, -scale * 0.13, 0.13 * fitting);
       for(let i=0;i<8;i++) {
         const [x,z]=outline(shape,i*Math.PI/4);
-        tube([[x*scale*.72,-scale*.32,z*scale*.72],[x*scale*.94,-scale*.13,z*scale*.94],[x*scale*1.02,scale*.05,z*scale*1.02]],.09*fitting,assembly,head);
+        tube([[x*scale*.72,-scale*.58,z*scale*.72],[x*scale*.94,-scale*.13,z*scale*.94],[x*scale*1.02,scale*.05,z*scale*1.02]],.09*fitting,assembly,head);
       }
     } else
       for (let i = 0; i < s.prongs; i++) {
         const a = (2 * Math.PI * (i + 0.5)) / s.prongs;
+        // Keep the two claws physically separate at the girdle. A fixed
+        // angle collapsed both claws together on small or elongated stones.
+        const before = outline(shape, a - .001), after = outline(shape, a + .001);
+        const tangentLength = Math.hypot(after[0] - before[0], after[1] - before[1]) / .002;
+        const pairAngle = Math.min(Math.PI / s.prongs * .4, .18 / (scale * tangentLength));
         for (const delta of s.setting === "doubleclaw"
-          ? [-0.055, 0.055]
+          ? [-pairAngle, pairAngle]
           : [0]) {
           const [x, z] = outline(shape, a + delta),
             tip = [x * scale * 0.995, scale * 0.12, z * scale * 0.995];
           tube(
             [
-              [x * scale * 0.72, -scale * 0.32, z * scale * 0.72],
+              [x * scale * 0.72, -scale * 0.58, z * scale * 0.72],
               [x * scale * 1.10, -scale * 0.28, z * scale * 1.10],
               [x * scale * 1.10, scale * 0.04, z * scale * 1.10],
               tip,
@@ -221,7 +250,7 @@ export function buildRing(s, environment) {
           claw.scale.y *= 0.65;
         }
       }
-    const gallery=seat(shape, scale * 0.72, assembly, -scale * 0.32, 0.16 * fitting);
+    const gallery=seat(shape, scale * 0.72, assembly, -scale * 0.58, 0.16 * fitting);
     gallery.userData.role='gallery';
     mountings.push({assembly,shape,scale,gallery});
     return assembly;
@@ -230,7 +259,7 @@ export function buildRing(s, environment) {
     seat(shape, size * 0.86, main, -size * 0.42, 0.18);
     for(let i=0;i<4;i++) {
       const [x,z]=outline(shape,i*Math.PI/2);
-      tube([[x*size*.72,-size*.32,z*size*.72],[x*size*.86,-size*.42,z*size*.86]],.085,main,head);
+      tube([[x*size*.72,-size*.58,z*size*.72],[x*size*.86,-size*.42,z*size*.86]],.085,main,head);
     }
     for (const point of spacedOutline(shape,size*.86,.44,24,24)) {
       const [x,z]=point.map(v=>v/(size*.86));
@@ -249,7 +278,7 @@ export function buildRing(s, environment) {
     }
   };
   const size = 2.4 * Math.cbrt(s.carat),
-    top = radius + size * 0.7 + s.height * 0.45;
+    top = radius + Math.max(size*.7, thick+size*.58+(s.accents!=='none'?s.accentSize*.14+.4:.2)) + s.height * 0.45;
   const rotation = s.orientation === "east" ? Math.PI / 2 : 0;
   if(DAILY_STYLES.includes(s.style)) {
     const scale=2.4*Math.cbrt(s.dailyCarat),r=radius+thick+scale*.7+s.height*.18;
@@ -293,7 +322,7 @@ export function buildRing(s, environment) {
           seat(s.shape, perimeter, main, -0.22, 0.12);
           for(let i=0;i<4;i++) {
             const [x,z]=outline(s.shape,i*Math.PI/2);
-            tube([[x*size*.72,-size*.32,z*size*.72],[x*perimeter,-.22,z*perimeter]],.105,main,head);
+            tube([[x*size*.72,-size*.58,z*size*.72],[x*perimeter,-.22,z*perimeter]],.105,main,head);
           }
           for (const point of haloPoints) {
             const [x,z]=point.map(v=>v/perimeter);
@@ -417,16 +446,25 @@ export function buildRing(s, environment) {
           }
       }
     }
-    if (s.accents === "channel" && !['split','tension'].includes(s.style))
-      for (const z of [-width * 0.44, width * 0.44]) {
-        const rail = mesh(
-          new T.TorusGeometry(radius + thick - .05, 0.1, 8, 160),
-          metal,
-        );
-        rail.position.z = z;
+    if(s.accents==='channel') {
+      // Rails follow the actual stone rows, not the outer edge of a wide band.
+      // Join each rail to the shank with a continuous web; otherwise a round
+      // profile can leave two floating toruses above the curved shoulders.
+      const split=['split','tension'].includes(s.style),w=width*(split?.55:1);
+      for(const sign of split?[-1,1]:[0])for(let row=0;row<s.accentRows;row++)for(const edge of [-1,1]){
+        const z=(s.accentRows===1?0:(row-.5)*w*.48)+edge*(gemR*.9+.08);
+        const positions=[],indices=[],n=192,m=12;
+        for(let i=0;i<n;i++)for(let j=0;j<m;j++){
+          const a=i/n*Math.PI*2,b=j/m*Math.PI*2;
+          const r=radius+thick*.45+(thick*.55+.05)*Math.cos(b);
+          positions.push(Math.sin(a)*r,Math.cos(a)*r,sign*(width*.65+.55)*Math.pow(Math.max(0,Math.cos(a)),2)+z+bandShift(a)+.12*Math.sin(b));
+          const k=i*m+j,q=i*m+(j+1)%m,next=((i+1)%n)*m+j,nextQ=((i+1)%n)*m+(j+1)%m;
+          indices.push(k,q,next,q,nextQ,next);
+        }
+        const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(positions,3));geo.setIndex(indices);geo.computeVertexNormals();
+        mesh(geo,metal,null,group);
       }
-    if(s.accents==='channel'&&['split','tension'].includes(s.style)) for(const sign of [-1,1]) for(const edge of [-1,1])
-      tube(Array.from({length:128},(_,i)=>{const a=i/128*Math.PI*2;return [Math.sin(a)*(radius+thick-.2),Math.cos(a)*(radius+thick-.2),sign*(width*.65+.55)*Math.pow(Math.max(0,Math.cos(a)),2)+edge*width*.55*.44];}),.1,group,metal,true);
+    }
   }
   if (s.style === "vintage")
     for (let i = 0; i < 100; i++) {
@@ -442,17 +480,62 @@ export function buildRing(s, environment) {
   // Resolve supports only after every assembly rotation is final. Endpoints
   // are on the actual gallery and shank, not guessed in global coordinates.
   group.updateMatrixWorld(true);
+  const obstacles=gems.map(g=>({inverse:g.matrixWorld.clone().invert(),scale:g.getWorldScale(new T.Vector3()).x,planes:stonePlanes.get(g),box:new T.Box3().setFromObject(g)}));
+  const pathClear=(points,r)=>{
+    const box=new T.Box3().setFromPoints(points).expandByScalar(r+.01);
+    for(const stone of obstacles){
+      if(!box.intersectsBox(stone.box))continue;
+      const clearance=(r+.01)/stone.scale;
+      const local=points.map(p=>p.clone().applyMatrix4(stone.inverse));
+      for(let i=1;i<local.length;i++){
+        let enter=0,exit=1;
+        for(const plane of stone.planes){
+          const distance=p=>plane.x*p.x+plane.y*p.y+plane.z*p.z-plane.w-clearance;
+          const a=distance(local[i-1]),b=distance(local[i]);
+          if(a>0&&b>0){enter=2;break;}
+          if(a>0)enter=Math.max(enter,a/(a-b));
+          if(b>0)exit=Math.min(exit,a/(a-b));
+          if(enter>exit)break;
+        }
+        if(enter<=exit)return false;
+      }
+    }
+    return true;
+  };
   for(const {assembly,shape,scale,gallery} of mountings) {
     for(const a of [0,Math.PI/2,Math.PI,Math.PI*1.5]) {
-      const [x,z]=outline(shape,a);
-      const end=assembly.localToWorld(new T.Vector3(x*scale*.72,-scale*.32,z*scale*.72));
-      const angle=Math.atan2(end.x,end.y);
-      const splitSign=end.z<0?-1:1;
-      const track=['split','tension'].includes(s.style)?splitSign*(width*.65+.55)*Math.pow(Math.max(0,Math.cos(angle)),2):bandShift(angle);
-      const start=new T.Vector3(Math.sin(angle)*radius,Math.cos(angle)*radius,track);
-      const mid=start.clone().lerp(end,.5);
-      if(s.style==='cathedral') mid.y+=.3;
-      const support=tube([start.toArray(),mid.toArray(),end.toArray()],Math.min(.22,Math.max(.10,scale*.075)),group,head);
+      const split=['split','tension'].includes(s.style),w=width*(split?.55:1);
+      const r=Math.max(.16,Math.min(.22,Math.max(.10,scale*.075)));
+      let start,end,points,splitSign,clear=false;
+      // Move attachment positions along the gallery when a neighbouring stone
+      // blocks a cardinal position; retain four distinct structural supports.
+      for(const offset of [0,.12,-.12,.25,-.25,.4,-.4]){
+        const [x,z]=outline(shape,a+offset);
+        const outward=new T.Vector3(x,0,z).normalize().multiplyScalar(.08);
+        end=assembly.localToWorld(new T.Vector3(x*scale*.72,-scale*.58-.13,z*scale*.72).add(outward));
+        const angle=Math.atan2(end.x,end.y);splitSign=end.z<0?-1:1;
+        // A narrow pavé band may require a foot between two neighbouring
+        // accent stones, rather than directly beneath the gallery endpoint.
+        for(const footOffset of [0,.06,-.06,.12,-.12]){
+          const footAngle=angle+footOffset;
+          const track=split?splitSign*(width*.65+.55)*Math.pow(Math.max(0,Math.cos(footAngle)),2):bandShift(footAngle);
+          for(const flank of [splitSign,-splitSign]){
+            start=new T.Vector3(Math.sin(footAngle)*radius,Math.cos(footAngle)*radius,track+flank*w*.35);
+            for(const lift of [0,.4,.8,1.2]){
+              const mid=start.clone().lerp(end,.5);
+              mid.z=flank*(Math.max(Math.abs(start.z),Math.abs(end.z))+.12+lift);
+              if(s.style==='cathedral')mid.y+=.3;
+              points=[start.clone(),mid,end.clone()];
+              if(pathClear(points,r)){clear=true;break;}
+            }
+            if(clear)break;
+          }
+          if(clear)break;
+        }
+        if(clear)break;
+      }
+      const support=tube(points.map(v=>v.toArray()),r,group,head);
+      support.userData.stoneClearanceValid=clear;
       support.userData.role='structural-support';
       contacts.push({support,start,end,gallery,band:bands[['split','tension'].includes(s.style)?(splitSign<0?0:1):0]});
     }
