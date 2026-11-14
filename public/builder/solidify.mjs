@@ -1,5 +1,6 @@
 import * as T from 'three';
 import {getKernel} from './kernel.mjs';
+import {MIN_ROD_RADIUS} from './manufacturing-policy.mjs';
 import {validateMesh,removeCollapsedTriangles,removeOppositeCoincidentTriangles} from './validation.mjs';
 // Failed legacy assemblies are diagnostic concepts only. The UI must not
 // display them as finished models, and exports retain the failed validation.
@@ -49,16 +50,20 @@ export function unifyLegacy(model) {
     const p=o.geometry.attributes.position,verts=[];
     const scale=o.getWorldScale(new T.Vector3()).y;
     for(let i=0;i<p.count;i++)if(Math.abs(p.getY(i))<.03){
-      for(const y of [.018,.22/scale])
+      for(const y of [.018,(2*MIN_ROD_RADIUS+.02)/scale])
         verts.push(new T.Vector3(p.getX(i)*1.01,y,p.getZ(i)*1.01).applyMatrix4(o.matrixWorld).toArray());
     }
     if(verts.length)body=own(body.subtract(own(Manifold.hull(verts))));
   }
   const parts=body.decompose();parts.sort((a,b)=>b.volume()-a.volume());
-  // Exact cavity cuts may leave minute isolated claw-tip slivers. Remove only
-  // sub-0.02 scene-unit^3 debris; any structural island fails validation.
-  if(body.status()!=='NoError'||body.isEmpty()||parts.slice(1).some(p=>p.volume()>.02||p.volume()<-.000000001)){const volumes=parts.map(p=>Number((p.volume()/(.8**3)).toFixed(6)));parts.forEach(p=>p.delete());throw new Error('Assembly is not a single metal solid; component volumes mm3: '+volumes.join(', '));}
-  if(parts.length>1){body=own(parts[0]);parts.slice(1).forEach(p=>p.delete());}else parts.forEach(p=>p.delete());
+  // Never discard a detached claw tip or bead to make an assembly pass.
+  // Positive islands and negative enclosed cavities are both diagnostic errors.
+  if(body.status()!=='NoError'||body.isEmpty()||parts.slice(1).some(p=>Math.abs(p.volume())>1e-9)){
+    const components=parts.map(p=>({volumeMm3:p.volume()/(.8**3),bounds:p.boundingBox()}));
+    model.engineering={...model.engineering,disconnectedComponents:components};
+    parts.forEach(p=>p.delete());throw new Error('Assembly is not a single metal solid; component volumes mm3: '+components.map(p=>p.volumeMm3.toFixed(6)).join(', '));
+  }
+  parts.forEach(p=>p.delete());
   // Collapse sub-micron Boolean slivers before Float32 export. This tolerance
   // is 800 times smaller than the stone clearance and independently rechecked.
   body=own(body.simplify(.00001));

@@ -1,0 +1,165 @@
+{
+  "config": {
+    "style": "openpair",
+    "shape": "round",
+    "metal": "white18",
+    "finish": "polished",
+    "carat": 1.5,
+    "color": "F",
+    "clarity": "VS1",
+    "certificate": "IGI",
+    "origin": "lab",
+    "accents": "none",
+    "profile": "round",
+    "width": 3.5,
+    "size": 54,
+    "prongs": 4,
+    "engraving": "",
+    "light": "studio",
+    "rotate": false,
+    "gemTone": "ice",
+    "sideTone": "ice",
+    "sideShape": "round",
+    "sideMode": "none",
+    "sideCarat": 0.3,
+    "sideMainGap": 0,
+    "sideSpacing": 0,
+    "setting": "bezel",
+    "orientation": "north",
+    "headMetal": "match",
+    "coverage": "shoulders",
+    "accentSize": 1,
+    "accentRows": 1,
+    "halo": "single",
+    "haloSize": 1,
+    "height": 0,
+    "engravingFont": "serif",
+    "fire": 1,
+    "hiddenHalo": false,
+    "sculpt": 1.2,
+    "rhythm": 4,
+    "layers": 3,
+    "gap": 1,
+    "faceSize": 7,
+    "face": "oval",
+    "inlay": "metal",
+    "secondaryMetal": "white18",
+    "mixedMetal": false,
+    "dailyCount": 2,
+    "dailyCarat": 0.1,
+    "dailySpacing": 0.15,
+    "alternateGems": false,
+    "stoneLength": 2,
+    "stoneWidth": 2,
+    "stoneDepth": 1.3,
+    "thickness": 1.8,
+    "bezelWall": 0.45,
+    "fashionStone": true,
+    "motifDepth": 0.5,
+    "motifOffset": 0,
+    "edgeSoftness": 0.7
+  },
+  "engineering": {
+    "version": "cut-seats-9",
+    "units": "mm",
+    "status": "geometry_checked",
+    "metalSolids": 1,
+    "volumeMm3": 259.08179691827195,
+    "innerDiameterMm": 17.188733853924695,
+    "nominalInnerCircumferenceMm": 54,
+    "bandWidthMm": 3.5,
+    "minimumBaseThicknessMm": 1.8,
+    "bezelWallMm": 0.45,
+    "tessellation": {
+      "angularSegments": 256,
+      "maxRadialChordErrorMm": 0.0009332730345684631
+    },
+    "stones": [
+      {
+        "id": "S1",
+        "shape": "round",
+        "length": 2,
+        "width": 2,
+        "depth": 1.3,
+        "angle": -0.21239114436856346,
+        "rotation": 0,
+        "z": 0,
+        "girdleRadius": 10.494366926962348,
+        "tone": "ice",
+        "positionMm": [
+          -2.2121906652416206,
+          10.258554949813302,
+          0
+        ]
+      },
+      {
+        "id": "S2",
+        "shape": "round",
+        "length": 2,
+        "width": 2,
+        "depth": 1.3,
+        "angle": 0.21239114436856346,
+        "rotation": 0,
+        "z": 0,
+        "girdleRadius": 10.494366926962348,
+        "tone": "ice",
+        "positionMm": [
+          2.2121906652416206,
+          10.258554949813302,
+          0
+        ]
+      }
+    ],
+    "requiresWorkshopApproval": true,
+    "checks": [
+      "Manifold Boolean operations succeeded",
+      "One connected closed metal solid",
+      "Shared preview/export geometry",
+      "Exact nominal inner-radius construction"
+    ],
+    "pending": [
+      "Verify actual stone measurements and cut scans",
+      "Confirm alloy, casting shrinkage, setting/finishing allowances",
+      "Goldsmith approval before manufacturing"
+    ],
+    "meshValidation": {
+      "valid": true,
+      "parts": 1,
+      "checks": [
+        {
+          "valid": true,
+          "nonManifoldVertices": 0,
+          "problemEdges": [],
+          "vertices": 12908,
+          "triangles": 25820,
+          "nonFinite": 0,
+          "degenerate": 0,
+          "boundaryEdges": 0,
+          "inconsistentEdges": 0,
+          "components": 1,
+          "signedVolume": 132.64988084974036
+        }
+      ]
+    },
+    "assemblyValidation": {
+      "valid": true,
+      "issues": [],
+      "blockedSupports": 0,
+      "stones": {
+        "valid": true,
+        "stoneCount": 2,
+        "collisions": [],
+        "toleranceMm3": 0.00001
+      },
+      "metal": {
+        "valid": true,
+        "collisions": [],
+        "toleranceMm3": 0.001
+      },
+      "minimumBoreRadiusMm": 8.593724297149464,
+      "requestedBoreRadiusMm": 8.594366926962348,
+      "boreToleranceMm": 0.03,
+      "requiresWorkshopApproval": true
+    }
+  }
+}

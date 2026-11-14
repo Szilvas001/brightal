@@ -1,0 +1,578 @@
+{
+  "styles": [
+    {
+      "id": "solitaire",
+      "name": "Örök klasszikus"
+    },
+    {
+      "id": "hiddenhalo",
+      "name": "Secret Halo"
+    },
+    {
+      "id": "bezel",
+      "name": "Modern Bezel"
+    },
+    {
+      "id": "tension",
+      "name": "Suspended Bridge"
+    },
+    {
+      "id": "halo",
+      "name": "Párizsi fények"
+    },
+    {
+      "id": "trilogy",
+      "name": "Modern Trio"
+    },
+    {
+      "id": "vintage",
+      "name": "Rózsakert"
+    },
+    {
+      "id": "pave",
+      "name": "Pavé ragyogás"
+    },
+    {
+      "id": "band",
+      "name": "Essential Diamond"
+    },
+    {
+      "id": "duet",
+      "name": "Dialogue"
+    },
+    {
+      "id": "cathedral",
+      "name": "Éjszakai múzsa"
+    },
+    {
+      "id": "split",
+      "name": "Air Split"
+    },
+    {
+      "id": "eternity",
+      "name": "Diamond Half Band"
+    },
+    {
+      "id": "bezelrow",
+      "name": "Bubble Bezel"
+    },
+    {
+      "id": "scatter",
+      "name": "Stardust Cigar"
+    },
+    {
+      "id": "chevron",
+      "name": "Diamond Wishbone"
+    },
+    {
+      "id": "ribbon",
+      "name": "Diamond Ribbon"
+    },
+    {
+      "id": "graduated",
+      "name": "Graduated Rivière"
+    },
+    {
+      "id": "eastwest",
+      "name": "East–West Capsule"
+    },
+    {
+      "id": "alternating",
+      "name": "Deco Mosaic"
+    },
+    {
+      "id": "crown",
+      "name": "Marquise Crown"
+    },
+    {
+      "id": "curvedoval",
+      "name": "Arc Oval"
+    },
+    {
+      "id": "wavebezel",
+      "name": "Tidal Bezel"
+    },
+    {
+      "id": "openpair",
+      "name": "Twin Light"
+    },
+    {
+      "id": "contour",
+      "name": "Nesting Arc"
+    },
+    {
+      "id": "asymmetric",
+      "name": "Offset Constellation"
+    },
+    {
+      "id": "fullcircle",
+      "name": "Full Eternity"
+    },
+    {
+      "id": "wave",
+      "name": "Liquid"
+    },
+    {
+      "id": "rope",
+      "name": "Croissant"
+    },
+    {
+      "id": "dome",
+      "name": "Bombé"
+    },
+    {
+      "id": "signet",
+      "name": "Diamond Signet"
+    },
+    {
+      "id": "open",
+      "name": "Sculpted Bypass"
+    },
+    {
+      "id": "stack",
+      "name": "Connected Stack"
+    },
+    {
+      "id": "fluted",
+      "name": "Kannelúra"
+    },
+    {
+      "id": "petal",
+      "name": "Szirom"
+    },
+    {
+      "id": "twist",
+      "name": "Csavart szalag"
+    },
+    {
+      "id": "saddle",
+      "name": "Nyereg"
+    },
+    {
+      "id": "ripple",
+      "name": "Víztükör"
+    },
+    {
+      "id": "tapered",
+      "name": "Aranyváll"
+    },
+    {
+      "id": "aurora",
+      "name": "Aurora"
+    },
+    {
+      "id": "orbit",
+      "name": "Orbit"
+    },
+    {
+      "id": "lotus",
+      "name": "Lótusz"
+    },
+    {
+      "id": "shield",
+      "name": "Pajzs"
+    },
+    {
+      "id": "braid",
+      "name": "Fonat"
+    }
+  ],
+  "options": {
+    "style": [
+      "solitaire",
+      "hiddenhalo",
+      "bezel",
+      "tension",
+      "halo",
+      "trilogy",
+      "vintage",
+      "pave",
+      "band",
+      "duet",
+      "cathedral",
+      "split",
+      "eternity",
+      "bezelrow",
+      "scatter",
+      "chevron",
+      "ribbon",
+      "graduated",
+      "eastwest",
+      "alternating",
+      "crown",
+      "curvedoval",
+      "wavebezel",
+      "openpair",
+      "contour",
+      "asymmetric",
+      "fullcircle",
+      "wave",
+      "rope",
+      "dome",
+      "signet",
+      "open",
+      "stack",
+      "fluted",
+      "petal",
+      "twist",
+      "saddle",
+      "ripple",
+      "tapered",
+      "aurora",
+      "orbit",
+      "lotus",
+      "shield",
+      "braid"
+    ],
+    "shape": [
+      "round",
+      "oval",
+      "cushion",
+      "emerald",
+      "pear",
+      "princess",
+      "marquise",
+      "radiant",
+      "asscher"
+    ],
+    "metal": [
+      "yellow14",
+      "yellow18",
+      "white14",
+      "white18",
+      "rose14",
+      "rose18"
+    ],
+    "finish": [
+      "polished",
+      "satin",
+      "brushed"
+    ],
+    "color": [
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "J"
+    ],
+    "clarity": [
+      "FL",
+      "IF",
+      "VVS1",
+      "VVS2",
+      "VS1",
+      "VS2",
+      "SI1"
+    ],
+    "certificate": [
+      "IGI"
+    ],
+    "origin": [
+      "lab"
+    ],
+    "accents": [
+      "none",
+      "pave",
+      "channel"
+    ],
+    "profile": [
+      "round",
+      "flat",
+      "knife"
+    ],
+    "light": [
+      "studio",
+      "daylight",
+      "evening"
+    ],
+    "gemTone": [
+      "ice",
+      "champagne",
+      "blush",
+      "canary",
+      "sapphire",
+      "emeraldGreen",
+      "ruby"
+    ],
+    "sideTone": [
+      "ice",
+      "champagne",
+      "blush",
+      "canary",
+      "sapphire",
+      "emeraldGreen",
+      "ruby"
+    ],
+    "sideShape": [
+      "round",
+      "oval",
+      "pear",
+      "emerald",
+      "marquise",
+      "princess",
+      "asscher"
+    ],
+    "sideMode": [
+      "none",
+      "pair",
+      "cluster",
+      "five"
+    ],
+    "setting": [
+      "claw",
+      "bezel",
+      "doubleclaw"
+    ],
+    "orientation": [
+      "north",
+      "east"
+    ],
+    "headMetal": [
+      "match",
+      "white18",
+      "yellow18",
+      "rose18"
+    ],
+    "coverage": [
+      "shoulders",
+      "half",
+      "full"
+    ],
+    "halo": [
+      "single",
+      "double"
+    ],
+    "engravingFont": [
+      "serif",
+      "script",
+      "modern"
+    ],
+    "face": [
+      "oval",
+      "cushion",
+      "round"
+    ],
+    "inlay": [
+      "metal",
+      "onyx",
+      "ivory",
+      "teal",
+      "coral"
+    ],
+    "secondaryMetal": [
+      "white18",
+      "yellow18",
+      "rose18"
+    ]
+  },
+  "numericRanges": [
+    {
+      "key": "carat",
+      "min": 0.3,
+      "max": 5,
+      "step": 0.1,
+      "default": 1.5
+    },
+    {
+      "key": "width",
+      "min": 1.6,
+      "max": 10,
+      "step": 0.1,
+      "default": 2
+    },
+    {
+      "key": "size",
+      "min": 44,
+      "max": 72,
+      "step": 1,
+      "default": 54
+    },
+    {
+      "key": "sideCarat",
+      "min": 0.1,
+      "max": 1.5,
+      "step": 0.05,
+      "default": 0.3
+    },
+    {
+      "key": "sideMainGap",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0
+    },
+    {
+      "key": "sideSpacing",
+      "min": 0,
+      "max": 0.8,
+      "step": 0.05,
+      "default": 0
+    },
+    {
+      "key": "accentSize",
+      "min": 0.6,
+      "max": 2,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "haloSize",
+      "min": 0.6,
+      "max": 1.6,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "height",
+      "min": 0,
+      "max": 6,
+      "step": 0.1,
+      "default": 0
+    },
+    {
+      "key": "fire",
+      "min": 0.5,
+      "max": 1.5,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "sculpt",
+      "min": 0.4,
+      "max": 2.5,
+      "step": 0.1,
+      "default": 1.2
+    },
+    {
+      "key": "rhythm",
+      "min": 2,
+      "max": 8,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "key": "layers",
+      "min": 2,
+      "max": 4,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "key": "gap",
+      "min": 0.3,
+      "max": 1.5,
+      "step": 0.1,
+      "default": 0.7
+    },
+    {
+      "key": "faceSize",
+      "min": 5,
+      "max": 11,
+      "step": 0.5,
+      "default": 7
+    },
+    {
+      "key": "dailyCount",
+      "min": 1,
+      "max": 9,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "key": "dailyCarat",
+      "min": 0.05,
+      "max": 0.3,
+      "step": 0.01,
+      "default": 0.1
+    },
+    {
+      "key": "dailySpacing",
+      "min": 0,
+      "max": 0.5,
+      "step": 0.05,
+      "default": 0.15
+    },
+    {
+      "key": "stoneLength",
+      "min": 1.5,
+      "max": 6,
+      "step": 0.1,
+      "default": 2.6
+    },
+    {
+      "key": "stoneWidth",
+      "min": 1.5,
+      "max": 5,
+      "step": 0.1,
+      "default": 2.6
+    },
+    {
+      "key": "stoneDepth",
+      "min": 1,
+      "max": 3.5,
+      "step": 0.1,
+      "default": 1.6
+    },
+    {
+      "key": "thickness",
+      "min": 1.4,
+      "max": 3.4,
+      "step": 0.1,
+      "default": 1.6
+    },
+    {
+      "key": "bezelWall",
+      "min": 0.35,
+      "max": 0.7,
+      "step": 0.05,
+      "default": 0.45
+    },
+    {
+      "key": "motifDepth",
+      "min": 0,
+      "max": 1.2,
+      "step": 0.1,
+      "default": 0.5
+    },
+    {
+      "key": "motifOffset",
+      "min": -1,
+      "max": 1,
+      "step": 0.1,
+      "default": 0
+    },
+    {
+      "key": "edgeSoftness",
+      "min": 0.35,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.7
+    }
+  ],
+  "discrete": {
+    "prongs": [
+      4,
+      6,
+      8
+    ],
+    "accentRows": [
+      1,
+      2
+    ]
+  },
+  "booleans": [
+    "rotate",
+    "hiddenHalo",
+    "mixedMetal",
+    "alternateGems",
+    "fashionStone"
+  ],
+  "text": {
+    "engraving": {
+      "maxLength": 24
+    }
+  },
+  "normalization": "Modern styles force bezel; dynamic stone/band bounds and style restrictions are applied by normalize(). Requested and effective configurations are both retained. No normalized duplicate is counted as another geometry."
+}

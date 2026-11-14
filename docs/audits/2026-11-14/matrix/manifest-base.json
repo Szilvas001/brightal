@@ -1,0 +1,217 @@
+{
+  "mode": "base",
+  "requestedCases": 1188,
+  "uniqueCases": 594,
+  "coverage": "style \u00d7 setting \u00d7 shape, then one parameter at a time at min/mid/max and enumerated choices; not the Cartesian product of every parameter",
+  "unsupportedSettings": [
+    {
+      "style": "band",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "eternity",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "bezelrow",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "scatter",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "chevron",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "ribbon",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "graduated",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "eastwest",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "alternating",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "crown",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "curvedoval",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "wavebezel",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "openpair",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "contour",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "asymmetric",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "fullcircle",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "wave",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "rope",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "dome",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "signet",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "open",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "stack",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "fluted",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "petal",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "twist",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "saddle",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "ripple",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "tapered",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "aurora",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "orbit",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "lotus",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "shield",
+      "supported": [
+        "bezel"
+      ]
+    },
+    {
+      "style": "braid",
+      "supported": [
+        "bezel"
+      ]
+    }
+  ],
+  "completed": false,
+  "processed": 253,
+  "failures": 9,
+  "unverifiedRules": [
+    "A: off-centre/multi-setting symmetry and prong angular distribution",
+    "C: stone retention and bearing contact",
+    "D: local minimum wall/prong thickness and geometric self-intersection",
+    "F: round-trip export mesh equivalence"
+  ],
+  "stoppedForWorkInProgressSnapshot": true,
+  "revisionNote": "Intermediate support-symmetry revision; before minimum-diameter and strict component fixes. Not final acceptance evidence."
+}

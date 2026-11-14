@@ -18,7 +18,7 @@ function ranges(s,A){const {isModern,isFashion,ATELIER_STYLES,SQUARE_SHAPES,mode
   if(s.style==='signet')r.faceSize=ticks(Math.max(5,Math.ceil(A.minBandWidth(s)*2)/2),11,.5);
   if(ATELIER_STYLES.includes(s.style))Object.assign(r,{motifDepth:ticks(0,1.2,.1),motifOffset:ticks(-1,1,.1),edgeSoftness:ticks(.35,1.2,.05)});
  }else{
-  Object.assign(r,{carat:ticks(.3,5,.1),height:ticks(.5,2.5,.1)});
+  Object.assign(r,{carat:ticks(.3,5,.1),height:ticks(0,6,.1)});
   if(s.setting!=='bezel')r.prongs=[4,6,8];
   if(s.style==='duet'||s.sideMode!=='none')r.sideCarat=ticks(.1,1.5,.05);
   if(['halo','vintage'].includes(s.style))r.haloSize=ticks(.6,1.6,.1);

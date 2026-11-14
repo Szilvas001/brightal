@@ -1,5 +1,7 @@
 import * as T from "three";
 import {getKernel} from "./kernel.mjs";
+import {supportLayout} from "./support-layout.mjs";
+import {MIN_ROD_RADIUS,MIN_PRONG_RADIUS} from "./manufacturing-policy.mjs";
 import {spacedOutline} from "./stone-spacing.mjs";
 import { buildContemporary, MODERN_STYLES } from './contemporary.mjs';
 import { DAILY_STYLES } from "./state.mjs";
@@ -65,10 +67,22 @@ export function buildRing(s, environment) {
     o.scale.setScalar(Math.max(.16,r));
     return o;
   };
+  const rodMeshes=new Map();
   const tube = (points, r, parent = group, mat = metal, closed = false) => {
-    r=Math.max(.16,r);
+    r=Math.max(MIN_ROD_RADIUS,r);
     const vectors=points.map(p=>new T.Vector3(...p));
     if(closed)return mesh(new T.TubeGeometry(new T.CatmullRomCurve3(vectors,true,'centripetal'),Math.max(24,points.length*3),r,12,true),mat,null,parent);
+    const keyFor=(sx,sz)=>JSON.stringify([r,points.map(([x,y,z])=>[x*sx,y,z*sz].map(v=>Math.round(v*1e8)/1e8))]);
+    // Mirrored paths must reuse mirrored triangles as well. Independently
+    // orienting a polygonal cylinder produces a different facet phase even
+    // when its centreline is perfectly symmetric.
+    for(const [sx,sz]of [[1,1],[-1,1],[1,-1],[-1,-1]]){
+      const source=rodMeshes.get(keyFor(sx,sz));if(!source)continue;
+      const geo=source.clone().applyMatrix4(new T.Matrix4().makeScale(sx,1,sz));
+      if(sx*sz<0){const indices=Array.from(geo.index.array);for(let i=0;i<indices.length;i+=3)[indices[i+1],indices[i+2]]=[indices[i+2],indices[i+1]];geo.setIndex(indices);}
+      geo.computeVertexNormals();const path=new T.CurvePath();for(let i=1;i<vectors.length;i++)path.add(new T.LineCurve3(vectors[i-1],vectors[i]));geo.parameters={path};
+      return mesh(geo,mat,null,parent);
+    }
     // Construct open rods from unions of closed rounded segments. Sweeping a
     // thick tube around a tight bend can invert its inner surface even though
     // its edge counts still look closed after a Boolean operation.
@@ -84,7 +98,7 @@ export function buildRing(s, environment) {
       const solid=own(Manifold.union(parts)),data=solid.getMesh(),geo=new T.BufferGeometry(),xyz=[];
       for(let i=0;i<data.vertProperties.length;i+=data.numProp)xyz.push(...data.vertProperties.slice(i,i+3));
       geo.setAttribute('position',new T.Float32BufferAttribute(xyz,3));geo.setIndex(Array.from(data.triVerts));geo.computeVertexNormals();
-      const path=new T.CurvePath();for(let i=1;i<vectors.length;i++)path.add(new T.LineCurve3(vectors[i-1],vectors[i]));geo.parameters={path};
+      const path=new T.CurvePath();for(let i=1;i<vectors.length;i++)path.add(new T.LineCurve3(vectors[i-1],vectors[i]));geo.parameters={path};rodMeshes.set(keyFor(1,1),geo);
       return mesh(geo,mat,null,parent);
     }finally{owned.reverse().forEach(o=>o.delete());}
   };
@@ -182,7 +196,7 @@ export function buildRing(s, environment) {
     return o;
   };
   const seat = (shape, scale, parent, y = -0.25, r = 0.12) => {
-    r=Math.max(.16,r);
+    r=Math.max(MIN_ROD_RADIUS,r);
     const points = Array.from({ length: 64 }, (_, i) => {
       const [x, z] = outline(shape, (i / 64) * Math.PI * 2);
       return [x * scale, y, z * scale];
@@ -231,17 +245,18 @@ export function buildRing(s, environment) {
           : [0]) {
           const [x, z] = outline(shape, a + delta),
             tip = [x * scale * 0.995, scale * 0.12, z * scale * 0.995];
-          tube(
+          const prong=tube(
             [
               [x * scale * 0.72, -scale * 0.58, z * scale * 0.72],
               [x * scale * 1.10, -scale * 0.28, z * scale * 1.10],
               [x * scale * 1.10, scale * 0.04, z * scale * 1.10],
               tip,
             ],
-            (s.setting === "doubleclaw" ? 0.10 : 0.16) * fitting,
+            Math.max(MIN_PRONG_RADIUS,(s.setting === "doubleclaw" ? 0.10 : 0.16) * fitting),
             assembly,
             head,
           );
+          prong.userData.role='prong';
           const claw = bead(
             (s.setting === "doubleclaw" ? 0.11 : 0.15) * fitting,
             tip,
@@ -278,10 +293,10 @@ export function buildRing(s, environment) {
     }
   };
   const size = 2.4 * Math.cbrt(s.carat),
-    top = radius + Math.max(size*.7, thick+size*.58+(s.accents!=='none'?s.accentSize*.14+.4:.2)) + s.height * 0.45;
+    top = radius + Math.max(size*.7, thick+size*.58+(s.accents!=='none'?s.accentSize*.14+.4:.2)) + s.height * .8;
   const rotation = s.orientation === "east" ? Math.PI / 2 : 0;
   if(DAILY_STYLES.includes(s.style)) {
-    const scale=2.4*Math.cbrt(s.dailyCarat),r=radius+thick+scale*.7+s.height*.18;
+    const scale=2.4*Math.cbrt(s.dailyCarat),r=radius+thick+scale*.7+s.height*.8;
     const step=2*Math.asin(Math.min(.9,(scale*1.7+.18+s.dailySpacing)/r));
     for(let i=0;i<s.dailyCount;i++) {
       const a=(i-(s.dailyCount-1)/2)*step;
@@ -435,14 +450,14 @@ export function buildRing(s, environment) {
             bead(
               0.075,
               [
-                Math.sin(a + prongSpacing * 0.46) * (radius + thick + .05),
-                Math.cos(a + prongSpacing * 0.46) * (radius + thick + .05),
+                Math.sin(a + Math.sign(a || 1) * prongSpacing * 0.5) * (radius + thick + .05),
+                Math.cos(a + Math.sign(a || 1) * prongSpacing * 0.5) * (radius + thick + .05),
                 z + shift * gemR * 0.7,
               ],
               group,
               metal,
             );
-            tube([[Math.sin(a+prongSpacing*.46)*radius,Math.cos(a+prongSpacing*.46)*radius,track],[Math.sin(a+prongSpacing*.46)*(radius+thick+.05),Math.cos(a+prongSpacing*.46)*(radius+thick+.05),z+shift*gemR*.7]],.05,group,metal);
+            tube([[Math.sin(a+Math.sign(a||1)*prongSpacing*.5)*radius,Math.cos(a+Math.sign(a||1)*prongSpacing*.5)*radius,z+shift*gemR*.7],[Math.sin(a+Math.sign(a||1)*prongSpacing*.5)*(radius+thick+.05),Math.cos(a+Math.sign(a||1)*prongSpacing*.5)*(radius+thick+.05),z+shift*gemR*.7]],.05,group,metal);
           }
       }
     }
@@ -503,41 +518,13 @@ export function buildRing(s, environment) {
     return true;
   };
   for(const {assembly,shape,scale,gallery} of mountings) {
-    for(const a of [0,Math.PI/2,Math.PI,Math.PI*1.5]) {
-      const split=['split','tension'].includes(s.style),w=width*(split?.55:1);
-      const r=Math.max(.16,Math.min(.22,Math.max(.10,scale*.075)));
-      let start,end,points,splitSign,clear=false;
-      // Move attachment positions along the gallery when a neighbouring stone
-      // blocks a cardinal position; retain four distinct structural supports.
-      for(const offset of [0,.12,-.12,.25,-.25,.4,-.4]){
-        const [x,z]=outline(shape,a+offset);
-        const outward=new T.Vector3(x,0,z).normalize().multiplyScalar(.08);
-        end=assembly.localToWorld(new T.Vector3(x*scale*.72,-scale*.58-.13,z*scale*.72).add(outward));
-        const angle=Math.atan2(end.x,end.y);splitSign=end.z<0?-1:1;
-        // A narrow pavé band may require a foot between two neighbouring
-        // accent stones, rather than directly beneath the gallery endpoint.
-        for(const footOffset of [0,.06,-.06,.12,-.12]){
-          const footAngle=angle+footOffset;
-          const track=split?splitSign*(width*.65+.55)*Math.pow(Math.max(0,Math.cos(footAngle)),2):bandShift(footAngle);
-          for(const flank of [splitSign,-splitSign]){
-            start=new T.Vector3(Math.sin(footAngle)*radius,Math.cos(footAngle)*radius,track+flank*w*.35);
-            for(const lift of [0,.4,.8,1.2]){
-              const mid=start.clone().lerp(end,.5);
-              mid.z=flank*(Math.max(Math.abs(start.z),Math.abs(end.z))+.12+lift);
-              if(s.style==='cathedral')mid.y+=.3;
-              points=[start.clone(),mid,end.clone()];
-              if(pathClear(points,r)){clear=true;break;}
-            }
-            if(clear)break;
-          }
-          if(clear)break;
-        }
-        if(clear)break;
-      }
+    const split=['split','tension'].includes(s.style);
+    const routes=supportLayout({assembly,shape,scale,width,radius,split,bandShift,cathedral:s.style==='cathedral',pathClear});
+    for(const {start,end,points,splitSign,r,clear} of routes){
       const support=tube(points.map(v=>v.toArray()),r,group,head);
       support.userData.stoneClearanceValid=clear;
       support.userData.role='structural-support';
-      contacts.push({support,start,end,gallery,band:bands[['split','tension'].includes(s.style)?(splitSign<0?0:1):0]});
+      contacts.push({support,start,end,gallery,band:bands[split?(splitSign<0?0:1):0]});
     }
   }
   // Geometry/materials created but unused in a particular permutation are released too.

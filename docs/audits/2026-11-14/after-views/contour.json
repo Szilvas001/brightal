@@ -1,0 +1,216 @@
+{
+  "config": {
+    "style": "contour",
+    "shape": "round",
+    "metal": "yellow18",
+    "finish": "polished",
+    "carat": 1.5,
+    "color": "F",
+    "clarity": "VS1",
+    "certificate": "IGI",
+    "origin": "lab",
+    "accents": "none",
+    "profile": "round",
+    "width": 3.1,
+    "size": 54,
+    "prongs": 4,
+    "engraving": "",
+    "light": "studio",
+    "rotate": false,
+    "gemTone": "ice",
+    "sideTone": "ice",
+    "sideShape": "round",
+    "sideMode": "none",
+    "sideCarat": 0.3,
+    "sideMainGap": 0,
+    "sideSpacing": 0,
+    "setting": "bezel",
+    "orientation": "north",
+    "headMetal": "match",
+    "coverage": "shoulders",
+    "accentSize": 1,
+    "accentRows": 1,
+    "halo": "single",
+    "haloSize": 1,
+    "height": 0,
+    "engravingFont": "serif",
+    "fire": 1,
+    "hiddenHalo": false,
+    "sculpt": 2.3,
+    "rhythm": 4,
+    "layers": 3,
+    "gap": 0.7,
+    "faceSize": 7,
+    "face": "oval",
+    "inlay": "metal",
+    "secondaryMetal": "white18",
+    "mixedMetal": false,
+    "dailyCount": 5,
+    "dailyCarat": 0.1,
+    "dailySpacing": 0.15,
+    "alternateGems": false,
+    "stoneLength": 1.6,
+    "stoneWidth": 1.6,
+    "stoneDepth": 1.1,
+    "thickness": 1.6,
+    "bezelWall": 0.45,
+    "fashionStone": true,
+    "motifDepth": 0.5,
+    "motifOffset": 0,
+    "edgeSoftness": 0.7
+  },
+  "engineering": {
+    "version": "cut-seats-9",
+    "units": "mm",
+    "status": "geometry_checked",
+    "metalSolids": 1,
+    "volumeMm3": 208.01579387302633,
+    "innerDiameterMm": 17.188733853924695,
+    "nominalInnerCircumferenceMm": 54,
+    "bandWidthMm": 3.1,
+    "minimumBaseThicknessMm": 1.6,
+    "bezelWallMm": 0.45,
+    "tessellation": {
+      "angularSegments": 256,
+      "maxRadialChordErrorMm": 0.0009182134023973636
+    },
+    "stones": [
+      {
+        "id": "S1",
+        "shape": "round",
+        "length": 1.6,
+        "width": 1.6,
+        "depth": 1.1,
+        "angle": -0.5907050369428007,
+        "rotation": 0,
+        "z": 1.094428107142122,
+        "girdleRadius": 10.294366926962347,
+        "tone": "ice",
+        "positionMm": [
+          -5.733413981570794,
+          8.549968101862412,
+          1.094428107142122
+        ]
+      },
+      {
+        "id": "S2",
+        "shape": "round",
+        "length": 1.6,
+        "width": 1.6,
+        "depth": 1.1,
+        "angle": -0.29535251847140037,
+        "rotation": 0,
+        "z": 1.9267713966189424,
+        "girdleRadius": 10.294366926962347,
+        "tone": "ice",
+        "positionMm": [
+          -2.9964547028564232,
+          9.84861663588678,
+          1.9267713966189424
+        ]
+      },
+      {
+        "id": "S3",
+        "shape": "round",
+        "length": 1.6,
+        "width": 1.6,
+        "depth": 1.1,
+        "angle": 0,
+        "rotation": 0,
+        "z": 2.3,
+        "girdleRadius": 10.294366926962347,
+        "tone": "ice",
+        "positionMm": [
+          0,
+          10.294366926962347,
+          2.3
+        ]
+      },
+      {
+        "id": "S4",
+        "shape": "round",
+        "length": 1.6,
+        "width": 1.6,
+        "depth": 1.1,
+        "angle": 0.29535251847140037,
+        "rotation": 0,
+        "z": 1.9267713966189424,
+        "girdleRadius": 10.294366926962347,
+        "tone": "ice",
+        "positionMm": [
+          2.9964547028564232,
+          9.84861663588678,
+          1.9267713966189424
+        ]
+      },
+      {
+        "id": "S5",
+        "shape": "round",
+        "length": 1.6,
+        "width": 1.6,
+        "depth": 1.1,
+        "angle": 0.5907050369428007,
+        "rotation": 0,
+        "z": 1.094428107142122,
+        "girdleRadius": 10.294366926962347,
+        "tone": "ice",
+        "positionMm": [
+          5.733413981570794,
+          8.549968101862412,
+          1.094428107142122
+        ]
+      }
+    ],
+    "requiresWorkshopApproval": true,
+    "checks": [
+      "Manifold Boolean operations succeeded",
+      "One connected closed metal solid",
+      "Shared preview/export geometry",
+      "Exact nominal inner-radius construction"
+    ],
+    "pending": [
+      "Verify actual stone measurements and cut scans",
+      "Confirm alloy, casting shrinkage, setting/finishing allowances",
+      "Goldsmith approval before manufacturing"
+    ],
+    "meshValidation": {
+      "valid": true,
+      "parts": 1,
+      "checks": [
+        {
+          "valid": true,
+          "nonManifoldVertices": 0,
+          "problemEdges": [],
+          "vertices": 13913,
+          "triangles": 27846,
+          "nonFinite": 0,
+          "degenerate": 0,
+          "boundaryEdges": 0,
+          "inconsistentEdges": 0,
+          "components": 1,
+          "signedVolume": 106.50408571557304
+        }
+      ]
+    },
+    "assemblyValidation": {
+      "valid": true,
+      "issues": [],
+      "blockedSupports": 0,
+      "stones": {
+        "valid": true,
+        "stoneCount": 5,
+        "collisions": [],
+        "toleranceMm3": 0.00001
+      },
+      "metal": {
+        "valid": true,
+        "collisions": [],
+        "toleranceMm3": 0.001
+      },
+      "minimumBoreRadiusMm": 8.593729380371869,
+      "requestedBoreRadiusMm": 8.594366926962348,
+      "boreToleranceMm": 0.03,
+      "requiresWorkshopApproval": true
+    }
+  }
+}

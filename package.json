@@ -27,7 +27,8 @@
     "build:ring-previews": "node scripts/thumbnails.mjs",
     "lint": "eslint server scripts tests public/builder public/app.jsx",
     "typecheck": "tsc -p jsconfig.pricing.json",
-    "test:styles-browser": "node scripts/check-styles-browser.cjs"
+    "test:styles-browser": "node scripts/check-styles-browser.cjs",
+    "test:manufacturing": "node --expose-gc scripts/audit-ring-system.mjs --mode=parameters --assert-valid"
   },
   "dependencies": {
     "express": "^4.19.2",

@@ -159,7 +159,7 @@ export const DEFAULT = Object.freeze({
   accentRows: 1,
   halo: "single",
   haloSize: 1,
-  height: 1,
+  height: 0,
   engravingFont: "serif",
   fire: 1,
   hiddenHalo: false,
@@ -186,16 +186,7 @@ export const DEFAULT = Object.freeze({
   motifOffset: 0,
   edgeSoftness: .7,
 });
-export function normalize(input = {}) {
-  if (!input || typeof input !== "object" || Array.isArray(input)) input = {};
-  // Preserve the white-metal appearance of older saved platinum designs.
-  input = { ...input };
-  for (const key of ["metal", "headMetal", "secondaryMetal"])
-    if (input[key] === "platinum") input[key] = "white18";
-  const s = { ...DEFAULT };
-  for (const [key, choices] of Object.entries(OPTIONS))
-    if (choices.includes(input[key])) s[key] = input[key];
-  for (const [key, min, max, step] of [
+export const NUMERIC_RANGES = Object.freeze([
     ["carat", 0.3, 5, 0.1],
     ["width", 1.6, 10, 0.1],
     ["size", 44, 72, 1],
@@ -204,7 +195,7 @@ export function normalize(input = {}) {
     ["sideSpacing", 0, 0.8, 0.05],
     ["accentSize", 0.6, 2, 0.1],
     ["haloSize", 0.6, 1.6, 0.1],
-    ["height", 0.5, 2.5, 0.1],
+    ["height", 0, 6, 0.1],
     ["fire", 0.5, 1.5, 0.1],
     ["sculpt", 0.4, 2.5, 0.1],
     ["rhythm", 2, 8, 1],
@@ -222,7 +213,17 @@ export function normalize(input = {}) {
     ['motifDepth',0,1.2,.1],
     ['motifOffset',-1,1,.1],
     ['edgeSoftness',.35,1.2,.05],
-  ]) {
+  ]);
+export function normalize(input = {}) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) input = {};
+  // Preserve the white-metal appearance of older saved platinum designs.
+  input = { ...input };
+  for (const key of ["metal", "headMetal", "secondaryMetal"])
+    if (input[key] === "platinum") input[key] = "white18";
+  const s = { ...DEFAULT };
+  for (const [key, choices] of Object.entries(OPTIONS))
+    if (choices.includes(input[key])) s[key] = input[key];
+  for (const [key, min, max, step] of NUMERIC_RANGES) {
     const n = Number(input[key]);
     if (Number.isFinite(n) && input[key] !== undefined)
       s[key] = Number(

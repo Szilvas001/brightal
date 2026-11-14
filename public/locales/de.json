@@ -702,5 +702,6 @@
   "Pre-fulfilment review and contract acceptance are required.": "Prüfung und Vertragsannahme vor Ausführung erforderlich.",
   "The offer cannot change while payment is in progress.": "Während einer laufenden Zahlung kann das Angebot nicht geändert werden.",
   "The design needs geometry corrections. Change the stone dimensions or setting and try again.": "Die Geometrie des Entwurfs muss korrigiert werden. Ändere die Steinmaße oder die Fassung und versuche es erneut.",
-  "A support route is obstructed by a stone. Change the stone size or spacing.": "Ein Stein versperrt den Verlauf einer Stütze. Ändere die Steingröße oder den Abstand."
+  "A support route is obstructed by a stone. Change the stone size or spacing.": "Ein Stein versperrt den Verlauf einer Stütze. Ändere die Steingröße oder den Abstand.",
+  "0 mm: the lowest base setting. Lift moves the stone and setting together; supports adjust to match. Prong-tip length stays unchanged.": "0 mm: die niedrigste Grundfassung. Stein und Fassung werden gemeinsam angehoben; die Stützen passen sich an. Die Länge der Krappenspitzen bleibt unverändert."
 }

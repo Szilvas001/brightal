@@ -1285,15 +1285,17 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                     </label>
                   )}
                 </div>
-                {!isModern(s) && (!isBand(s)||isDaily(s)) &&
-                  slider(
+                {!isModern(s) && (!isBand(s)||isDaily(s)) && <>
+                  {slider(
                     "height",
                     L("Foglalat emelése", "Setting lift"),
-                    0.5,
-                    2.5,
+                    0,
+                    6,
                     0.1,
                     "mm",
                   )}
+                  <p className="rb-hint">{L('0 mm: a legalacsonyabb alapfoglalat. Az emelés a követ és a foglalatot együtt mozgatja, a tartók hozzáigazodnak. A karomvég hossza nem változik.','0 mm: the lowest base setting. Lift moves the stone and setting together; supports adjust to match. Prong-tip length stays unchanged.')}</p>
+                </>}
                 {!isModern(s) && (
                   <>
                     <label className="rb-select rb-engraving">
