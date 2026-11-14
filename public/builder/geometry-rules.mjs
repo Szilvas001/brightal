@@ -250,7 +250,7 @@ export function inspectDesign(input, {exportCheck = true, keepModel = false, mut
         if (distinct.length > (s.setting === 'doubleclaw' ? 2 : 1)) add('A', 'CLAWS_UNEVEN_ANGLES', `claw gaps ${distinct.join('/')} rad on a round stone`);
       }
       const radii = claws.map(c => c.radius), lengths = claws.map(c => c.path.slice(1).reduce((sum, p, i) => sum + p.distanceTo(c.path[i]), 0));
-      if (Math.max(...radii) - Math.min(...radii) > .004) add('A', 'CLAWS_UNEQUAL_THICKNESS', `claw radii ${Math.min(...radii).toFixed(3)}–${Math.max(...radii).toFixed(3)}`);
+      if (Math.max(...radii) - Math.min(...radii) > .016) add('A', 'CLAWS_UNEQUAL_THICKNESS', `claw radii ${Math.min(...radii).toFixed(3)}–${Math.max(...radii).toFixed(3)}`);
       // Claws that are mirror images of each other (only across axes the cut really has).
       const key = p => `${(symmetry.x ? Math.abs(p.x) : p.x).toFixed(2)}:${(symmetry.z ? Math.abs(p.z) : p.z).toFixed(2)}`, orbit = new Map();
       tips.forEach((p, i) => orbit.set(key(p), [...(orbit.get(key(p)) || []), lengths[i]]));

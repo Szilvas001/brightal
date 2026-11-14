@@ -66,6 +66,64 @@ export function buildRing(s, environment) {
     return mesh(geo, mat, null, parent);
   };
   const beadGeo = new T.SphereGeometry(1, 20, 12);
+  // One smooth, closed, tapering rod: a single swept surface with domed ends
+  // (no joints, so no ridges), with a mirror-invariant tessellation.
+  const rod = (points, radii, parent, mat) => {
+    const {Manifold, Mesh} = getKernel(), sides = 20, path = points.map(p => new T.Vector3(...p)), n = path.length;
+    const direction = i => path[Math.min(i + 1, n - 1)].clone().sub(path[Math.max(i - 1, 0)]).normalize();
+    const xyz = [], index = [], rings = [];
+    const reference = Math.abs(direction(0).y) > .999 ? new T.Vector3(1, 0, 0) : new T.Vector3(0, 1, 0);
+    let u = reference.addScaledVector(direction(0), -reference.dot(direction(0))).normalize();
+    const ring = (centre, tangent, radius, squeeze) => {
+      u = u.clone().addScaledVector(tangent, -u.dot(tangent)).normalize();
+      const v = new T.Vector3().crossVectors(tangent, u), first = xyz.length / 3;
+      for (let j = 0; j < sides; j++) {
+        const t = (j + .5) / sides * Math.PI * 2, offset = u.clone().multiplyScalar(Math.cos(t) * radius).addScaledVector(v, Math.sin(t) * radius);
+        if (squeeze) offset.addScaledVector(squeeze.axis, offset.dot(squeeze.axis) * (squeeze.factor - 1));
+        xyz.push(centre.x + offset.x, centre.y + offset.y, centre.z + offset.z);
+      }
+      rings.push(first);
+    };
+    const dome = (end, sign) => {
+      const tangent = direction(end), steps = [1, 2, 3].map(k => k * Math.PI / 8);
+      for (const a of sign < 0 ? steps.slice().reverse() : steps) ring(path[end].clone().addScaledVector(tangent, sign * radii[end] * Math.sin(a)), tangent, radii[end] * Math.cos(a));
+    };
+    dome(0, -1);
+    for (let i = 0; i < n; i++) {
+      const tangent = direction(i);
+      let squeeze;
+      if (i > 0 && i < n - 1) {
+        // Mitre: keep the rod round along both legs of a bend.
+        const before = path[i].clone().sub(path[i - 1]).normalize(), after = path[i + 1].clone().sub(path[i]).normalize(), bend = after.clone().sub(before);
+        if (bend.lengthSq() > 1e-10) squeeze = {axis: bend.normalize(), factor: 1 / Math.max(.5, Math.sqrt((1 + before.dot(after)) / 2))};
+      }
+      ring(path[i], tangent, radii[i], squeeze);
+    }
+    dome(n - 1, 1);
+    for (let k = 0; k + 1 < rings.length; k++) for (let j = 0; j < sides; j++) {
+      const a = rings[k] + j, b = rings[k] + (j + 1) % sides, c = rings[k + 1] + j, d = rings[k + 1] + (j + 1) % sides;
+      index.push(a, b, c, b, d, c);
+    }
+    const cap = (first, centre, flip) => {
+      const apex = xyz.length / 3; xyz.push(centre.x, centre.y, centre.z);
+      for (let j = 0; j < sides; j++) flip ? index.push(apex, first + (j + 1) % sides, first + j) : index.push(apex, first + j, first + (j + 1) % sides);
+    };
+    cap(rings[0], path[0].clone().addScaledVector(direction(0), -radii[0]), true);
+    cap(rings.at(-1), path[n - 1].clone().addScaledVector(direction(n - 1), radii[n - 1]), false);
+    let solid = new Manifold(new Mesh({numProp: 3, vertProperties: new Float32Array(xyz), triVerts: new Uint32Array(index)}));
+    try {
+      if (solid.status() !== 'NoError' || solid.volume() < 0) {
+        // Opposite winding (depends on the frame's handedness): turn every triangle.
+        solid.delete();
+        for (let i = 0; i < index.length; i += 3) [index[i + 1], index[i + 2]] = [index[i + 2], index[i + 1]];
+        solid = new Manifold(new Mesh({numProp: 3, vertProperties: new Float32Array(xyz), triVerts: new Uint32Array(index)}));
+      }
+      if (solid.status() !== 'NoError') throw new Error('Rod sweep is not a closed solid: ' + solid.status());
+      const o = solidMesh(solid, mat, parent);
+      o.userData.rod = {points: path, radius: Math.min(...radii), radii};
+      return o;
+    } finally { solid.delete(); }
+  };
   const bead = (r, pos, parent = group, mat = head) => {
     const o = mesh(beadGeo, mat, pos, parent);
     o.scale.setScalar(Math.max(.16,r));
@@ -300,30 +358,43 @@ export function buildRing(s, environment) {
       stem = {y: baseY, radius: stemR};
       const wide = (baseR + CLEARANCE) / scale, free = p => clearance(planes, p.x / scale, p.y / scale, p.z / scale) * scale;
       const away = p => Math.hypot(p.x, p.z) > .05 * scale ? new T.Vector3(p.x, 0, p.z).normalize() : new T.Vector3(0, -1, 0);
-      // A smooth rod through the control points, tapering from `from` to `to`.
-      // The smoothed curve must still clear the stone everywhere: a sample (or
-      // the straight piece to the next one) that would graze it moves outwards,
-      // or downwards under the culet. A claw's tip stays where it holds the stone.
-      const sweep = (control, from, to, count, keepLast) => {
-        const curve = new T.CatmullRomCurve3(control.map(p => new T.Vector3(...p)), false, 'centripetal');
-        const samples = curve.getSpacedPoints(count), last = samples.length - 1;
-        const radii = samples.map((_, i) => to + (from - to) * Math.pow(1 - i / last, 1.4));
-        const room = i => radii[i] + CLEARANCE + .04, fixed = i => keepLast && i === last;
-        for (let pass = 0; pass < 6; pass++) {
-          let moved = false;
-          samples.forEach((p, i) => {
-            if (fixed(i)) return;
-            for (let n = 0; n < 120 && free(p) < room(i); n++) { p.addScaledVector(away(p), .01 * scale); moved = true; }
-            if (i < last && !fixed(i + 1)) {
-              const q = samples[i + 1], middle = p.clone().lerp(q, .5);
-              for (let n = 0; n < 60 && free(middle) < room(i); n++) {
-                p.addScaledVector(away(p), .01 * scale); q.addScaledVector(away(q), .01 * scale); middle.copy(p).lerp(q, .5); moved = true;
-              }
-            }
-          });
-          if (!moved) break;
+      // A rod along straight legs with rounded corners, tapering from `from`
+      // to `to`. The legs stay straight; a corner is rounded as far as the
+      // stone allows, and if a leg itself would graze the stone, the inner
+      // control points move outwards as a whole (never single samples, which
+      // would leave the rod wavy). A claw's tip stays where it holds the stone.
+      const sweep = (control, from, to, _count, keepLast) => {
+        const points = control.map(p => new T.Vector3(...p));
+        const build = fillet => {
+          const path = [points[0].clone()];
+          for (let i = 1; i < points.length - 1; i++) {
+            const corner = points[i], before = points[i - 1], after = points[i + 1];
+            const reach = Math.min(fillet, before.distanceTo(corner) * .45, after.distanceTo(corner) * .45);
+            const start = corner.clone().add(before.clone().sub(corner).setLength(reach)), end = corner.clone().add(after.clone().sub(corner).setLength(reach));
+            for (let k = 0; k <= 6; k++) { const t = k / 6; path.push(start.clone().multiplyScalar((1 - t) ** 2).addScaledVector(corner, 2 * t * (1 - t)).addScaledVector(end, t * t)); }
+          }
+          path.push(points.at(-1).clone());
+          // Even spacing along the straight legs keeps the taper smooth.
+          const dense = [path[0]];
+          for (let i = 1; i < path.length; i++) {
+            const steps = Math.max(1, Math.ceil(path[i].distanceTo(path[i - 1]) / (.35 * scale)));
+            for (let k = 1; k <= steps; k++) dense.push(path[i - 1].clone().lerp(path[i], k / steps));
+          }
+          const lengths = [0];
+          for (let i = 1; i < dense.length; i++) lengths.push(lengths[i - 1] + dense[i].distanceTo(dense[i - 1]));
+          const radii = lengths.map(l => to + (from - to) * Math.pow(1 - l / lengths.at(-1), 1.4));
+          const last = dense.length - 1;
+          const clear = dense.every((p, i) => (keepLast && i === last) || (free(p) >= radii[i] + CLEARANCE + .03
+            && (i === last || (keepLast && i + 1 === last) || free(p.clone().lerp(dense[i + 1], .5)) >= radii[i] + CLEARANCE + .03)));
+          return {points: dense.map(p => p.toArray()), radii, clear};
+        };
+        let result;
+        for (let push = 0; push < 80; push++) {
+          for (const fillet of [2.2 * from, 1.4 * from, .8 * from, .4 * from]) { result = build(fillet); if (result.clear) return result; }
+          for (let i = 1; i < points.length - (keepLast ? 2 : 1); i++) points[i].addScaledVector(away(points[i]), .012 * scale);
+          if (keepLast && points.length > 2) { const shaftTop = points.at(-2); shaftTop.addScaledVector(away(shaftTop), .012 * scale); }
         }
-        return {points: samples.map(p => p.toArray()), radii};
+        return result;
       };
       const direction = angle => { const [x, z] = outline(shape, angle), l = Math.hypot(x, z); return [x / l * spread, baseY, z / l * spread]; };
       // Where a claw meets the stone just under the girdle and hugs it: the
@@ -336,20 +407,22 @@ export function buildRing(s, environment) {
       };
       // Through the basket ring a hair off its centre line: two tubes that
       // share a centre point would meet in coincident facets.
+      // The foot of a claw's upright part, just under the girdle.
+      const shaftFoot = post => { const top = post.points.at(-2); return [top[0], -.03 * scale, top[2]]; };
       const throughRing = post => post.points[0].map((v, i) => i === 1 ? v - .007 * scale : v * 1.006);
       const angles = clawAngles(shape, scale, fit.count, fit.double, r);
       const claw = (angle, start, from) => {
         const post = postPath(shape, planes, angle, {scale, radius: r, galleryK});
         posts.push(post);
         const body = sweep([...start(post), ...post.points.slice(-2)], from, r, 22, true);
-        tag(tube(body.points, body.radii, assembly, head), 'claw', stone, {ends: [1, 0], melee});
+        tag(rod(body.points, body.radii, assembly, head), 'claw', stone, {ends: [1, 0], melee});
         // What stands near the claw (hidden-halo stones, halo rows) keeps clear of its real, tapered body.
         post.points = body.points; post.reach = from;
       };
       if (!fit.double) {
         for (const angle of angles) {
           const foot = direction(angle);
-          claw(angle, post => basket ? [foot, throughRing(post), post.points[1]] : [foot, seatOf(angle, foot)], baseR);
+          claw(angle, post => basket ? [foot, throughRing(post), post.points[1]] : [foot, seatOf(angle, foot), shaftFoot(post)], baseR);
         }
       } else {
         // Double claws: each pair rises as ONE tapered trunk from the base and
@@ -359,14 +432,14 @@ export function buildRing(s, environment) {
           const guide = postPath(shape, planes, centre, {scale, radius: r, galleryK});
           const fork = basket ? guide.points[1] : seatOf(centre, foot);
           const trunk = sweep(basket ? [foot, throughRing(guide), fork] : [foot, fork], baseR, 1.25 * r, 14, false);
-          tag(tube(trunk.points, trunk.radii, assembly, head), 'post', stone, {ends: [1, 1], melee});
+          tag(rod(trunk.points, trunk.radii, assembly, head), 'post', stone, {ends: [1, 1], melee});
           const top = trunk.points.at(-1);
           posts.push({...guide, points: trunk.points, reach: baseR});
           for (const angle of [angles[i], angles[i + 1]]) claw(angle, post => {
             // Each branch leaves the trunk's end towards its own side (two rods
             // starting in the very same point would share coincident facets).
             const shaft = post.points.at(-2), side = new T.Vector3(shaft[0] - top[0], 0, shaft[2] - top[2]).normalize().multiplyScalar(.45 * r);
-            return [[top[0] + side.x, top[1], top[2] + side.z], [shaft[0], (top[1] + shaft[1]) / 2 - .02 * scale, shaft[2]]];
+            return [[top[0] + side.x, top[1], top[2] + side.z], [shaft[0], Math.max(top[1] + .3 * r, -.03 * scale), shaft[2]]];
           }, 1.2 * r);
         }
       }
