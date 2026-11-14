@@ -1,6 +1,8 @@
 # Geometriai audit – munkaverzió, 2026-11-14
 
-**Nem kiadható, nem teljes audit.** A felhasználó kérésére külön munkaágon feltöltött részállapot.
+**Frissítés:** a Duet-hiba javítását és az új sikeres célzott teszteket a [követő jelentés](halo-fix/FOLLOWUP.md) tartalmazza. Az alábbi táblázatok a korábbi állapot történeti eredményei.
+
+**Nem teljes audit.** A felhasználó kérésére külön munkaágon feltöltött részállapot.
 
 ## 1. Leltár
 

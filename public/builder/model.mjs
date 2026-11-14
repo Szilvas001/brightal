@@ -1,6 +1,7 @@
 import * as T from "three";
 import {getKernel} from "./kernel.mjs";
 import {supportLayout} from "./support-layout.mjs";
+import {hiddenHaloLayout} from "./halo-layout.mjs";
 import {MIN_ROD_RADIUS,MIN_PRONG_RADIUS} from "./manufacturing-policy.mjs";
 import {spacedOutline} from "./stone-spacing.mjs";
 import { buildContemporary, MODERN_STYLES } from './contemporary.mjs';
@@ -230,7 +231,8 @@ export function buildRing(s, environment) {
       seat(shape, scale * 0.94, assembly, -scale * 0.13, 0.13 * fitting);
       for(let i=0;i<8;i++) {
         const [x,z]=outline(shape,i*Math.PI/4);
-        tube([[x*scale*.72,-scale*.58,z*scale*.72],[x*scale*.94,-scale*.13,z*scale*.94],[x*scale*1.02,scale*.05,z*scale*1.02]],.09*fitting,assembly,head);
+        const rib=tube([[x*scale*.72,-scale*.58,z*scale*.72],[x*scale*.94,-scale*.13,z*scale*.94],[x*scale*1.02,scale*.05,z*scale*1.02]],.09*fitting,assembly,head);
+        rib.userData.role='setting-rib';
       }
     } else
       for (let i = 0; i < s.prongs; i++) {
@@ -271,17 +273,18 @@ export function buildRing(s, environment) {
     return assembly;
   };
   const addHiddenHalo = (main, shape, size) => {
-    seat(shape, size * 0.86, main, -size * 0.42, 0.18);
+    const layout=hiddenHaloLayout(main,shape,size);
+    seat(shape, layout.radius, main, layout.y, 0.18);
     for(let i=0;i<4;i++) {
       const [x,z]=outline(shape,i*Math.PI/2);
-      tube([[x*size*.72,-size*.58,z*size*.72],[x*size*.86,-size*.42,z*size*.86]],.085,main,head);
+      tube([[x*size*.72,-size*.58,z*size*.72],[x*layout.radius,layout.y,z*layout.radius]],.085,main,head);
     }
-    for (const point of spacedOutline(shape,size*.86,.44,24,24)) {
-      const [x,z]=point.map(v=>v/(size*.86));
+    for (const point of layout.points) {
+      const [x,z]=point.map(v=>v/layout.radius);
       const o = gem(
         "round",
         0.18,
-        [x * size * 0.86, -size * 0.42, z * size * 0.86],
+        [x * layout.radius, layout.y, z * layout.radius],
         s.sideTone,
         false,
         main,

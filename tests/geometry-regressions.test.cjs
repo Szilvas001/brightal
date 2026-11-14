@@ -51,3 +51,18 @@ test('reported pavé supports avoid stones before cavity subtraction, so cutting
   const audit=auditMetalPenetration({group});assert.equal(audit.valid,true,JSON.stringify(audit));
  }finally{m.group.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}
 });
+
+test('hidden-halo diamonds stay outside raw claws and bezel ribs for every cut at both carat limits',async()=>{
+ await(await import('../public/builder/kernel.mjs')).initKernel();
+ const T=await import('three'),{buildRing}=await import('../public/builder/model.mjs'),{normalize,OPTIONS}=await import('../public/builder/state.mjs'),{auditMetalPenetration}=await import('../public/builder/assembly-audit.mjs'),{spacedOutline}=await import('../public/builder/stone-spacing.mjs');
+ let count=0;
+ for(const shape of OPTIONS.shape)for(const setting of OPTIONS.setting)for(const carat of [.3,5]){
+  const m=buildRing(normalize({style:'solitaire',shape,setting,carat,hiddenHalo:true}));
+  try{const group=new T.Group(),mount=m.mountings[0],stones=mount.assembly.children.filter(o=>o.userData.gem&&!o.userData.hero);
+   assert.equal(stones.length,spacedOutline(shape,2.4*Math.cbrt(carat)*.86,.44,24,24).length,'No hidden-halo stone may be removed');
+   for(const o of [...stones,...mount.assembly.children.filter(o=>['prong','setting-rib'].includes(o.userData.role))]){const copy=o.clone();copy.matrixAutoUpdate=false;copy.matrix.copy(o.matrixWorld);group.add(copy);}
+   const report=auditMetalPenetration({group});assert.equal(report.valid,true,JSON.stringify({shape,setting,carat,report}));count++;
+  }finally{m.group.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}
+ }
+ console.log('Hidden-halo raw setting clearance cases:',count);
+});
