@@ -16,12 +16,12 @@ test('mountings intersect real shank and gallery meshes at extreme sizes and rot
     for(const setting of ['claw','bezel','doubleclaw'])
       for(const extreme of [false,true]) {
         const model=buildRing(normalize({style,setting,shape:extreme?'pear':'emerald',orientation:extreme?'east':'north',carat:extreme?5:.3,size:extreme?44:72,height:extreme?2.5:.5,width:extreme?1.6:5,sideMode:'cluster',sideCarat:extreme?1.5:.1,hiddenHalo:true,halo:'double'}),null);
-        // A centre claw head grows out of the shank on one solid base; every
-        // other basket (bezels, side stones) stands on four posts.
+        // Centre and main side heads (claw or bezel) grow out of the shank on one
+        // solid base; only the small satellite baskets stand on four posts.
         const based=model.mountings.filter(m=>m.stem).length;let bases=0;
         model.group.traverse(o=>{if(o.userData.role==='head-base')bases++;});
         assert.ok(bases>=based,`${style}/${setting}: every claw head has a base`);
-        assert.equal(based>0,setting!=='bezel',`${style}/${setting}`);
+        assert.ok(based>0,`${style}/${setting}: the centre head stands on a base`);
         assert.equal(model.contacts.length,(model.mountings.length-based)*4);
         for(const contact of model.contacts) {
           assert.ok(inside(contact.start,contact.band),`${style}/${setting}: support must enter shank`);

@@ -53,6 +53,8 @@ export function buildRing(s, environment) {
   };
   // How far below the girdle the base of a claw head sits, in stone radii.
   const HEAD_DROP = 1.12;
+  // …but never so little that the base would reach the culet of a small stone.
+  const headDrop = scale => Math.max(HEAD_DROP * scale, .7 * scale + 1.92 * rodRadius(scale) + .12);
   const tag = (o, role, holds, extra) => {
     o.userData.role = role;
     if (holds) o.userData.holds = holds;
@@ -95,7 +97,7 @@ export function buildRing(s, environment) {
       if (i > 0 && i < n - 1) {
         // Mitre: keep the rod round along both legs of a bend.
         const before = path[i].clone().sub(path[i - 1]).normalize(), after = path[i + 1].clone().sub(path[i]).normalize(), bend = after.clone().sub(before);
-        if (bend.lengthSq() > 1e-10) squeeze = {axis: bend.normalize(), factor: 1 / Math.max(.5, Math.sqrt((1 + before.dot(after)) / 2))};
+        if (bend.lengthSq() > 1e-10) squeeze = {axis: bend.normalize(), factor: 1 / Math.max(.87, Math.sqrt((1 + before.dot(after)) / 2))};
       }
       ring(path[i], tangent, radii[i], squeeze);
     }
@@ -324,11 +326,37 @@ export function buildRing(s, environment) {
     // something is carried on it: a bezel's posts, a hidden halo, a halo's ribs.
     // Side stones keep their small basket on posts; the classic head is the centre stone's.
     const classicHead = centre && s.setting !== "bezel";
-    const basket = !classicHead || hiddenHalo || ["halo", "vintage"].includes(s.style);
+    const basket = !centre || hiddenHalo || ["halo", "vintage"].includes(s.style);
     const gallery = basket ? tag(loop(shape, galleryK * scale, GALLERY_Y * scale, railRadius, assembly), 'gallery', stone, {melee, host: hiddenHalo}) : null;
     const posts = [];
     let baseCount = 8, stem = null;
-    if (s.setting === "bezel") {
+    if (s.setting === "bezel" && centre) {
+      // Classic bezel: one solid collar around the girdle with a narrow lip
+      // over the crown, closing below into a cup that stands on the same base
+      // in the shank as a claw head. The stone's seat is cut into the cup.
+      const wall = Math.max(.45, .16 * scale), lip = Math.min(.3, .12 * scale), rimY = .06 * scale + .14;
+      const baseR = 1.6 * r, baseY = -headDrop(scale);
+      stem = {y: baseY, radius: baseR * 1.2};
+      const outer = (x, z) => scale + wall / Math.hypot(x, z), inner = (x, z) => scale - lip / Math.hypot(x, z);
+      const {Manifold} = getKernel(), owned = [], own = o => (owned.push(o), o);
+      try {
+        const foot = Array.from({length: 24}, (_, i) => [Math.cos((i + .5) / 24 * Math.PI * 2) * baseR, baseY, Math.sin((i + .5) / 24 * Math.PI * 2) * baseR]);
+        const cup = own(Manifold.hull([...ringPoints(shape, outer, rimY), ...ringPoints(shape, outer, -.22 * scale), ...foot]));
+        const opening = own(Manifold.hull([...ringPoints(shape, inner, 0), ...ringPoints(shape, inner, rimY + scale)]));
+        tag(solidMesh(own(cup.subtract(opening)), head, assembly), 'bezel', stone, {melee, host: true});
+      } finally { owned.reverse().forEach(o => o.delete()); }
+      // What stands around the stone (halo rows, hidden-halo stones) keeps clear of the collar.
+      for (let i = 0; i < 16; i++) {
+        const angle = i * Math.PI / 8, [x, z] = outline(shape, angle), k = outer(x, z);
+        posts.push({angle, shaftK: k / scale, reach: .05, points: [[x * k, -.22 * scale, z * k], [x * k, rimY, z * k]]});
+      }
+      // Ribs that carry a halo leave the basket ring at these eight points: a
+      // hidden halo's stones stay clear of them too.
+      for (let i = 0; i < 8; i++) {
+        const angle = i * Math.PI / 4, [x, z] = outline(shape, angle), k = outer(x, z), g = galleryK * scale;
+        posts.push({angle, shaftK: k / scale, reach: .22, points: [[x * g, GALLERY_Y * scale, z * g], [x * g * 1.35, GALLERY_Y * scale + .25 * scale, z * g * 1.35]]});
+      }
+    } else if (s.setting === "bezel") {
       const seatY = -(.018 + margin * 1.15), seatK = ringFactor(shape, planes, seatY, margin);
       const tipHeight = rimHeight(shape, planes, scale, r);
       for (let i = 0; i < 8; i++) {
@@ -354,7 +382,7 @@ export function buildRing(s, environment) {
       const fit = fitClaws(shape, scale, s.prongs, s.setting === "doubleclaw");
       baseCount = fit.count;
       const baseR = 1.6 * r, stemR = baseR * 1.2, spread = baseR * .4;
-      const baseY = -HEAD_DROP * scale;
+      const baseY = -headDrop(scale);
       stem = {y: baseY, radius: stemR};
       const wide = (baseR + CLEARANCE) / scale, free = p => clearance(planes, p.x / scale, p.y / scale, p.z / scale) * scale;
       const away = p => Math.hypot(p.x, p.z) > .05 * scale ? new T.Vector3(p.x, 0, p.z).normalize() : new T.Vector3(0, -1, 0);
@@ -490,7 +518,7 @@ export function buildRing(s, environment) {
     // A claw head stands on its base: the base sits in the top of the shank.
     top = s.setting === "bezel"
       ? radius + Math.max(size * .7, thick + size * .7 + (s.accents !== 'none' ? s.accentSize * .14 + .32 : .12)) + s.height * 0.45
-      : radius + thick * .5 + HEAD_DROP * size + (s.accents !== 'none' ? s.accentSize * .14 + .2 : 0) + s.height * 0.45;
+      : radius + thick * .5 + headDrop(size) + (s.accents !== 'none' ? s.accentSize * .14 + .2 : 0) + s.height * 0.45;
   const rotation = s.orientation === "east" ? Math.PI / 2 : 0;
   const extentOf = object => { object.updateWorldMatrix(true, true); return new T.Box3().setFromObject(object); };
   if (s.style === "duet") {
@@ -579,7 +607,7 @@ export function buildRing(s, environment) {
         // Neighbouring baskets are placed by their measured extents, so the
         // claws of one stone never run through the stone beside it.
         const inward = box => sign > 0 ? -box.min.x : box.max.x, outward = box => sign > 0 ? box.max.x : -box.min.x;
-        const side = setting(s.sideShape, scale, [0, y, 0], s.sideTone, 0, true);
+        const side = setting(s.sideShape, scale, [0, y, 0], s.sideTone, 0, true, false, true);
         side.rotation.z = sign * -0.14;
         side.position.x = sign * (mainExtent + inward(extentOf(side)) + .06 + (s.sideMainGap || 0) * 0.8);
         const sideBox = extentOf(side);
