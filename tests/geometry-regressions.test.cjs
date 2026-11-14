@@ -46,7 +46,7 @@ test('reported pavé supports avoid stones before cavity subtraction, so cutting
  const T=await import('three'),{buildRing}=await import('../public/builder/model.mjs'),{normalize}=await import('../public/builder/state.mjs'),{auditMetalPenetration}=await import('../public/builder/assembly-audit.mjs');
  const c=normalize({style:'pave',shape:'pear',metal:'yellow14',carat:1.3,accents:'pave',width:2.4,size:50,prongs:8,sideShape:'princess',sideMode:'five',sideCarat:.3,height:.5,thickness:2}),m=buildRing(c),group=new T.Group();
  try{
-  assert.equal(m.contacts.length,20);assert.ok(m.contacts.every(c=>c.support.userData.stoneClearanceValid));
+  assert.equal(m.contacts.length,m.mountings.filter(x=>!x.stem).length*4);assert.equal(m.contacts.length,16);assert.ok(m.contacts.every(c=>c.support.userData.stoneClearanceValid));
   for(const mesh of [...m.contacts.map(c=>c.support),...m.gems]){const copy=mesh.clone();copy.matrixAutoUpdate=false;copy.matrix.copy(mesh.matrixWorld);group.add(copy);}
   const audit=auditMetalPenetration({group});assert.equal(audit.valid,true,JSON.stringify(audit));
  }finally{m.group.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}

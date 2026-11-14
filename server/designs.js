@@ -28,39 +28,26 @@ async function makePackage(request, files = []) {
   const { initKernel } = await import('../public/builder/kernel.mjs');
   await initKernel();
   const { buildFinishedRing } = await import('../public/builder/finished-model.mjs');
-  const { Vector3 } = await import('three');
   const snapshot = request.design;
   const model = buildFinishedRing(snapshot.config);
-  const lines = ['# BRIGHTAL concept mesh; not a production solid', '# Units: millimetres; renderer coordinates / 0.8. Nominal size requires workshop reconciliation.', 'o BRIGHTAL_Ring'];
-  let offset = 1, part = 0;
-  const meshes = [], geometries = new Set(), materials = new Set();
+  // The package holds exactly the meshes the viewer shows (rule F): one closed
+  // metal body and every stone as its own object, written by the same
+  // function the geometry checker re-reads.
+  const { exportMeshes } = await import('../public/builder/export-mesh.mjs');
+  let exported;
   try {
-    model.group.updateMatrixWorld(true);
+    exported = exportMeshes(model);
+  } finally {
+    const geometries = new Set(), materials = new Set();
     model.group.traverse(object => {
       if (!object.isMesh) return;
       geometries.add(object.geometry);
       for (const m of Array.isArray(object.material) ? object.material : [object.material]) materials.add(m);
-      const role = object.userData.gem ? 'gemstone' : (object.userData.role || 'setting');
-      lines.push(`g ${role}_${++part}`);
-      const position = object.geometry.getAttribute('position');
-      const index = object.geometry.index;
-      const min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
-      for (let i = 0; i < position.count; i++) {
-        const p = new Vector3().fromBufferAttribute(position, i).applyMatrix4(object.matrixWorld).divideScalar(.8);
-        const values = p.toArray();
-        if (!values.every(Number.isFinite)) throw new Error('INVALID_GEOMETRY');
-        values.forEach((v, j) => { min[j] = Math.min(min[j], v); max[j] = Math.max(max[j], v); });
-        lines.push('v ' + values.map(v => v.toFixed(6)).join(' '));
-      }
-      const count = index ? index.count : position.count;
-      for (let i = 0; i < count; i += 3) lines.push('f ' + [0, 1, 2].map(j => offset + (index ? index.getX(i + j) : i + j)).join(' '));
-      meshes.push({ part, role, vertices: position.count, triangles: count / 3, boundsMm: { min, max } });
-      offset += position.count;
     });
-  } finally {
     geometries.forEach(g => g.dispose());
     materials.forEach(m => m.dispose());
   }
+  const meshes = exported.objects.map((o, i) => ({ part: i + 1, ...o }));
   const s = snapshot.config;
   const manifest = {
     ...snapshot, requestNumber: request.requestNumber, createdAt: request.createdAt,
@@ -81,20 +68,10 @@ async function makePackage(request, files = []) {
   };
   const entries = {
     'design.json': strToU8(JSON.stringify({ ...manifest, design: s }, null, 2)),
-    'ring-concept.obj': strToU8(lines.join('\n') + '\n'),
+    'ring-concept.obj': strToU8(exported.obj),
     'READ-ME.txt': strToU8('BRIGHTAL – műhely-egyeztetési csomag / workshop review package\n\nNem közvetlenül gyártható CAD vagy nyomtatási fájl. / Not production CAD or a print-ready file.\n\n' + manifest.limitations.join('\n\n')),
   };
-  if(model.engineering?.assemblyValidation?.valid) {
-    const {buildFinishedRing: rebuild}=await import('../public/builder/finished-model.mjs');
-    const {STLExporter}=await import('three/addons/exporters/STLExporter.js');
-    const solid=rebuild(snapshot.config);
-    const remove=[];solid.group.traverse(o=>{if(o.userData.gem)remove.push(o);});remove.forEach(o=>o.removeFromParent());
-    const stl=new STLExporter().parse(solid.group,{binary:true});
-    // Renderer is in 0.8 scene units per millimetre; STL must be millimetres.
-    for(let i=0;i<stl.getUint32(80,true);i++)for(let k=0;k<9;k++){const off=84+i*50+12+k*4;stl.setFloat32(off,stl.getFloat32(off,true)/.8,true);}
-    entries['ring-metal-mm.stl']=new Uint8Array(stl.buffer);
-    solid.group.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});remove.forEach(o=>{o.geometry?.dispose();o.material?.dispose();});
-  }
+  if(model.engineering?.assemblyValidation?.valid) entries['ring-metal-mm.stl']=exported.stl;
   const photos = [];
   for (const [i, file] of files.entries()) {
     const ext = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' }[file.mimetype];

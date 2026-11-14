@@ -30,7 +30,10 @@ test('ZIP has a single logical object, valid indices, complete config and escape
   assert.equal(r.details.ringSize, String(design.config.size));
   assert.equal(r.details.metal, design.config.metal);
   const obj = strFromU8(zip['ring-concept.obj']).split('\n');
-  assert.equal(obj.filter(l=>l.startsWith('o ')).length, 1);
+  // Rule F: one closed metal body, and every stone as a separate object.
+  assert.equal(obj.filter(l=>l.startsWith('o BRIGHTAL_metal')).length, 1);
+  assert.equal(obj.filter(l=>l.startsWith('o gemstone_')).length, manifest.meshParts.filter(p=>p.kind==='gemstone').length);
+  assert.ok(obj.filter(l=>l.startsWith('o gemstone_')).length >= 1);
   const vertices = obj.filter(l=>l.startsWith('v '));
   assert.ok(vertices.length > 1000);
   for (const v of vertices) assert.ok(v.slice(2).split(' ').every(n=>Number.isFinite(Number(n))));

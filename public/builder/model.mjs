@@ -1,11 +1,9 @@
 import * as T from "three";
 import {getKernel} from "./kernel.mjs";
-import {spacedOutline} from "./stone-spacing.mjs";
 import { buildContemporary, MODERN_STYLES } from './contemporary.mjs';
-import { DAILY_STYLES } from "./state.mjs";
-import { buildFashion, FASHION_STYLES } from "./fashion.mjs";
 import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import { outline, gemGeometry, gemstoneMaterial } from "./optics.mjs";
+import {CLEARANCE, GALLERY_Y, clearance, segmentClear, clawAngles, fitClaws, grainLayout, isMelee, postPath, rimHeight, ringFactor, rodRadius, symmetricRow} from './mounting.mjs';
 
 export const METAL_COLORS = {
   yellow14: 0xf2d69b,
@@ -16,21 +14,15 @@ export const METAL_COLORS = {
   rose18: 0xeeb397,
   platinum: 0xe5e7eb,
 };
+const GRAIN = .165;               // grain / bead radius (0.41 mm diameter)
+const HIDDEN_STONE = .32;         // hidden-halo melee radius (0.8 mm stones)
+const HIDDEN_RAIL = HIDDEN_STONE * .75 + .1;
 
-/** Independent procedural model: usable in scene, thumbnails and geometry tests. */
+/** Independent procedural model: usable in scene, thumbnails and geometry tests.
+ * Every metal mesh carries userData.role (and, where relevant, the stone it
+ * holds and which rod ends must be embedded) for the geometry checker. */
 export function buildRing(s, environment) {
   if (MODERN_STYLES.includes(s.style)) return buildContemporary(s, environment, METAL_COLORS);
-  if (FASHION_STYLES.includes(s.style)) {
-    const material = (key) =>
-      new T.MeshPhysicalMaterial({
-        color: METAL_COLORS[key],
-        metalness: 1,
-        roughness:
-          s.finish === "polished" ? 0.105 : s.finish === "satin" ? 0.29 : 0.4,
-        anisotropy: s.finish === "brushed" ? 0.75 : 0,
-      });
-    return buildFashion(s, material(s.metal), material(s.secondaryMetal));
-  }
   const group = new T.Group(),
     gems = [],
     materials = new Map();
@@ -59,45 +51,79 @@ export function buildRing(s, environment) {
     parent.add(o);
     return o;
   };
+  // How far below the girdle the base of a claw head sits, in stone radii.
+  const HEAD_DROP = 1.12;
+  const tag = (o, role, holds, extra) => {
+    o.userData.role = role;
+    if (holds) o.userData.holds = holds;
+    Object.assign(o.userData, extra || {});
+    return o;
+  };
+  const solidMesh = (solid, mat, parent) => {
+    const data = solid.getMesh(), geo = new T.BufferGeometry(), xyz = [];
+    for (let i = 0; i < data.vertProperties.length; i += data.numProp) xyz.push(...data.vertProperties.slice(i, i + 3));
+    geo.setAttribute('position', new T.Float32BufferAttribute(xyz, 3)); geo.setIndex(Array.from(data.triVerts)); geo.computeVertexNormals();
+    return mesh(geo, mat, null, parent);
+  };
   const beadGeo = new T.SphereGeometry(1, 20, 12);
   const bead = (r, pos, parent = group, mat = head) => {
     const o = mesh(beadGeo, mat, pos, parent);
     o.scale.setScalar(Math.max(.16,r));
+    o.userData.ball = {radius: Math.max(.16, r)};
     return o;
   };
+  // Rods and closed rings are unions of rounded segments. Sweeping a thick
+  // tube around a tight bend or an acute corner can fold its inner surface.
   const tube = (points, r, parent = group, mat = metal, closed = false) => {
-    r=Math.max(.16,r);
+    // `r` is one radius, or one radius per point for a tapered rod.
+    const radii=points.map((_,i)=>Math.max(.16,Array.isArray(r)?r[i]:r)),tapered=Array.isArray(r);
+    r=Math.min(...radii);
     const vectors=points.map(p=>new T.Vector3(...p));
-    if(closed)return mesh(new T.TubeGeometry(new T.CatmullRomCurve3(vectors,true,'centripetal'),Math.max(24,points.length*3),r,12,true),mat,null,parent);
-    // Construct open rods from unions of closed rounded segments. Sweeping a
-    // thick tube around a tight bend can invert its inner surface even though
-    // its edge counts still look closed after a Boolean operation.
     const {Manifold}=getKernel(),owned=[],own=o=>(owned.push(o),o),parts=[];
     try {
-      for(const point of vectors)parts.push(own(own(Manifold.sphere(r,12)).translate(point.toArray())));
-      for(let i=1;i<vectors.length;i++){
-        const delta=vectors[i].clone().sub(vectors[i-1]);if(delta.length()<1e-8)continue;
-        const q=new T.Quaternion().setFromUnitVectors(new T.Vector3(0,0,1),delta.clone().normalize());
-        const transform=new T.Matrix4().makeRotationFromQuaternion(q).setPosition(vectors[i-1]);
-        parts.push(own(own(Manifold.cylinder(delta.length(),r,r,12)).transform(transform.elements)));
+      // Orient the facets from a mirror-invariant reference, so mirrored rods
+      // are exact mirror images down to their tessellation. The joint spheres
+      // are turned with the rod as well: rods that start side by side then
+      // never have coplanar facets or equators.
+      const basis=(from,to)=>{
+        const d=to.clone().sub(from).normalize(),reference=Math.abs(d.y)>.999?new T.Vector3(1,0,0):new T.Vector3(0,1,0);
+        const u=reference.addScaledVector(d,-reference.dot(d)).normalize(),v=new T.Vector3().crossVectors(d,u);
+        return new T.Matrix4().makeBasis(u,v,d);
+      };
+      const count=vectors.length;
+      vectors.forEach((point,i)=>{
+        const next=vectors[closed?(i+1)%count:Math.min(i+1,count-1)],previous=vectors[closed?(i+count-1)%count:Math.max(i-1,0)];
+        const turn=next.distanceTo(previous)<1e-8?new T.Matrix4():basis(previous,next);
+        parts.push(own(own(Manifold.sphere(radii[i],12)).transform(turn.setPosition(point).elements)));
+      });
+      for(let i=closed?0:1;i<count;i++){
+        const k=(i+count-1)%count,from=vectors[k],length=vectors[i].distanceTo(from);if(length<1e-8)continue;
+        parts.push(own(own(Manifold.cylinder(length,radii[k],radii[i],12)).transform(basis(from,vectors[i]).setPosition(from).elements)));
       }
-      const solid=own(Manifold.union(parts)),data=solid.getMesh(),geo=new T.BufferGeometry(),xyz=[];
-      for(let i=0;i<data.vertProperties.length;i+=data.numProp)xyz.push(...data.vertProperties.slice(i,i+3));
-      geo.setAttribute('position',new T.Float32BufferAttribute(xyz,3));geo.setIndex(Array.from(data.triVerts));geo.computeVertexNormals();
-      const path=new T.CurvePath();for(let i=1;i<vectors.length;i++)path.add(new T.LineCurve3(vectors[i-1],vectors[i]));geo.parameters={path};
-      return mesh(geo,mat,null,parent);
+      const o=solidMesh(own(Manifold.union(parts)),mat,parent);
+      const path=new T.CurvePath();for(let i=1;i<vectors.length;i++)path.add(new T.LineCurve3(vectors[i-1],vectors[i]));o.geometry.parameters={path};
+      o.userData[closed?'loop':'rod']={points:vectors,radius:r,...(tapered?{radii}:{})};
+      return o;
     }finally{owned.reverse().forEach(o=>o.delete());}
   };
   const thick = s.thickness * .4,
     radius = (s.size / (2 * Math.PI)) * .8 + thick,
     width = s.width * .8,
-    isBand = ["band", "eternity", ...DAILY_STYLES].includes(s.style);
-  const bandShift = a => {
-    const top = Math.pow(Math.max(0, Math.cos(a)), 4);
-    if(s.style==='chevron') return top*s.sculpt;
-    if(s.style==='crown') return -top*s.sculpt;
-    if(s.style==='ribbon') return Math.sin(a*2)*s.sculpt*.55;
-    return 0;
+    split = ["split","tension"].includes(s.style),
+    // Each rail of a split shank keeps a manufacturable wall (1 mm guide).
+    bandWidth = split ? Math.max(width * .55, 1.06 * .8) : width;
+  const separation = a => (width * 0.65 + 0.55) * Math.pow(Math.max(0, Math.cos(a)), 2);
+  // Cross-section of the shank: radius and axial offset at profile angle b
+  // (b = 0 is the outside of the ring). Decorations use the same function, so
+  // they sit on the real surface of every profile.
+  // A plain shank under a claw head narrows gently towards the head, as on a
+  // classic solitaire. Bands that carry stones, and split shanks, keep their width.
+  const taperedShank = !split && s.accents === 'none' && s.setting !== 'bezel';
+  const widthAt = a => bandWidth * (taperedShank ? 1 - .18 * Math.exp(-((Math.atan2(Math.sin(a), Math.cos(a)) / .55) ** 2)) : 1);
+  const profilePoint = (b, a = Math.PI) => {
+    const co = Math.cos(b), si = Math.sin(b), bandWidth = widthAt(a);
+    return [radius + thick * (s.profile === "flat" ? Math.sign(co) * Math.pow(Math.abs(co), 0.35) : co),
+      bandWidth * 0.5 * (s.profile === "knife" ? si * (0.62 + (0.38 * (1 - co)) / 2) : si)];
   };
   const band = (splitSign = 0) => {
     const vertices = [],
@@ -107,27 +133,8 @@ export function buildRing(s, environment) {
     for (let i = 0; i <= uN; i++) {
       const a = (i / uN) * Math.PI * 2;
       for (let j = 0; j <= vN; j++) {
-        const b = (j / vN) * Math.PI * 2,
-          co = Math.cos(b),
-          si = Math.sin(b);
-        const r =
-          radius +
-          thick *
-            (s.profile === "flat"
-              ? Math.sign(co) * Math.pow(Math.abs(co), 0.35)
-              : co);
-        const separation =
-          splitSign *
-          (width * 0.65 + 0.55) *
-          Math.pow(Math.max(0, Math.cos(a)), 2);
-        const w = width * (splitSign ? 0.55 : 1),
-          z =
-            w *
-              0.5 *
-              (s.profile === "knife"
-                ? si * (0.62 + (0.38 * (1 - co)) / 2)
-                : si) +
-            separation + bandShift(a);
+        const b = (j / vN) * Math.PI * 2;
+        const [r, offset] = profilePoint(b, a), z = offset + splitSign * separation(a);
         vertices.push(Math.sin(a) * r, Math.cos(a) * r, z);
         if (i < uN && j < vN) {
           const k = i * (vN + 1) + j;
@@ -143,15 +150,18 @@ export function buildRing(s, environment) {
     const smooth = mergeVertices(geo, 0.00001);
     smooth.computeVertexNormals();
     geo.dispose();
-    const body = mesh(smooth, metal);
-    body.userData.role = 'shank';
+    const body = tag(mesh(smooth, metal), 'shank', null, {host: true});
     bands.push(body);
   };
-  if (["split","tension"].includes(s.style)) {
+  if (split) {
     band(-1);
     band(1);
   } else band();
   const cuts = new Map();
+  const cut = shape => {
+    if (!cuts.has(shape)) cuts.set(shape, gemGeometry(shape));
+    return cuts.get(shape);
+  };
   const gem = (
     shape,
     scale,
@@ -160,8 +170,7 @@ export function buildRing(s, environment) {
     hero = false,
     parent = group,
   ) => {
-    if (!cuts.has(shape)) cuts.set(shape, gemGeometry(shape));
-    const { geometry, planes } = cuts.get(shape);
+    const { geometry, planes } = cut(shape);
     // Every stone uses the identical facet-tracing optical pipeline, including
     // tiny pavé and hidden halos. Uniforms are per stone (camera in local space).
     const mat = gemstoneMaterial(
@@ -177,306 +186,434 @@ export function buildRing(s, environment) {
     o.userData.gem = true;
     o.userData.tone = tone;
     o.userData.hero = hero;
+    o.userData.shape = shape;
     stonePlanes.set(o,planes);
     gems.push(o);
     return o;
   };
-  const seat = (shape, scale, parent, y = -0.25, r = 0.12) => {
-    r=Math.max(.16,r);
-    const points = Array.from({ length: 64 }, (_, i) => {
-      const [x, z] = outline(shape, (i / 64) * Math.PI * 2);
-      return [x * scale, y, z * scale];
-    });
-    if(shape==='marquise') {
-      // A swept tube folds over itself at the two acute tips. Offset a planar
-      // section instead, so even pointed seats are closed, non-crossing solids.
-      const {CrossSection}=getKernel(),owned=[],own=o=>(owned.push(o),o);
-      try {
-        const section=own(new CrossSection([points.map(([x,,z])=>[x,z])]));
-        const outer=own(section.offset(r,'Round',2,64)),inner=own(section.offset(-r,'Round',2,64));
-        const rim=own(outer.subtract(inner)),solid=own(rim.extrude(2*r));
-        const turned=own(solid.rotate([90,0,0])),placed=own(turned.translate([0,y+r,0]));
-        const data=placed.getMesh(),geo=new T.BufferGeometry(),xyz=[];
-        for(let i=0;i<data.vertProperties.length;i+=data.numProp)xyz.push(...data.vertProperties.slice(i,i+3));
-        geo.setAttribute('position',new T.Float32BufferAttribute(xyz,3));geo.setIndex(Array.from(data.triVerts));geo.computeVertexNormals();
-        return mesh(geo,head,null,parent);
-      }finally{owned.reverse().forEach(o=>o.delete());}
+  const ringPoints = (shape, factor, y) => Array.from({ length: 64 }, (_, i) => {
+    const [x, z] = outline(shape, (i / 64) * Math.PI * 2), k = typeof factor === 'function' ? factor(x, z) : factor;
+    return [x * k, y, z * k];
+  });
+  // Closed horizontal wire following a cut's outline: a mitred sweep with a
+  // mirror-invariant tessellation. Outlines with corners too sharp for the
+  // wire radius (marquise tips) fall back to the union of rounded segments.
+  const loop = (shape, factor, y, r, parent, mat = head) => {
+    r = Math.max(.16, r);
+    const points = ringPoints(shape, factor, y), n = points.length, sides = 12, xyz = [], index = [];
+    let sweepable = true;
+    for (let i = 0; i < n && sweepable; i++) {
+      const a = points[(i + n - 1) % n], b = points[i], c = points[(i + 1) % n];
+      const d1 = [b[0] - a[0], b[2] - a[2]], d2 = [c[0] - b[0], c[2] - b[2]], l1 = Math.hypot(...d1), l2 = Math.hypot(...d2);
+      const cos = (d1[0] * d2[0] + d1[1] * d2[1]) / (l1 * l2), half = Math.acos(Math.min(1, Math.max(-1, cos))) / 2;
+      if (r * Math.tan(half) > Math.min(l1, l2) * .45) { sweepable = false; break; }
+      // In-plane normal of the mitre (bisector), stretched to keep the wire round along both segments.
+      const tx = d1[0] / l1 + d2[0] / l2, tz = d1[1] / l1 + d2[1] / l2, tl = Math.hypot(tx, tz), nx = tz / tl, nz = -tx / tl, stretch = 1 / Math.cos(half);
+      for (let j = 0; j < sides; j++) {
+        const t = j / sides * Math.PI * 2;
+        xyz.push(b[0] + nx * Math.cos(t) * r * stretch, b[1] + Math.sin(t) * r, b[2] + nz * Math.cos(t) * r * stretch);
+        const k = i * sides + j, q = i * sides + (j + 1) % sides, next = ((i + 1) % n) * sides + j, nextQ = ((i + 1) % n) * sides + (j + 1) % sides;
+        index.push(k, q, next, q, nextQ, next);
+      }
     }
-    return tube(points, r, parent, head, true);
+    if (!sweepable) return tube(points, r, parent, mat, true);
+    const geo = new T.BufferGeometry();
+    geo.setAttribute('position', new T.Float32BufferAttribute(xyz, 3)); geo.setIndex(index);
+    // Outward orientation, whichever way the outline runs.
+    let signed = 0; const p = geo.attributes.position;
+    for (let i = 0; i < index.length; i += 3) {
+      const [a, b, c] = [0, 1, 2].map(k => new T.Vector3().fromBufferAttribute(p, index[i + k]));
+      signed += a.dot(b.cross(c));
+    }
+    if (signed < 0) { for (let i = 0; i < index.length; i += 3) [index[i + 1], index[i + 2]] = [index[i + 2], index[i + 1]]; geo.setIndex(index); }
+    geo.computeVertexNormals();
+    const o = mesh(geo, mat, null, parent);
+    o.userData.loop = {points: points.map(q => new T.Vector3(...q)), radius: r};
+    return o;
   };
-  const setting = (shape, scale, pos, tone, rotation = 0, hero = true) => {
-    const fitting = Math.min(1, Math.max(0.4, scale / 1.5));
+  // Flat annular plate that follows a cut's outline: the seat of a melee row.
+  const plate = (shape, factor, halfWidth, top, height, parent) => {
+    const {CrossSection}=getKernel(),owned=[],own=o=>(owned.push(o),o);
+    try {
+      const section=own(new CrossSection([ringPoints(shape,factor,0).map(([x,,z])=>[x,z])]));
+      const outer=own(section.offset(halfWidth,'Round',2,48)),inner=own(section.offset(-halfWidth,'Round',2,48));
+      const solid=own(own(outer.subtract(inner)).extrude(height));
+      return solidMesh(own(own(solid.rotate([90,0,0])).translate([0,top,0])),head,parent);
+    }finally{owned.reverse().forEach(o=>o.delete());}
+  };
+  // A melee stone's grain: a bead that touches the girdle from outside, on a
+  // peg that is embedded in the host metal.
+  const grain = (anchor, g, parent, mat, holds) => tag(
+    tube([anchor, g.position.map((v, i) => v + g.axis[i] * g.lift)], GRAIN, parent, mat),
+    'grain', holds, {ends: [1, 0], melee: true});
+  const grains = (row, options) => grainLayout(row, GRAIN, {planes: cut('round').planes, ...options});
+
+  // One stone with its basket. The same construction serves centre stones,
+  // side stones and cluster satellites, in every classic style:
+  //   gallery ring → equally spaced posts → claw tips over the crown,
+  //   or (bezel) posts that carry a seat ring and a rim on the crown edge.
+  const setting = (shape, scale, pos, tone, rotation = 0, hero = true, hiddenHalo = false, centre = false) => {
     const assembly = new T.Group();
     assembly.position.set(...pos);
     assembly.rotation.y = rotation;
     group.add(assembly);
-    gem(shape, scale, [0, 0, 0], tone, hero, assembly);
+    const stone = gem(shape, scale, [0, 0, 0], tone, hero, assembly);
+    stone.userData.set = s.setting;
+    const {planes} = cut(shape), r = rodRadius(scale), melee = isMelee(scale), margin = (r + CLEARANCE) / scale;
+    const railRadius = hiddenHalo ? Math.max(r, HIDDEN_RAIL) : r;
+    const galleryK = Math.max(.72, ringFactor(shape, planes, GALLERY_Y, (railRadius + CLEARANCE) / scale));
+    // A claw head has no basket ring of its own. The ring exists only where
+    // something is carried on it: a bezel's posts, a hidden halo, a halo's ribs.
+    // Side stones keep their small basket on posts; the classic head is the centre stone's.
+    const classicHead = centre && s.setting !== "bezel";
+    const basket = !classicHead || hiddenHalo || ["halo", "vintage"].includes(s.style);
+    const gallery = basket ? tag(loop(shape, galleryK * scale, GALLERY_Y * scale, railRadius, assembly), 'gallery', stone, {melee, host: hiddenHalo}) : null;
+    const posts = [];
+    let baseCount = 8, stem = null;
     if (s.setting === "bezel") {
-      seat(shape, scale * 1.02, assembly, scale * 0.05, 0.16 * fitting);
-      seat(shape, scale * 0.94, assembly, -scale * 0.13, 0.13 * fitting);
-      for(let i=0;i<8;i++) {
-        const [x,z]=outline(shape,i*Math.PI/4);
-        tube([[x*scale*.72,-scale*.58,z*scale*.72],[x*scale*.94,-scale*.13,z*scale*.94],[x*scale*1.02,scale*.05,z*scale*1.02]],.09*fitting,assembly,head);
+      const seatY = -(.018 + margin * 1.15), seatK = ringFactor(shape, planes, seatY, margin);
+      const tipHeight = rimHeight(shape, planes, scale, r);
+      for (let i = 0; i < 8; i++) {
+        const post = postPath(shape, planes, i * Math.PI / 4, {scale, radius: r, galleryK, tipHeight, seat: {k: seatK, y: seatY}});
+        posts.push(post);
+        tag(tube(post.points, r, assembly, head), 'post', stone, {ends: [1, 1], melee});
       }
-    } else
-      for (let i = 0; i < s.prongs; i++) {
-        const a = (2 * Math.PI * (i + 0.5)) / s.prongs;
-        // Keep the two claws physically separate at the girdle. A fixed
-        // angle collapsed both claws together on small or elongated stones.
-        const before = outline(shape, a - .001), after = outline(shape, a + .001);
-        const tangentLength = Math.hypot(after[0] - before[0], after[1] - before[1]) / .002;
-        const pairAngle = Math.min(Math.PI / s.prongs * .4, .18 / (scale * tangentLength));
-        for (const delta of s.setting === "doubleclaw"
-          ? [-pairAngle, pairAngle]
-          : [0]) {
-          const [x, z] = outline(shape, a + delta),
-            tip = [x * scale * 0.995, scale * 0.12, z * scale * 0.995];
-          tube(
-            [
-              [x * scale * 0.72, -scale * 0.58, z * scale * 0.72],
-              [x * scale * 1.10, -scale * 0.28, z * scale * 1.10],
-              [x * scale * 1.10, scale * 0.04, z * scale * 1.10],
-              tip,
-            ],
-            (s.setting === "doubleclaw" ? 0.10 : 0.16) * fitting,
-            assembly,
-            head,
-          );
-          const claw = bead(
-            (s.setting === "doubleclaw" ? 0.11 : 0.15) * fitting,
-            tip,
-            assembly,
-          );
-          claw.scale.y *= 0.65;
+      tag(loop(shape, seatK * scale, seatY * scale, r, assembly), 'seat', stone, {melee});
+      tag(loop(shape, (x, z) => scale - .9 * r / Math.hypot(x, z), tipHeight * scale, r, assembly), 'bezel', stone, {melee});
+    } else if (!classicHead) {
+      const fit = fitClaws(shape, scale, s.prongs, s.setting === "doubleclaw");
+      baseCount = fit.count;
+      for (const angle of clawAngles(shape, scale, fit.count, fit.double, r)) {
+        const post = postPath(shape, planes, angle, {scale, radius: r, galleryK});
+        posts.push(post);
+        tag(tube(post.points, r, assembly, head), 'claw', stone, {ends: [1, 0], melee});
+      }
+    } else {
+      // Classic claw head: every claw rises from one solid base under the
+      // culet in a single smooth, tapering curve (thickest at the base), runs
+      // up outside the girdle and bends only its tip over the crown. The base
+      // itself is joined to the shank after all assemblies are placed.
+      const fit = fitClaws(shape, scale, s.prongs, s.setting === "doubleclaw");
+      baseCount = fit.count;
+      const baseR = 1.6 * r, stemR = baseR * 1.2, spread = baseR * .4;
+      const baseY = -HEAD_DROP * scale;
+      stem = {y: baseY, radius: stemR};
+      const wide = (baseR + CLEARANCE) / scale, free = p => clearance(planes, p.x / scale, p.y / scale, p.z / scale) * scale;
+      const away = p => Math.hypot(p.x, p.z) > .05 * scale ? new T.Vector3(p.x, 0, p.z).normalize() : new T.Vector3(0, -1, 0);
+      // A smooth rod through the control points, tapering from `from` to `to`.
+      // The smoothed curve must still clear the stone everywhere: a sample (or
+      // the straight piece to the next one) that would graze it moves outwards,
+      // or downwards under the culet. A claw's tip stays where it holds the stone.
+      const sweep = (control, from, to, count, keepLast) => {
+        const curve = new T.CatmullRomCurve3(control.map(p => new T.Vector3(...p)), false, 'centripetal');
+        const samples = curve.getSpacedPoints(count), last = samples.length - 1;
+        const radii = samples.map((_, i) => to + (from - to) * Math.pow(1 - i / last, 1.4));
+        const room = i => radii[i] + CLEARANCE + .04, fixed = i => keepLast && i === last;
+        for (let pass = 0; pass < 6; pass++) {
+          let moved = false;
+          samples.forEach((p, i) => {
+            if (fixed(i)) return;
+            for (let n = 0; n < 120 && free(p) < room(i); n++) { p.addScaledVector(away(p), .01 * scale); moved = true; }
+            if (i < last && !fixed(i + 1)) {
+              const q = samples[i + 1], middle = p.clone().lerp(q, .5);
+              for (let n = 0; n < 60 && free(middle) < room(i); n++) {
+                p.addScaledVector(away(p), .01 * scale); q.addScaledVector(away(q), .01 * scale); middle.copy(p).lerp(q, .5); moved = true;
+              }
+            }
+          });
+          if (!moved) break;
+        }
+        return {points: samples.map(p => p.toArray()), radii};
+      };
+      const direction = angle => { const [x, z] = outline(shape, angle), l = Math.hypot(x, z); return [x / l * spread, baseY, z / l * spread]; };
+      // Where a claw meets the stone just under the girdle and hugs it: the
+      // seat the stone rests in. Lower on a step cut whose pavilion is in the way.
+      const hug = y => ringFactor(shape, planes, y, (1.2 * r + CLEARANCE + .02) / scale);
+      const seatOf = (angle, foot) => {
+        const [ox, oz] = outline(shape, angle);
+        const y = [-.12, -.28, -.45].find(y => segmentClear(planes, foot.map(v => v / scale), [ox * hug(y), y, oz * hug(y)], wide)) ?? -.45;
+        return [ox * hug(y) * scale, y * scale, oz * hug(y) * scale];
+      };
+      // Through the basket ring a hair off its centre line: two tubes that
+      // share a centre point would meet in coincident facets.
+      const throughRing = post => post.points[0].map((v, i) => i === 1 ? v - .007 * scale : v * 1.006);
+      const angles = clawAngles(shape, scale, fit.count, fit.double, r);
+      const claw = (angle, start, from) => {
+        const post = postPath(shape, planes, angle, {scale, radius: r, galleryK});
+        posts.push(post);
+        const body = sweep([...start(post), ...post.points.slice(-2)], from, r, 22, true);
+        tag(tube(body.points, body.radii, assembly, head), 'claw', stone, {ends: [1, 0], melee});
+        // What stands near the claw (hidden-halo stones, halo rows) keeps clear of its real, tapered body.
+        post.points = body.points; post.reach = from;
+      };
+      if (!fit.double) {
+        for (const angle of angles) {
+          const foot = direction(angle);
+          claw(angle, post => basket ? [foot, throughRing(post), post.points[1]] : [foot, seatOf(angle, foot)], baseR);
+        }
+      } else {
+        // Double claws: each pair rises as ONE tapered trunk from the base and
+        // forks into its two claws just under the girdle.
+        for (let i = 0; i < angles.length; i += 2) {
+          const centre = (angles[i] + angles[i + 1]) / 2, foot = direction(centre);
+          const guide = postPath(shape, planes, centre, {scale, radius: r, galleryK});
+          const fork = basket ? guide.points[1] : seatOf(centre, foot);
+          const trunk = sweep(basket ? [foot, throughRing(guide), fork] : [foot, fork], baseR, 1.25 * r, 14, false);
+          tag(tube(trunk.points, trunk.radii, assembly, head), 'post', stone, {ends: [1, 1], melee});
+          const top = trunk.points.at(-1);
+          posts.push({...guide, points: trunk.points, reach: baseR});
+          for (const angle of [angles[i], angles[i + 1]]) claw(angle, post => {
+            // Each branch leaves the trunk's end towards its own side (two rods
+            // starting in the very same point would share coincident facets).
+            const shaft = post.points.at(-2), side = new T.Vector3(shaft[0] - top[0], 0, shaft[2] - top[2]).normalize().multiplyScalar(.45 * r);
+            return [[top[0] + side.x, top[1], top[2] + side.z], [shaft[0], (top[1] + shaft[1]) / 2 - .02 * scale, shaft[2]]];
+          }, 1.2 * r);
         }
       }
-    const gallery=seat(shape, scale * 0.72, assembly, -scale * 0.58, 0.16 * fitting);
-    gallery.userData.role='gallery';
-    mountings.push({assembly,shape,scale,gallery});
+    }
+    // Where the basket's posts stand (one angle per claw pair): anything else
+    // that leaves the gallery starts there, clear of a hidden halo's stones.
+    const postAngles = Array.from({length: baseCount}, (_, i) => s.setting === "bezel" ? i * Math.PI / 4 : 2 * Math.PI * (i + .5) / baseCount);
+    const mount = {assembly, shape, scale, gallery, stone, galleryK, radius: r, melee, posts, planes, postAngles, stem};
+    if (hiddenHalo) addHiddenHalo(mount);
+    mountings.push(mount);
     return assembly;
   };
-  const addHiddenHalo = (main, shape, size) => {
-    seat(shape, size * 0.86, main, -size * 0.42, 0.18);
-    for(let i=0;i<4;i++) {
-      const [x,z]=outline(shape,i*Math.PI/2);
-      tube([[x*size*.72,-size*.58,z*size*.72],[x*size*.86,-size*.42,z*size*.86]],.085,main,head);
+  // Hidden halo: the gallery ring itself becomes a pavé rail. Stones face
+  // outwards between the posts; no stone is placed where a post passes.
+  const addHiddenHalo = ({assembly, shape, scale, galleryK, posts}) => {
+    const y = GALLERY_Y * scale, k = galleryK * scale;
+    const samples = Array.from({length: 512}, (_, i) => outline(shape, i / 512 * Math.PI * 2).map(v => v * k));
+    const frame = (x, z) => {
+      let best = 0, distance = Infinity;
+      samples.forEach((p, i) => { const d = Math.hypot(p[0] - x, p[1] - z); if (d < distance) { distance = d; best = i; } });
+      const before = samples[(best + 511) % 512], after = samples[(best + 1) % 512];
+      const along = new T.Vector3(after[0] - before[0], 0, after[1] - before[1]).normalize();
+      const normal = new T.Vector3(along.z, 0, -along.x);
+      if (normal.x * x + normal.z * z < 0) normal.negate();
+      return {along, normal, anchor: [samples[best][0], y, samples[best][1]]};
+    };
+    const postSegments = posts.flatMap(p => p.points.slice(1).map((b, i) => new T.Line3(new T.Vector3(...p.points[i]), new T.Vector3(...b))));
+    const row = [], nearest = new T.Vector3();
+    for (const [x, z] of symmetricRow(shape, k, HIDDEN_STONE * 2 + .08, 48)) {
+      const {along, normal} = frame(x, z);
+      const centre = new T.Vector3(x, y, z).addScaledVector(normal, HIDDEN_RAIL - .03);
+      const reach = posts.length ? Math.min(...postSegments.map(line => line.closestPointToPoint(centre, true, nearest).distanceTo(centre))) : Infinity;
+      if (reach < HIDDEN_STONE * 1.05 + Math.max(...posts.map(p => p.reach ?? rodRadius(scale))) + .04) continue;
+      const o = gem("round", HIDDEN_STONE, centre.toArray(), s.sideTone, false, assembly);
+      o.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), normal);
+      o.userData.melee = 'hidden';
+      row.push({centre: centre.toArray(), axis: normal.toArray(), along: along.toArray(), radius: HIDDEN_STONE, stone: o});
     }
-    for (const point of spacedOutline(shape,size*.86,.44,24,24)) {
-      const [x,z]=point.map(v=>v/(size*.86));
-      const o = gem(
-        "round",
-        0.18,
-        [x * size * 0.86, -size * 0.42, z * size * 0.86],
-        s.sideTone,
-        false,
-        main,
-      );
-      o.quaternion.setFromUnitVectors(
-        new T.Vector3(0, 1, 0),
-        new T.Vector3(x, 0, z).normalize(),
-      );
+    // Each grain stands on a peg that leaves the rail beside the stones: it is
+    // anchored inside the rail, part-way towards the point straight behind it.
+    if (row.length) for (const g of grains(row)) {
+      const centre = frame(g.position[0], g.position[2]).anchor, behind = g.position.map((v, i) => v - g.axis[i] * (HIDDEN_RAIL - .03));
+      grain(centre.map((v, i) => v + (behind[i] - v) * .55), g, assembly, head, row[0].stone);
     }
   };
   const size = 2.4 * Math.cbrt(s.carat),
-    top = radius + Math.max(size*.7, thick+size*.58+(s.accents!=='none'?s.accentSize*.14+.4:.2)) + s.height * 0.45;
+    // The culet must clear the top of the ring body, whatever the stone size.
+    // A claw head stands on its base: the base sits in the top of the shank.
+    top = s.setting === "bezel"
+      ? radius + Math.max(size * .7, thick + size * .7 + (s.accents !== 'none' ? s.accentSize * .14 + .32 : .12)) + s.height * 0.45
+      : radius + thick * .5 + HEAD_DROP * size + (s.accents !== 'none' ? s.accentSize * .14 + .2 : 0) + s.height * 0.45;
   const rotation = s.orientation === "east" ? Math.PI / 2 : 0;
-  if(DAILY_STYLES.includes(s.style)) {
-    const scale=2.4*Math.cbrt(s.dailyCarat),r=radius+thick+scale*.7+s.height*.18;
-    const step=2*Math.asin(Math.min(.9,(scale*1.7+.18+s.dailySpacing)/r));
-    for(let i=0;i<s.dailyCount;i++) {
-      const a=(i-(s.dailyCount-1)/2)*step;
-      const z=bandShift(a)+(s.style==='scatter'?(i%2?1:-1)*width*.48:0);
-      const cut=s.style==='alternating'&&i%2?s.sideShape:s.shape;
-      const stoneScale=s.style==='graduated'?scale*(1-.35*Math.abs(i-(s.dailyCount-1)/2)/Math.max(1,(s.dailyCount-1)/2)):scale;
-      const turn=s.style==='eastwest'?Math.PI/2:s.style==='crown'?a*.45:rotation;
-      const assembly=setting(cut,stoneScale,[Math.sin(a)*r,Math.cos(a)*r,z],s.alternateGems&&i%2?s.sideTone:s.gemTone,turn);
-      assembly.rotation.z=-a;
-    }
-  }
-  if (!isBand) {
-    if (s.style === "duet") {
-      const other = 2.4 * Math.cbrt(s.sideCarat),
-        gap = (size + other) * 0.54;
-      const first=setting(s.shape, size, [-gap, top, 0.65], s.gemTone, rotation - 0.23);
-      const second=setting(s.sideShape, other, [gap, top - 0.35, -0.65], s.sideTone, 0.3);
-      group.updateMatrixWorld(true);
-      const leftBox=new T.Box3().setFromObject(first),rightBox=new T.Box3().setFromObject(second);
-      const separation=Math.max(0,(leftBox.max.x-rightBox.min.x+.12)/2);
-      first.position.x-=separation+(s.sideMainGap||0)*.4;second.position.x+=separation+(s.sideMainGap||0)*.4;
-      if(s.hiddenHalo) {addHiddenHalo(first,s.shape,size);addHiddenHalo(second,s.sideShape,other);}
-    } else {
-      const main = setting(s.shape, size, [0, top, 0], s.gemTone, rotation);
-      if (["halo", "vintage"].includes(s.style)) {
-        const haloR = s.haloSize * 0.4;
-        let previousHaloPoints=[];
-        for (let row = 0; row < (s.halo === "double" ? 2 : 1); row++) {
-          let perimeter = size + haloR * 1.25 + row * haloR * 2.1;
-          const pointsAt=r=>spacedOutline(s.shape,r,haloR*2+(s.shape==='round'?.01:.08),56,Math.min(56,Math.max(18,Math.round(2*Math.PI*r/(haloR*2.15)))));
-          let haloPoints=pointsAt(perimeter);
-          // On pear and other non-circular cuts a radial row step is not the
-          // actual stone-to-stone clearance. Check both rows in the XZ plane.
-          for(let attempt=0;row&&attempt<100&&haloPoints.some(p=>previousHaloPoints.some(q=>Math.hypot(p[0]-q[0],p[1]-q[1])<haloR*2+.04));attempt++){
-            perimeter+=.02;haloPoints=pointsAt(perimeter);
-          }
-          previousHaloPoints=haloPoints;
-          seat(s.shape, perimeter, main, -0.22, 0.12);
-          for(let i=0;i<4;i++) {
-            const [x,z]=outline(s.shape,i*Math.PI/2);
-            tube([[x*size*.72,-size*.58,z*size*.72],[x*perimeter,-.22,z*perimeter]],.105,main,head);
-          }
-          for (const point of haloPoints) {
-            const [x,z]=point.map(v=>v/perimeter);
-            gem(
-              "round",
-              haloR,
-              [x * perimeter, 0, z * perimeter],
-              s.sideTone,
-              false,
-              main,
-            );
-            bead(
-              0.085,
-              [x * (perimeter + haloR), -0.06, z * (perimeter + haloR)],
-              main,
-            );
-            tube([[x*perimeter,-.22,z*perimeter],[x*(perimeter+haloR),-.06,z*(perimeter+haloR)]],.065,main,head);
-          }
+  const extentOf = object => { object.updateWorldMatrix(true, true); return new T.Box3().setFromObject(object); };
+  if (s.style === "duet") {
+    const other = 2.4 * Math.cbrt(s.sideCarat),
+      gap = (size + other) * 0.54;
+    const first=setting(s.shape, size, [-gap, top, 0.65], s.gemTone, rotation - 0.23, true, s.hiddenHalo, true);
+    const second=setting(s.sideShape, other, [gap, top - 0.35, -0.65], s.sideTone, 0.3, true, s.hiddenHalo, true);
+    const leftBox=extentOf(first),rightBox=extentOf(second);
+    const apart=Math.max(0,(leftBox.max.x-rightBox.min.x+.12)/2);
+    first.position.x-=apart+(s.sideMainGap||0)*.4;second.position.x+=apart+(s.sideMainGap||0)*.4;
+  } else {
+    const main = setting(s.shape, size, [0, top, 0], s.gemTone, rotation, true, s.hiddenHalo, true);
+    const mainMount = mountings[0];
+    if (["halo", "vintage"].includes(s.style)) {
+      const haloR = s.haloSize * 0.4, r = mainMount.radius * 1.25; // the tapered claw is thicker below its tip
+      // The halo starts outside the centre stone's claws, never through them.
+      let ring = Math.max(size + haloR * 1.25, ...mainMount.posts.map(p => p.shaftK * size + (r + haloR + .04) / Math.hypot(...outline(s.shape, p.angle))));
+      const depth = haloR * .7 + .42, rings = [];
+      const row = [];
+      let previous = [];
+      for (let n = 0; n < (s.halo === "double" ? 2 : 1); n++) {
+        const pitch = haloR * 2 + .04;
+        // The second row stands far enough out that the grains between the
+        // rows clear the stones of both rows, wherever they fall along the row.
+        const reach = haloR + GRAIN + CLEARANCE;
+        if (n) ring += Math.max(haloR * 2 + .06, Math.sqrt(reach * reach - pitch * pitch / 4) + reach + .01);
+        let points = symmetricRow(s.shape, ring, pitch, 64);
+        // The first row also keeps clear of the centre stone's claws: measured
+        // stone by stone, because a scaled outline is not a constant offset.
+        const shafts = mainMount.posts.map(p => { const [x, z] = outline(s.shape, p.angle); return [x * p.shaftK * size, z * p.shaftK * size]; });
+        for (let attempt = 0; !n && attempt < 200 && points.some(p => shafts.some(q => Math.hypot(p[0] - q[0], p[1] - q[1]) < haloR + r + .03)); attempt++) {
+          ring += .02; points = symmetricRow(s.shape, ring, pitch, 64);
         }
+        // On non-circular cuts a radial row step is not the stone-to-stone
+        // clearance. Check both rows in the XZ plane.
+        for (let attempt = 0; n && attempt < 100 && points.some(p => previous.some(q => Math.hypot(p[0] - q[0], p[1] - q[1]) < pitch)); attempt++) {
+          ring += .02; points = symmetricRow(s.shape, ring, pitch, 64);
+        }
+        previous = points;
+        rings.push({ring, samples: ringPoints(s.shape, ring, 0).map(([x, , z]) => [x, z]), halfWidth: haloR * .6});
+        // Tangent of the row at each stone, from the outline itself.
+        points.forEach(([x, z]) => {
+          const o = gem("round", haloR, [x, 0, z], s.sideTone, false, main);
+          o.userData.melee = 'halo';
+          const a = Math.atan2(z, x), e = .01, p = outline(s.shape, a + e), q = outline(s.shape, a - e);
+          row.push({centre: [x, 0, z], axis: [0, 1, 0], along: [p[0] - q[0], 0, p[1] - q[1]], radius: haloR, stone: o, group: n});
+        });
       }
-      if (s.hiddenHalo) addHiddenHalo(main,s.shape,size);
-      if (s.sideMode !== "none") {
-        const scale = 2.4 * Math.cbrt(s.sideCarat),
-          extent = rotation
-            ? Math.max(
-                ...Array.from({ length: 32 }, (_, i) =>
-                  Math.abs(outline(s.shape, (i / 32) * Math.PI * 2)[1]),
-                ),
-              )
-            : 1;
-        main.updateWorldMatrix(true,true);
-        const mainBox=new T.Box3().setFromObject(main);
-        const mainExtent=Math.max(size*extent,Math.abs(mainBox.min.x),Math.abs(mainBox.max.x));
-        const offset = mainExtent + scale * 1.2 + 0.25 + (s.sideMainGap || 0) * 0.8;
-        const sideExtentZ=Math.max(...Array.from({length:64},(_,i)=>Math.abs(outline(s.sideShape,i/64*Math.PI*2)[1])));
-        for (const sign of [-1, 1]) {
-          const y = top - size * 0.22;
-          const side = setting(
-            s.sideShape,
-            scale,
-            [sign * offset, y, 0],
-            s.sideTone,
-            0,
-            true,
-          );
-          side.rotation.z = sign * -0.14;
-          if (s.sideMode === "cluster")
-            for (const z of [-1, 1]) {
-              const satellite = setting(
-                "round",
-                scale * 0.45,
-                [sign * (offset + 0.3), y - 0.5, z * (scale * (sideExtentZ + .45) + .15 + (s.sideSpacing || 0) * 0.8)],
-                s.sideTone,
-              );
-              satellite.rotation.z = sign * -0.14;
-            }
-          if (s.sideMode === "five") {
-            const o = setting(
-              s.sideShape,
-              scale * 0.65,
-              [sign * (offset + scale * 1.85 + (s.sideSpacing || 0) * 0.8), y - scale * 0.9, 0],
-              s.sideTone,
-              0,
-              false,
-            );
-            o.rotation.z = sign * -0.4;
+      // The seat plate of each row is as wide as its outermost grain needs.
+      const layout = row.length ? grains(row) : [];
+      const distanceTo = (samples, x, z) => {
+        let d = Infinity;
+        for (let i = 0; i < samples.length; i++) {
+          const a = samples[i], b = samples[(i + 1) % samples.length], ux = b[0] - a[0], uz = b[1] - a[1];
+          const t = Math.min(1, Math.max(0, ((x - a[0]) * ux + (z - a[1]) * uz) / (ux * ux + uz * uz)));
+          d = Math.min(d, Math.hypot(x - a[0] - t * ux, z - a[1] - t * uz));
+        }
+        return d;
+      };
+      for (const g of layout) {
+        const distances = rings.map(r => distanceTo(r.samples, g.position[0], g.position[2]));
+        const nearest = distances.indexOf(Math.min(...distances));
+        rings[nearest].halfWidth = Math.max(rings[nearest].halfWidth, distances[nearest] + GRAIN + .04);
+      }
+      // Neighbouring rows share one continuous seat: their plates overlap
+      // along the whole outline, also where an elongated cut spreads the rows.
+      const spread = Math.max(...Array.from({length: 64}, (_, i) => Math.hypot(...outline(s.shape, i / 64 * Math.PI * 2))));
+      for (let n = 1; n < rings.length; n++) {
+        const need = (rings[n].ring - rings[n - 1].ring) * spread / 2 + .06;
+        rings[n].halfWidth = Math.max(rings[n].halfWidth, need); rings[n - 1].halfWidth = Math.max(rings[n - 1].halfWidth, need);
+      }
+      rings.forEach(({ring, halfWidth}, n) => {
+        tag(plate(s.shape, ring, Math.ceil(halfWidth * 50) / 50, 0, depth, main), 'melee-rail', null, {host: true});
+        // Ribs join the gallery to the underside of the plate, below the culets.
+        if (!n) for (const a of mainMount.postAngles) {
+          const [x, z] = outline(s.shape, a);
+          tag(tube([[x * mainMount.galleryK * size, GALLERY_Y * size, z * mainMount.galleryK * size], [x * ring, -(haloR * .7 + .2 + CLEARANCE), z * ring]], .2, main, head), 'rib', null, {ends: [1, 1], melee: true});
+        }
+      });
+      for (const g of layout) grain([g.position[0], -depth / 2, g.position[2]], g, main, head, row[0].stone);
+    }
+    if (s.sideMode !== "none") {
+      const scale = 2.4 * Math.cbrt(s.sideCarat), y = top - size * 0.22;
+      const mainBox = extentOf(main), mainExtent = Math.max(Math.abs(mainBox.min.x), Math.abs(mainBox.max.x));
+      for (const sign of [-1, 1]) {
+        // Neighbouring baskets are placed by their measured extents, so the
+        // claws of one stone never run through the stone beside it.
+        const inward = box => sign > 0 ? -box.min.x : box.max.x, outward = box => sign > 0 ? box.max.x : -box.min.x;
+        const side = setting(s.sideShape, scale, [0, y, 0], s.sideTone, 0, true);
+        side.rotation.z = sign * -0.14;
+        side.position.x = sign * (mainExtent + inward(extentOf(side)) + .06 + (s.sideMainGap || 0) * 0.8);
+        const sideBox = extentOf(side);
+        if (s.sideMode === "cluster")
+          for (const z of [-1, 1]) {
+            const satellite = setting("round", scale * 0.45, [side.position.x + sign * .3, y - 0.5, 0], s.sideTone);
+            satellite.rotation.z = sign * -0.14;
+            const box = extentOf(satellite);
+            satellite.position.z = z * (Math.max(-sideBox.min.z, sideBox.max.z) + Math.max(-box.min.z, box.max.z) + .06 + (s.sideSpacing || 0) * 0.8);
           }
+        if (s.sideMode === "five") {
+          const o = setting(s.sideShape, scale * 0.65, [0, y - scale * 0.9, 0], s.sideTone, 0, false);
+          o.rotation.z = sign * -0.4;
+          o.position.x = sign * (outward(sideBox) + inward(extentOf(o)) + .06 + (s.sideSpacing || 0) * 0.8);
         }
       }
     }
   }
-  const hasPave = ["pave", "channel"].includes(s.accents);
-  if (hasPave) {
-    const gemR = s.accentSize * 0.4,
+  if (["pave", "channel"].includes(s.accents)) {
+    const gemR = s.accentSize * 0.4, surface = radius + thick + .02,
       angleMax =
         s.coverage === "full"
           ? Math.PI
           : s.coverage === "half"
             ? Math.PI / 2
             : 1.15;
-    const prongSpacing = (gemR * 2 + 0.11) / (radius + thick + .05);
     const spacing = (gemR * 2 + 0.11 + (s.sideSpacing || 0) * 0.8) / (radius + thick + .05),
       n = Math.floor(angleMax / spacing);
-    const opening = isBand
-      ? 0
-      : Math.asin(
-          Math.min(
-            0.8,
-            (size + (s.style === "duet" ? size * 0.5 : 0)) / (radius + thick + .05),
-          ),
-        );
+    // Accent stones begin beyond every basket: the posts of the centre and
+    // side stones come down onto plain metal, never between or onto stones.
+    const footprint = Math.max(size + (s.style === "duet" ? size * 0.5 : 0), ...mountings.map(m => { const box = extentOf(m.assembly); return Math.max(-box.min.x, box.max.x) + .1; }));
+    const opening = Math.asin(Math.min(0.97, footprint / (radius + thick + .05)));
+    // On a split shank each rail carries its own row while the rails are fully
+    // apart, and one shared row once they have merged. No stone is set in the
+    // short stretch where the rails are only partly merged: there is no seat.
+    const rowHalf = gemR + (s.accentRows === 2 ? bandWidth * .24 : 0);
+    const tracksAt = a => {
+      if (!split) return [0];
+      const apart = separation(a);
+      return apart >= rowHalf + .06 ? [-apart, apart] : apart <= .04 ? [0] : [];
+    };
+    const row = [];
     for (let i = -n; i <= n; i++) {
       const baseAngle = i * spacing;
-      if (!isBand && Math.abs(baseAngle) < opening) continue;
-      const a = baseAngle + (isBand ? 0 : Math.sign(i) * (s.sideMainGap || 0) * 0.8 / (radius + thick + .05));
-      if (Math.abs(a) > angleMax) continue;
-      const tracks=['split','tension'].includes(s.style)?[-1,1].map(sign=>sign*(width*.65+.55)*Math.pow(Math.max(0,Math.cos(a)),2)):[0];
-      for(const track of tracks) for (let row = 0; row < s.accentRows; row++) {
-        const w=['split','tension'].includes(s.style)?width*.55:width;
-        const z = track + (s.accentRows === 1 ? 0 : (row - 0.5) * w * 0.48);
+      if (Math.abs(baseAngle) < opening) continue;
+      const a = baseAngle + Math.sign(i) * (s.sideMainGap || 0) * 0.8 / (radius + thick + .05);
+      // A full circle closes at the palm side: the two ends keep one pitch apart.
+      if (Math.abs(a) > (s.coverage === 'full' ? Math.PI - spacing / 2 : angleMax)) continue;
+      for(const track of tracksAt(a)) for (let line = 0; line < s.accentRows; line++) {
+        const z = track + (s.accentRows === 1 ? 0 : (line - 0.5) * bandWidth * 0.48);
         const o = gem(
           s.accents === "channel" ? "princess" : "round",
           gemR,
-          [Math.sin(a) * (radius + thick + .02), Math.cos(a) * (radius + thick + .02), z],
+          [Math.sin(a) * surface, Math.cos(a) * surface, z],
           s.sideTone,
         );
         o.rotation.z = -a;
-        if (s.accents !== "channel")
-          for (const shift of [-1, 1]) {
-            bead(
-              0.075,
-              [
-                Math.sin(a + prongSpacing * 0.46) * (radius + thick + .05),
-                Math.cos(a + prongSpacing * 0.46) * (radius + thick + .05),
-                z + shift * gemR * 0.7,
-              ],
-              group,
-              metal,
-            );
-            tube([[Math.sin(a+prongSpacing*.46)*radius,Math.cos(a+prongSpacing*.46)*radius,track],[Math.sin(a+prongSpacing*.46)*(radius+thick+.05),Math.cos(a+prongSpacing*.46)*(radius+thick+.05),z+shift*gemR*.7]],.05,group,metal);
-          }
+        o.userData.melee = s.accents;
+        o.userData.onBand = true;
+        row.push({centre: o.position.toArray(), axis: [Math.sin(a), Math.cos(a), 0], along: [Math.cos(a), -Math.sin(a), 0], radius: gemR, stone: o, group: Math.sign(track)});
+      }
+    }
+    if (s.accents === "pave" && row.length) {
+      // Grains stand on the band, in the gaps between the stones, and stay
+      // inside the band's width.
+      // A grain belongs to the rail of its stones and stays on that rail.
+      const limit = ([x, y, z], rail) => {
+        const track = rail * separation(Math.atan2(x, y)), room = Math.max(0, bandWidth / 2 - .02); // the grain's axis stays on the band
+        return [x, y, track + Math.min(room, Math.max(-room, z - track))];
+      };
+      for (const g of grains(row, {limit})) {
+        // The peg is rooted in the body of the rail, not at its thin edge.
+        const a = Math.atan2(g.position[0], g.position[1]), track = g.group * separation(a), inside = bandWidth * .3;
+        grain([Math.sin(a) * radius, Math.cos(a) * radius, track + Math.min(inside, Math.max(-inside, g.position[2] - track))], g, group, metal, row[0].stone);
       }
     }
     if(s.accents==='channel') {
       // Rails follow the actual stone rows, not the outer edge of a wide band.
       // Join each rail to the shank with a continuous web; otherwise a round
       // profile can leave two floating toruses above the curved shoulders.
-      const split=['split','tension'].includes(s.style),w=width*(split?.55:1);
-      for(const sign of split?[-1,1]:[0])for(let row=0;row<s.accentRows;row++)for(const edge of [-1,1]){
-        const z=(s.accentRows===1?0:(row-.5)*w*.48)+edge*(gemR*.9+.08);
-        const positions=[],indices=[],n=192,m=12;
-        for(let i=0;i<n;i++)for(let j=0;j<m;j++){
-          const a=i/n*Math.PI*2,b=j/m*Math.PI*2;
+      for(const sign of split?[-1,1]:[0])for(let line=0;line<s.accentRows;line++)for(const edge of [-1,1]){
+        const z=(s.accentRows===1?0:(line-.5)*bandWidth*.48)+edge*(gemR*.9+.08);
+        const positions=[],indices=[],count=192,m=12;
+        for(let i=0;i<count;i++)for(let j=0;j<m;j++){
+          const a=i/count*Math.PI*2,b=j/m*Math.PI*2;
           const r=radius+thick*.45+(thick*.55+.05)*Math.cos(b);
-          positions.push(Math.sin(a)*r,Math.cos(a)*r,sign*(width*.65+.55)*Math.pow(Math.max(0,Math.cos(a)),2)+z+bandShift(a)+.12*Math.sin(b));
-          const k=i*m+j,q=i*m+(j+1)%m,next=((i+1)%n)*m+j,nextQ=((i+1)%n)*m+(j+1)%m;
+          positions.push(Math.sin(a)*r,Math.cos(a)*r,sign*separation(a)+z+.12*Math.sin(b));
+          const k=i*m+j,q=i*m+(j+1)%m,next=((i+1)%count)*m+j,nextQ=((i+1)%count)*m+(j+1)%m;
           indices.push(k,q,next,q,nextQ,next);
         }
         const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(positions,3));geo.setIndex(indices);geo.computeVertexNormals();
-        mesh(geo,metal,null,group);
+        tag(mesh(geo,metal,null,group),'rail',null,{host:true});
       }
     }
   }
-  if (s.style === "vintage")
+  if (s.style === "vintage") {
+    // Milgrain: a row of beads along both shoulders of the band, half sunk
+    // into the surface of whichever profile is selected.
+    const [edgeR, edgeZ] = profilePoint(1.08), [innerR, innerZ] = profilePoint(1.08 + .02);
+    const slope = Math.hypot(innerR - edgeR, innerZ - edgeZ), normal = [(innerZ - edgeZ) / slope, -(innerR - edgeR) / slope];
+    const beadR = edgeR - normal[0] * .07, beadZ = edgeZ - normal[1] * .07;
     for (let i = 0; i < 100; i++) {
       const a = (i / 100) * Math.PI * 2;
-      for (const z of [-width * 0.44, width * 0.44])
-        bead(
-          0.085,
-          [Math.sin(a) * (radius + thick - .25), Math.cos(a) * (radius + thick - .25), z],
-          group,
-          metal,
-        );
+      for (const side of [-1, 1])
+        tag(bead(0.085, [Math.sin(a) * beadR, Math.cos(a) * beadR, side * beadZ], group, metal), 'milgrain');
     }
+  }
   // Resolve supports only after every assembly rotation is final. Endpoints
   // are on the actual gallery and shank, not guessed in global coordinates.
   group.updateMatrixWorld(true);
@@ -502,42 +639,68 @@ export function buildRing(s, environment) {
     }
     return true;
   };
-  for(const {assembly,shape,scale,gallery} of mountings) {
-    for(const a of [0,Math.PI/2,Math.PI,Math.PI*1.5]) {
-      const split=['split','tension'].includes(s.style),w=width*(split?.55:1);
-      const r=Math.max(.16,Math.min(.22,Math.max(.10,scale*.075)));
-      let start,end,points,splitSign,clear=false;
-      // Move attachment positions along the gallery when a neighbouring stone
-      // blocks a cardinal position; retain four distinct structural supports.
-      for(const offset of [0,.12,-.12,.25,-.25,.4,-.4]){
-        const [x,z]=outline(shape,a+offset);
-        const outward=new T.Vector3(x,0,z).normalize().multiplyScalar(.08);
-        end=assembly.localToWorld(new T.Vector3(x*scale*.72,-scale*.58-.13,z*scale*.72).add(outward));
-        const angle=Math.atan2(end.x,end.y);splitSign=end.z<0?-1:1;
-        // A narrow pavé band may require a foot between two neighbouring
-        // accent stones, rather than directly beneath the gallery endpoint.
-        for(const footOffset of [0,.06,-.06,.12,-.12]){
-          const footAngle=angle+footOffset;
-          const track=split?splitSign*(width*.65+.55)*Math.pow(Math.max(0,Math.cos(footAngle)),2):bandShift(footAngle);
-          for(const flank of [splitSign,-splitSign]){
-            start=new T.Vector3(Math.sin(footAngle)*radius,Math.cos(footAngle)*radius,track+flank*w*.35);
-            for(const lift of [0,.4,.8,1.2]){
-              const mid=start.clone().lerp(end,.5);
-              mid.z=flank*(Math.max(Math.abs(start.z),Math.abs(end.z))+.12+lift);
-              if(s.style==='cathedral')mid.y+=.3;
-              points=[start.clone(),mid,end.clone()];
-              if(pathClear(points,r)){clear=true;break;}
-            }
-            if(clear)break;
-          }
-          if(clear)break;
-        }
-        if(clear)break;
+  // Four posts carry every basket, one in each quadrant of the stone. All
+  // four are described by the same canonical parameters and mapped into their
+  // quadrant by mirroring, so the search for a clear route tries mirrored
+  // candidates in the same order: a symmetric ring gets symmetric posts, and
+  // on a split shank each rail receives exactly two of them.
+  for(const {assembly,shape,scale,gallery,stone,galleryK,radius:r,stem} of mountings) {
+    if(stem){
+      // The base of a claw head grows out of the shank: one solid neck from
+      // under the culet into the ring body (into both rails of a split shank).
+      const centre=assembly.localToWorld(new T.Vector3(0,stem.y,0)),angle=Math.atan2(centre.x,centre.y);
+      const tracks=split?[-separation(angle),separation(angle)]:[Math.min(bandWidth*.2,Math.max(-bandWidth*.2,centre.z))];
+      const {Manifold}=getKernel();
+      for(const track of tracks){
+        const owned=[],own=o=>(owned.push(o),o);
+        try{
+          const upper=own(own(Manifold.sphere(stem.radius,24)).translate(centre.toArray()));
+          const lower=own(own(Manifold.sphere(Math.min(thick*.9,bandWidth*.42),24)).translate([Math.sin(angle)*radius,Math.cos(angle)*radius,track]));
+          tag(solidMesh(own(Manifold.hull([upper,lower])),head,group),'head-base',null,{melee:isMelee(scale)});
+        }finally{owned.reverse().forEach(o=>o.delete());}
       }
-      const support=tube(points.map(v=>v.toArray()),r,group,head);
+      continue;
+    }
+    const quadrants=[[1,1],[-1,1],[-1,-1],[1,-1]];
+    const route=([sx,sz],offset)=>{
+      const quadrant=t=>sx>0?(sz>0?t:-t):(sz>0?Math.PI-t:Math.PI+t);
+      const [x,z]=outline(shape,quadrant(Math.PI/4+offset));
+      const end=assembly.localToWorld(new T.Vector3(x*scale*galleryK,GALLERY_Y*scale,z*scale*galleryK));
+      const lean=Math.abs(end.x)>1e-6?Math.sign(end.x):sx,side=Math.abs(end.z)>1e-6?Math.sign(end.z):sz;
+      const angle=Math.atan2(end.x,end.y);
+      let fallback;
+      // A narrow pavé band may require a foot between two neighbouring
+      // accent stones, rather than directly beneath the gallery endpoint.
+      for(const footOffset of [0,.06,-.06,.12,-.12,.2,.3]){
+        const footAngle=angle+lean*footOffset;
+        const track=split?side*separation(footAngle):0;
+        for(const flank of [side,-side]){
+          const start=new T.Vector3(Math.sin(footAngle)*radius,Math.cos(footAngle)*radius,track+flank*bandWidth*.2);
+          for(const lift of [0,.4,.8,1.2]){
+            const mid=start.clone().lerp(end,.5);
+            mid.z=flank*(Math.max(Math.abs(start.z),Math.abs(end.z))+.12+lift);
+            if(s.style==='cathedral')mid.y+=.3;
+            const candidate={start,end,side,points:[start.clone(),mid,end.clone()]};
+            fallback||=candidate;
+            if(pathClear(candidate.points,r))return {...candidate,clear:true};
+          }
+        }
+      }
+      return {...fallback,clear:false};
+    };
+    // All four posts leave the basket at the same canonical position, mirrored
+    // into their quadrants: when a neighbouring stone blocks one of them, the
+    // attachment of all four moves together, so they stay evenly arranged.
+    let routes;
+    for(const offset of [0,.2,-.2,.4,-.4,.6,-.6]){
+      const attempt=quadrants.map(q=>route(q,offset));
+      routes||=attempt;
+      if(attempt.every(a=>a.clear)){routes=attempt;break;}
+    }
+    for(const {start,end,side,points,clear} of routes){
+      const support=tag(tube(points.map(v=>v.toArray()),r,group,head),'support',stone,{ends:[1,1],melee:isMelee(scale)});
       support.userData.stoneClearanceValid=clear;
-      support.userData.role='structural-support';
-      contacts.push({support,start,end,gallery,band:bands[['split','tension'].includes(s.style)?(splitSign<0?0:1):0]});
+      contacts.push({support,start,end,gallery,band:bands[split?(side<0?0:1):0]});
     }
   }
   // Geometry/materials created but unused in a particular permutation are released too.

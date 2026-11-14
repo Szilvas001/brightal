@@ -6,7 +6,7 @@ import { FASHION_STYLES, ATELIER_STYLES, stoneDimensions, longestStone } from '.
 export const MODERN_STYLES = ['bezelrow','scatter','chevron','ribbon','graduated','eastwest','alternating','crown','wave','rope','dome','signet','open','stack','band','eternity','curvedoval','wavebezel','openpair','contour','asymmetric','fullcircle'];
 export const SCALE = .8;
 MODERN_STYLES.push(...FASHION_STYLES.filter(s=>!MODERN_STYLES.includes(s)));
-export const MODEL_REVISION = 'cut-seats-9';
+export const MODEL_REVISION = 'geometry-rules-10';
 const single = s => ['band','eastwest','curvedoval','wavebezel'].includes(s.style) || FASHION_STYLES.includes(s.style);
 export function modernLayout(s) {
   const inner = s.size / (2*Math.PI);
@@ -84,7 +84,25 @@ export function modernLayout(s) {
       angle,rotation:east?Math.PI/2:s.style==='crown'?angle*.25:0,z,
       girdleRadius:surface+.1, tone:s.alternateGems&&i%2?s.sideTone:s.gemTone });
   }
-  return {inner,width:s.style==='signet'?Math.max(width,s.faceSize):width,thickness,widthAt,thicknessAt,shift,stones,profileExponent,relief};
+  // A tapering band must still carry every bezel completely: wherever a stone
+  // sits, the band is at least as wide as that stone's collar (rule C: no
+  // stone or bezel overhangs the band). The widening fades out smoothly.
+  for(const stone of stones){
+    const turn=Math.abs(Math.sin(stone.rotation)),along=Math.abs(Math.cos(stone.rotation));
+    stone.halfZ=(stone.length*along+stone.width*turn)/2+s.bezelWall;
+    stone.halfT=(stone.length*turn+stone.width*along)/2+s.bezelWall;
+  }
+  const carriedWidthAt=a=>{
+    let w=widthAt(a);
+    for(const stone of stones){
+      const need=2*(Math.abs(stone.z-shift(stone.angle))+stone.halfZ)+.06;
+      const d=Math.abs(Math.atan2(Math.sin(a-stone.angle),Math.cos(a-stone.angle))),flat=stone.halfT/radius+.03,ramp=.35;
+      const weight=d<=flat?1:d>=flat+ramp?0:.5+.5*Math.cos(Math.PI*(d-flat)/ramp);
+      if(weight>0)w=Math.max(w,widthAt(a)+(need-widthAt(stone.angle))*weight);
+    }
+    return w;
+  };
+  return {inner,width:s.style==='signet'?Math.max(width,s.faceSize):width,thickness,widthAt:carriedWidthAt,thicknessAt,shift,stones,profileExponent,relief};
 }
 
 // Exact shared millimetre geometry: the browser and the workshop exporter use
@@ -172,7 +190,7 @@ export function buildContemporary(s, environment, colors) {
       const gem=new T.Mesh(geometry,gemstoneMaterial(planes,environment,stone.tone,s.color,s.light,s.fire));
       gem.matrixAutoUpdate=false;
       gem.matrix.copy(new T.Matrix4().makeScale(SCALE,SCALE,SCALE).multiply(matrix).multiply(new T.Matrix4().makeScale(scale.x,scale.y,scale.z)));
-      gem.userData={gem:true,tone:stone.tone,stoneId:stone.id};group.add(gem);gems.push(gem);
+      gem.userData={gem:true,tone:stone.tone,stoneId:stone.id,shape:stone.shape,onBand:true,set:'collar'};group.add(gem);gems.push(gem);
       schedule.push({...stone,positionMm:[Math.sin(stone.angle)*stone.girdleRadius,Math.cos(stone.angle)*stone.girdleRadius,stone.z]});
     }
     if(body.status()!=='NoError'||body.isEmpty()) throw new Error(`Invalid solid: ${body.status()}`);
