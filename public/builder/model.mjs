@@ -331,20 +331,33 @@ export function buildRing(s, environment) {
     const posts = [];
     let baseCount = 8, stem = null;
     if (s.setting === "bezel" && centre) {
-      // Classic bezel: one solid collar around the girdle with a narrow lip
-      // over the crown, closing below into a cup that stands on the same base
-      // in the shank as a claw head. The stone's seat is cut into the cup.
-      const wall = Math.max(.45, .16 * scale), lip = Math.min(.3, .12 * scale), rimY = .06 * scale + .14;
+      // Classic bezel: a collar around the girdle with a narrow lip over the
+      // crown, standing on the same base in the shank as a claw head. The
+      // stone's seat is cut into the collar.
+      const wall = Math.max(.62, .2 * scale), lip = Math.min(.3, .12 * scale), rimY = .06 * scale + .14;
       const baseR = 1.6 * r, baseY = -headDrop(scale);
       stem = {y: baseY, radius: baseR * 1.2};
       const outer = (x, z) => scale + wall / Math.hypot(x, z), inner = (x, z) => scale - lip / Math.hypot(x, z);
+      // The collar: a closed wall around the girdle, open above and below.
+      const low = -.3 * scale, mid = (x, z) => scale + (wall - lip) / 2 / Math.hypot(x, z);
       const {Manifold} = getKernel(), owned = [], own = o => (owned.push(o), o);
       try {
-        const foot = Array.from({length: 24}, (_, i) => [Math.cos((i + .5) / 24 * Math.PI * 2) * baseR, baseY, Math.sin((i + .5) / 24 * Math.PI * 2) * baseR]);
-        const cup = own(Manifold.hull([...ringPoints(shape, outer, rimY), ...ringPoints(shape, outer, -.22 * scale), ...foot]));
-        const opening = own(Manifold.hull([...ringPoints(shape, inner, 0), ...ringPoints(shape, inner, rimY + scale)]));
-        tag(solidMesh(own(cup.subtract(opening)), head, assembly), 'bezel', stone, {melee, host: true});
+        const wallBody = own(Manifold.hull([...ringPoints(shape, outer, rimY), ...ringPoints(shape, outer, low)]));
+        const opening = own(Manifold.hull([...ringPoints(shape, inner, low - scale), ...ringPoints(shape, inner, rimY + scale)]));
+        tag(solidMesh(own(wallBody.subtract(opening)), head, assembly), 'bezel', stone, {melee, host: true});
       } finally { owned.reverse().forEach(o => o.delete()); }
+      // …carried by four tapering legs that rise from the base in the shank,
+      // like the claws of a claw head, and end inside the collar wall.
+      for (const angle of [1, 3, 5, 7].map(i => i * Math.PI / 4)) {
+        const [x, z] = outline(shape, angle), l = Math.hypot(x, z), k = mid(x, z), spread = baseR * .4;
+        const foot = [x / l * spread, baseY, z / l * spread], end = [x * k, low + .1 * scale, z * k];
+        // The leg meets the collar clear of the stone (measured, not assumed: on
+        // a pointed cut a radial step is not the distance to the stone).
+        for (let n = 0; n < 80 && clearance(planes, end[0] / scale, end[1] / scale, end[2] / scale) * scale < r * 1.1 + CLEARANCE + .04; n++) { end[0] += x / l * .01 * scale; end[2] += z / l * .01 * scale; }
+        const length = Math.hypot(end[0] - foot[0], end[1] - foot[1], end[2] - foot[2]), steps = Math.max(2, Math.ceil(length / (.35 * scale)));
+        const path = Array.from({length: steps + 1}, (_, i) => foot.map((v, j) => v + (end[j] - v) * i / steps));
+        tag(rod(path, path.map((_, i) => r * 1.1 + (baseR - r * 1.1) * Math.pow(1 - i / steps, 1.4)), assembly, head), 'post', stone, {ends: [1, 1], melee});
+      }
       // What stands around the stone (halo rows, hidden-halo stones) keeps clear of the collar.
       for (let i = 0; i < 16; i++) {
         const angle = i * Math.PI / 8, [x, z] = outline(shape, angle), k = outer(x, z);
@@ -516,9 +529,7 @@ export function buildRing(s, environment) {
   const size = 2.4 * Math.cbrt(s.carat),
     // The culet must clear the top of the ring body, whatever the stone size.
     // A claw head stands on its base: the base sits in the top of the shank.
-    top = s.setting === "bezel"
-      ? radius + Math.max(size * .7, thick + size * .7 + (s.accents !== 'none' ? s.accentSize * .14 + .32 : .12)) + s.height * 0.45
-      : radius + thick * .5 + headDrop(size) + (s.accents !== 'none' ? s.accentSize * .14 + .2 : 0) + s.height * 0.45;
+    top = radius + thick * .5 + headDrop(size) + (s.accents !== 'none' ? s.accentSize * .14 + .2 : 0) + s.height * 0.45;
   const rotation = s.orientation === "east" ? Math.PI / 2 : 0;
   const extentOf = object => { object.updateWorldMatrix(true, true); return new T.Box3().setFromObject(object); };
   if (s.style === "duet") {
