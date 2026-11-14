@@ -9,7 +9,7 @@ export function hiddenHaloLayout(assembly,shape,size){
  assembly.updateWorldMatrix(true,true);
  const {Manifold}=getKernel(),parts=[],owned=[];
  try{
-  for(const o of assembly.children)if(o.isMesh&&['prong','setting-rib'].includes(o.userData.role))parts.push(meshSolid(o));
+  assembly.traverse(o=>{if(o.isMesh&&['prong','setting-rib'].includes(o.userData.role))parts.push(meshSolid(o));});
   const structure=parts.length?Manifold.union(parts):null;if(structure)owned.push(structure);
   const probe=Manifold.sphere(.22,20);owned.push(probe);
   const y=-size*.42;

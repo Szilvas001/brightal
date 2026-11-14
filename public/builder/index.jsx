@@ -1288,13 +1288,14 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                 {!isModern(s) && (!isBand(s)||isDaily(s)) && <>
                   {slider(
                     "height",
-                    L("Foglalat emelése", "Setting lift"),
+                    s.setting==='bezel'?L("Foglalat emelése", "Setting lift"):L("Foglalat magassági szintje", "Setting height level"),
                     0,
                     6,
                     0.1,
-                    "mm",
+                    s.setting==='bezel'?"mm":"",
                   )}
-                  <p className="rb-hint">{L('0 mm: a legalacsonyabb alapfoglalat. Az emelés a követ és a foglalatot együtt mozgatja, a tartók hozzáigazodnak. A karomvég hossza nem változik.','0 mm: the lowest base setting. Lift moves the stone and setting together; supports adjust to match. Prong-tip length stays unchanged.')}</p>
+                  {s.setting!=='bezel'&&<p className="rb-hint">{L('0: alacsony, 6: magas foglalat. A magasság a kő átmérőjének 55–75%-ához igazodik.','0: low, 6: high setting. Height follows 55–75% of the stone diameter.')}</p>}
+                  {s.setting==='bezel'&&<p className="rb-hint">{L('0 mm: a legalacsonyabb alapfoglalat. Az emelés a követ és a foglalatot együtt mozgatja, a tartók hozzáigazodnak. A karomvég hossza nem változik.','0 mm: the lowest base setting. Lift moves the stone and setting together; supports adjust to match. Prong-tip length stays unchanged.')}</p>}
                 </>}
                 {!isModern(s) && (
                   <>

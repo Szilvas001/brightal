@@ -2,7 +2,8 @@ import * as T from "three";
 import {getKernel} from "./kernel.mjs";
 import {supportLayout} from "./support-layout.mjs";
 import {hiddenHaloLayout} from "./halo-layout.mjs";
-import {MIN_ROD_RADIUS,MIN_PRONG_RADIUS} from "./manufacturing-policy.mjs";
+import {buildTaperedHead} from "./tapered-prong.mjs";
+import {MIN_ROD_RADIUS} from "./manufacturing-policy.mjs";
 import {spacedOutline} from "./stone-spacing.mjs";
 import { buildContemporary, MODERN_STYLES } from './contemporary.mjs';
 import { DAILY_STYLES } from "./state.mjs";
@@ -38,6 +39,8 @@ export function buildRing(s, environment) {
     gems = [],
     materials = new Map();
   const mountings = [], contacts = [], bands = [], stonePlanes = new Map();
+  const taperedHeads=new Map(),pendingDecorations=[];
+  const tapered=s.setting!=="bezel";
   const metalFor = (key) => {
     if (!materials.has(key))
       materials.set(
@@ -127,7 +130,7 @@ export function buildRing(s, environment) {
           si = Math.sin(b);
         const r =
           radius +
-          thick *
+          thick * (tapered?1-.16*Math.pow(Math.max(0,Math.cos(a)),6):1) *
             (s.profile === "flat"
               ? Math.sign(co) * Math.pow(Math.abs(co), 0.35)
               : co);
@@ -135,7 +138,7 @@ export function buildRing(s, environment) {
           splitSign *
           (width * 0.65 + 0.55) *
           Math.pow(Math.max(0, Math.cos(a)), 2);
-        const w = width * (splitSign ? 0.55 : 1),
+        const w = width * (splitSign ? 0.55 : 1) * (tapered?1-.18*Math.pow(Math.max(0,Math.cos(a)),6):1),
           z =
             w *
               0.5 *
@@ -234,50 +237,22 @@ export function buildRing(s, environment) {
         const rib=tube([[x*scale*.72,-scale*.58,z*scale*.72],[x*scale*.94,-scale*.13,z*scale*.94],[x*scale*1.02,scale*.05,z*scale*1.02]],.09*fitting,assembly,head);
         rib.userData.role='setting-rib';
       }
-    } else
-      for (let i = 0; i < s.prongs; i++) {
-        const a = (2 * Math.PI * (i + 0.5)) / s.prongs;
-        // Keep the two claws physically separate at the girdle. A fixed
-        // angle collapsed both claws together on small or elongated stones.
-        const before = outline(shape, a - .001), after = outline(shape, a + .001);
-        const tangentLength = Math.hypot(after[0] - before[0], after[1] - before[1]) / .002;
-        const pairAngle = Math.min(Math.PI / s.prongs * .4, .18 / (scale * tangentLength));
-        for (const delta of s.setting === "doubleclaw"
-          ? [-pairAngle, pairAngle]
-          : [0]) {
-          const [x, z] = outline(shape, a + delta),
-            tip = [x * scale * 0.995, scale * 0.12, z * scale * 0.995];
-          const prong=tube(
-            [
-              [x * scale * 0.72, -scale * 0.58, z * scale * 0.72],
-              [x * scale * 1.10, -scale * 0.28, z * scale * 1.10],
-              [x * scale * 1.10, scale * 0.04, z * scale * 1.10],
-              tip,
-            ],
-            Math.max(MIN_PRONG_RADIUS,(s.setting === "doubleclaw" ? 0.10 : 0.16) * fitting),
-            assembly,
-            head,
-          );
-          prong.userData.role='prong';
-          const claw = bead(
-            (s.setting === "doubleclaw" ? 0.11 : 0.15) * fitting,
-            tip,
-            assembly,
-          );
-          claw.scale.y *= 0.65;
-        }
-      }
+    } else {
+      mountings.push({assembly,shape,scale,gallery:null,tapered:true});
+      return assembly;
+    }
     const gallery=seat(shape, scale * 0.72, assembly, -scale * 0.58, 0.16 * fitting);
     gallery.userData.role='gallery';
     mountings.push({assembly,shape,scale,gallery});
     return assembly;
   };
   const addHiddenHalo = (main, shape, size) => {
+    if(tapered&&!taperedHeads.has(main)){pendingDecorations.push(()=>addHiddenHalo(main,shape,size));return;}
     const layout=hiddenHaloLayout(main,shape,size);
     seat(shape, layout.radius, main, layout.y, 0.18);
     for(let i=0;i<4;i++) {
       const [x,z]=outline(shape,i*Math.PI/2);
-      tube([[x*size*.72,-size*.58,z*size*.72],[x*layout.radius,layout.y,z*layout.radius]],.085,main,head);
+      tube([taperedHeads.get(main)?.attachment(i*Math.PI/2)||[x*size*.72,-size*.58,z*size*.72],[x*layout.radius,layout.y,z*layout.radius]],.085,main,head);
     }
     for (const point of layout.points) {
       const [x,z]=point.map(v=>v/layout.radius);
@@ -296,7 +271,7 @@ export function buildRing(s, environment) {
     }
   };
   const size = 2.4 * Math.cbrt(s.carat),
-    top = radius + Math.max(size*.7, thick+size*.58+(s.accents!=='none'?s.accentSize*.14+.4:.2)) + s.height * .8;
+    top = tapered ? radius+thick*.84+size*2*(.55+.2*s.height/6) : radius + Math.max(size*.7, thick+size*.58+(s.accents!=='none'?s.accentSize*.14+.4:.2)) + s.height * .8;
   const rotation = s.orientation === "east" ? Math.PI / 2 : 0;
   if(DAILY_STYLES.includes(s.style)) {
     const scale=2.4*Math.cbrt(s.dailyCarat),r=radius+thick+scale*.7+s.height*.8;
@@ -325,6 +300,7 @@ export function buildRing(s, environment) {
     } else {
       const main = setting(s.shape, size, [0, top, 0], s.gemTone, rotation);
       if (["halo", "vintage"].includes(s.style)) {
+        const decorate=()=>{
         const haloR = s.haloSize * 0.4;
         let previousHaloPoints=[];
         for (let row = 0; row < (s.halo === "double" ? 2 : 1); row++) {
@@ -340,7 +316,7 @@ export function buildRing(s, environment) {
           seat(s.shape, perimeter, main, -0.22, 0.12);
           for(let i=0;i<4;i++) {
             const [x,z]=outline(s.shape,i*Math.PI/2);
-            tube([[x*size*.72,-size*.58,z*size*.72],[x*perimeter,-.22,z*perimeter]],.105,main,head);
+            tube([taperedHeads.get(main)?.attachment(i*Math.PI/2)||[x*size*.72,-size*.58,z*size*.72],[x*perimeter,-.22,z*perimeter]],.105,main,head);
           }
           for (const point of haloPoints) {
             const [x,z]=point.map(v=>v/perimeter);
@@ -360,6 +336,8 @@ export function buildRing(s, environment) {
             tube([[x*perimeter,-.22,z*perimeter],[x*(perimeter+haloR),-.06,z*(perimeter+haloR)]],.065,main,head);
           }
         }
+        };
+        if(tapered)pendingDecorations.push(decorate);else decorate();
       }
       if (s.hiddenHalo) addHiddenHalo(main,s.shape,size);
       if (s.sideMode !== "none") {
@@ -411,6 +389,29 @@ export function buildRing(s, environment) {
         }
       }
     }
+  }
+  if(tapered){
+    group.updateMatrixWorld(true);
+    for(const mount of mountings){
+      const {assembly,shape,scale}=mount,center=assembly.getWorldPosition(new T.Vector3()),axis=new T.Vector3(0,1,0).transformDirection(assembly.matrixWorld);
+      const points=[];
+      for(const band of bands){
+        const previous=band.material.side;band.material.side=T.DoubleSide;
+        const hits=new T.Raycaster(center,axis.clone().negate(),0,100).intersectObject(band,false);band.material.side=previous;
+        if(hits.length)points.push(hits[0].point);
+        else {const p=band.geometry.attributes.position;let best,d=Infinity;for(let i=0;i<p.count;i++){const v=new T.Vector3().fromBufferAttribute(p,i).applyMatrix4(band.matrixWorld),distance=v.distanceToSquared(center);if(distance<d){d=distance;best=v;}}points.push(best);}
+      }
+      const foot=points.reduce((p,q)=>p.add(q),new T.Vector3()).divideScalar(points.length);
+      const desired=scale*2*(.55+.2*s.height/6);assembly.position.copy(foot.clone().addScaledVector(axis,desired));assembly.updateWorldMatrix(true,true);
+      const root=assembly.worldToLocal(foot.clone().addScaledVector(axis,-.12));
+      const stone=assembly.children.find(o=>o.userData.gem);
+      const availableWidth=width/.8*(bands.length>1?.55:1)*.82;
+      const headModel=buildTaperedHead({shape,scale,root,widthMm:availableWidth,prongs:s.prongs,doubleClaw:s.setting==='doubleclaw',material:head,planes:stonePlanes.get(stone),galleryRequired:s.prongs>=6||scale>2.4*Math.cbrt(2)||s.hiddenHalo||['halo','vintage'].includes(s.style)});
+      // A split shank shares one root spanning both shoulders, not four posts.
+      if(points.length>1){const local=points.map(p=>assembly.worldToLocal(p.clone()));const spread=Math.max(...local.map(p=>Math.abs(p.z-root.z)));headModel.base.geometry.scale(1,1,Math.max(1,(spread+width*.15)/(availableWidth*.48*.8)));}
+      assembly.add(headModel.group);mount.gallery=headModel.gallery;mount.head=headModel;taperedHeads.set(assembly,headModel);
+    }
+    for(const decorate of pendingDecorations)decorate();
   }
   const hasPave = ["pave", "channel"].includes(s.accents);
   if (hasPave) {
@@ -520,7 +521,7 @@ export function buildRing(s, environment) {
     }
     return true;
   };
-  for(const {assembly,shape,scale,gallery} of mountings) {
+  for(const {assembly,shape,scale,gallery} of mountings.filter(m=>!m.tapered)) {
     const split=['split','tension'].includes(s.style);
     const routes=supportLayout({assembly,shape,scale,width,radius,split,bandShift,cathedral:s.style==='cathedral',pathClear});
     for(const {start,end,points,splitSign,r,clear} of routes){

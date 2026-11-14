@@ -1,0 +1,3 @@
+import * as T from 'three';import {gemGeometry} from '../public/builder/optics.mjs';import {buildTaperedProng} from '../public/builder/tapered-prong.mjs';import {validateMesh} from '../public/builder/validation.mjs';
+const stone=gemGeometry('round'),material=new T.MeshBasicMaterial();
+try{const prong=buildTaperedProng({phi:Math.PI/4,planes:stone.planes,scaleMm:3,root:new T.Vector3(0,-3.35,0),widthMm:1.64},material);console.log(JSON.stringify({quality:prong.userData.quality,mesh:validateMesh(prong.geometry)}));prong.geometry.dispose();}catch(e){console.log(e.message,e.diagnostics);process.exitCode=1;}finally{stone.geometry.dispose();material.dispose();}

@@ -2,11 +2,12 @@ import fs from 'node:fs';
 import sharp from 'sharp';
 import * as T from 'three';
 import {PRESETS} from '../public/builder/catalog.mjs';
+import {normalize} from '../public/builder/state.mjs';
 import {buildFinishedRing} from '../public/builder/finished-model.mjs';
 import {initKernel} from '../public/builder/kernel.mjs';
 const arg=(key,fallback)=>process.argv.find(x=>x.startsWith('--'+key+'='))?.split('=').slice(1).join('=')||fallback;
 const out=arg('out','docs/audits/2026-11-14/views'),styles=arg('styles','').split(',');fs.mkdirSync(out,{recursive:true});await initKernel();
-for(const {config}of PRESETS){if(styles[0]&&!styles.includes(config.style))continue;const model=buildFinishedRing(config);model.group.updateMatrixWorld(true);
+for(const preset of PRESETS){const config=normalize({...preset.config,...arg('setting','')?{setting:arg('setting','')}:{}});if(styles[0]&&!styles.includes(config.style))continue;const model=buildFinishedRing(config);model.group.updateMatrixWorld(true);
  const box=new T.Box3().setFromObject(model.group),center=box.getCenter(new T.Vector3()),size=box.getSize(new T.Vector3()),span=Math.max(size.x,size.y,size.z)*1.16;
  const panels=[];
  for(const [label,direction]of [['front',[0,0,1]],['back',[0,0,-1]],['left',[-1,0,0]],['right',[1,0,0]]]){

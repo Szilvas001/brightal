@@ -1,0 +1,1402 @@
+[
+  {
+    "config": {
+      "style": "solitaire",
+      "shape": "round",
+      "metal": "yellow18",
+      "finish": "polished",
+      "carat": 1,
+      "color": "F",
+      "clarity": "VS1",
+      "certificate": "IGI",
+      "origin": "lab",
+      "accents": "none",
+      "profile": "round",
+      "width": 2,
+      "size": 54,
+      "prongs": 4,
+      "engraving": "",
+      "light": "studio",
+      "rotate": false,
+      "gemTone": "ice",
+      "sideTone": "ice",
+      "sideShape": "round",
+      "sideMode": "none",
+      "sideCarat": 0.3,
+      "sideMainGap": 0,
+      "sideSpacing": 0,
+      "setting": "claw",
+      "orientation": "north",
+      "headMetal": "match",
+      "coverage": "shoulders",
+      "accentSize": 1,
+      "accentRows": 1,
+      "halo": "single",
+      "haloSize": 1,
+      "height": 0,
+      "engravingFont": "serif",
+      "fire": 1,
+      "hiddenHalo": false,
+      "sculpt": 1.2,
+      "rhythm": 4,
+      "layers": 3,
+      "gap": 0.7,
+      "faceSize": 7,
+      "face": "oval",
+      "inlay": "metal",
+      "secondaryMetal": "white18",
+      "mixedMetal": false,
+      "dailyCount": 5,
+      "dailyCarat": 0.1,
+      "dailySpacing": 0.15,
+      "alternateGems": false,
+      "stoneLength": 2.6,
+      "stoneWidth": 2.6,
+      "stoneDepth": 1.6,
+      "thickness": 1.6,
+      "bezelWall": 0.45,
+      "fashionStone": true,
+      "motifDepth": 0.5,
+      "motifOffset": 0,
+      "edgeSoftness": 0.7
+    },
+    "issues": [],
+    "rawProngStone": {
+      "valid": true,
+      "collisions": [],
+      "toleranceMm3": 0.001
+    },
+    "sweeps": [
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820739306637055,
+        "tipDiameterMm": 0.7931555721134548,
+        "minimumBendRadiusOverDiameter": 1.2764232801378792
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820739306637055,
+        "tipDiameterMm": 0.7931555753833213,
+        "minimumBendRadiusOverDiameter": 1.2764228825854518
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820739306637055,
+        "tipDiameterMm": 0.7931556412425673,
+        "minimumBendRadiusOverDiameter": 1.2764280760082394
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820739306637055,
+        "tipDiameterMm": 0.7931556412425673,
+        "minimumBendRadiusOverDiameter": 1.2764280760082394
+      }
+    ],
+    "culet": [
+      0.3
+    ],
+    "assembly": {
+      "valid": true,
+      "issues": [],
+      "blockedSupports": 0,
+      "stones": {
+        "valid": true,
+        "stoneCount": 1,
+        "collisions": [],
+        "toleranceMm3": 0.00001
+      },
+      "metal": {
+        "valid": true,
+        "collisions": [],
+        "toleranceMm3": 0.001
+      },
+      "minimumBoreRadiusMm": 8.594366641757949,
+      "requestedBoreRadiusMm": 8.594366926962348,
+      "boreToleranceMm": 0.03,
+      "requiresWorkshopApproval": true
+    },
+    "valid": true
+  },
+  {
+    "config": {
+      "style": "split",
+      "shape": "oval",
+      "metal": "white18",
+      "finish": "polished",
+      "carat": 1.2,
+      "color": "F",
+      "clarity": "VS1",
+      "certificate": "IGI",
+      "origin": "lab",
+      "accents": "none",
+      "profile": "round",
+      "width": 3.4,
+      "size": 54,
+      "prongs": 4,
+      "engraving": "",
+      "light": "studio",
+      "rotate": false,
+      "gemTone": "ice",
+      "sideTone": "ice",
+      "sideShape": "round",
+      "sideMode": "none",
+      "sideCarat": 0.3,
+      "sideMainGap": 0,
+      "sideSpacing": 0,
+      "setting": "claw",
+      "orientation": "north",
+      "headMetal": "match",
+      "coverage": "shoulders",
+      "accentSize": 1,
+      "accentRows": 1,
+      "halo": "single",
+      "haloSize": 1,
+      "height": 0,
+      "engravingFont": "serif",
+      "fire": 1,
+      "hiddenHalo": false,
+      "sculpt": 1.2,
+      "rhythm": 4,
+      "layers": 3,
+      "gap": 0.7,
+      "faceSize": 7,
+      "face": "oval",
+      "inlay": "metal",
+      "secondaryMetal": "white18",
+      "mixedMetal": false,
+      "dailyCount": 5,
+      "dailyCarat": 0.1,
+      "dailySpacing": 0.15,
+      "alternateGems": false,
+      "stoneLength": 2.6,
+      "stoneWidth": 2.6,
+      "stoneDepth": 1.6,
+      "thickness": 1.6,
+      "bezelWall": 0.45,
+      "fashionStone": true,
+      "motifDepth": 0.5,
+      "motifOffset": 0,
+      "edgeSoftness": 0.7
+    },
+    "issues": [
+      "FINGER_CLEARANCE"
+    ],
+    "rawProngStone": {
+      "valid": true,
+      "collisions": [],
+      "toleranceMm3": 0.001
+    },
+    "sweeps": [
+      {
+        "topology": true,
+        "rootDiameterMm": 1.292239017824958,
+        "tipDiameterMm": 0.7931556490841264,
+        "minimumBendRadiusOverDiameter": 1.2760503264130802
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.292239017824958,
+        "tipDiameterMm": 0.7931557230456043,
+        "minimumBendRadiusOverDiameter": 1.2760503943113297
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.292239017824958,
+        "tipDiameterMm": 0.7931556652948605,
+        "minimumBendRadiusOverDiameter": 1.2760505169563
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.292239017824958,
+        "tipDiameterMm": 0.7931557230456043,
+        "minimumBendRadiusOverDiameter": 1.2760503943113297
+      }
+    ],
+    "culet": [
+      0.3
+    ],
+    "assembly": {
+      "valid": false,
+      "issues": [
+        "FINGER_CLEARANCE"
+      ],
+      "blockedSupports": 0,
+      "stones": {
+        "valid": true,
+        "stoneCount": 1,
+        "collisions": [],
+        "toleranceMm3": 0.00001
+      },
+      "metal": {
+        "valid": true,
+        "collisions": [],
+        "toleranceMm3": 0.001
+      },
+      "minimumBoreRadiusMm": 3.971802151130884,
+      "requestedBoreRadiusMm": 8.594366926962348,
+      "boreToleranceMm": 0.03,
+      "requiresWorkshopApproval": true
+    },
+    "valid": false
+  },
+  {
+    "config": {
+      "style": "trilogy",
+      "shape": "emerald",
+      "metal": "yellow18",
+      "finish": "polished",
+      "carat": 1.5,
+      "color": "F",
+      "clarity": "VS1",
+      "certificate": "IGI",
+      "origin": "lab",
+      "accents": "none",
+      "profile": "round",
+      "width": 2.8,
+      "size": 54,
+      "prongs": 4,
+      "engraving": "",
+      "light": "studio",
+      "rotate": false,
+      "gemTone": "ice",
+      "sideTone": "ice",
+      "sideShape": "round",
+      "sideMode": "pair",
+      "sideCarat": 0.2,
+      "sideMainGap": 0,
+      "sideSpacing": 0,
+      "setting": "claw",
+      "orientation": "north",
+      "headMetal": "match",
+      "coverage": "shoulders",
+      "accentSize": 1,
+      "accentRows": 1,
+      "halo": "single",
+      "haloSize": 1,
+      "height": 0,
+      "engravingFont": "serif",
+      "fire": 1,
+      "hiddenHalo": false,
+      "sculpt": 1.2,
+      "rhythm": 4,
+      "layers": 3,
+      "gap": 0.7,
+      "faceSize": 7,
+      "face": "oval",
+      "inlay": "metal",
+      "secondaryMetal": "white18",
+      "mixedMetal": false,
+      "dailyCount": 5,
+      "dailyCarat": 0.1,
+      "dailySpacing": 0.15,
+      "alternateGems": false,
+      "stoneLength": 2.6,
+      "stoneWidth": 2.6,
+      "stoneDepth": 1.6,
+      "thickness": 1.6,
+      "bezelWall": 0.45,
+      "fashionStone": true,
+      "motifDepth": 0.5,
+      "motifOffset": 0,
+      "edgeSoftness": 0.7
+    },
+    "issues": [
+      "NO_CLEAR_SMOOTH_PRONG_PATH"
+    ],
+    "diagnostics": {
+      "clearanceMm": -0.01962829056582921,
+      "minimumBendRadiusOverDiameter": 1.4921706175683696
+    },
+    "valid": false
+  },
+  {
+    "config": {
+      "style": "duet",
+      "shape": "pear",
+      "metal": "rose18",
+      "finish": "polished",
+      "carat": 0.8,
+      "color": "F",
+      "clarity": "VS1",
+      "certificate": "IGI",
+      "origin": "lab",
+      "accents": "none",
+      "profile": "round",
+      "width": 2.5,
+      "size": 54,
+      "prongs": 4,
+      "engraving": "",
+      "light": "studio",
+      "rotate": false,
+      "gemTone": "ice",
+      "sideTone": "ice",
+      "sideShape": "emerald",
+      "sideMode": "none",
+      "sideCarat": 0.3,
+      "sideMainGap": 0,
+      "sideSpacing": 0,
+      "setting": "claw",
+      "orientation": "north",
+      "headMetal": "match",
+      "coverage": "shoulders",
+      "accentSize": 1,
+      "accentRows": 1,
+      "halo": "single",
+      "haloSize": 1,
+      "height": 0,
+      "engravingFont": "serif",
+      "fire": 1,
+      "hiddenHalo": false,
+      "sculpt": 1.2,
+      "rhythm": 4,
+      "layers": 3,
+      "gap": 0.7,
+      "faceSize": 7,
+      "face": "oval",
+      "inlay": "metal",
+      "secondaryMetal": "white18",
+      "mixedMetal": false,
+      "dailyCount": 5,
+      "dailyCarat": 0.1,
+      "dailySpacing": 0.15,
+      "alternateGems": false,
+      "stoneLength": 2.6,
+      "stoneWidth": 2.6,
+      "stoneDepth": 1.6,
+      "thickness": 1.6,
+      "bezelWall": 0.45,
+      "fashionStone": true,
+      "motifDepth": 0.5,
+      "motifOffset": 0,
+      "edgeSoftness": 0.7
+    },
+    "issues": [
+      "NO_CLEAR_SMOOTH_PRONG_PATH"
+    ],
+    "diagnostics": {
+      "clearanceMm": -0.011257838649180896,
+      "minimumBendRadiusOverDiameter": 0.28605304059660164
+    },
+    "valid": false
+  },
+  {
+    "config": {
+      "style": "hiddenhalo",
+      "shape": "oval",
+      "metal": "yellow18",
+      "finish": "polished",
+      "carat": 1.5,
+      "color": "F",
+      "clarity": "VS1",
+      "certificate": "IGI",
+      "origin": "lab",
+      "accents": "none",
+      "profile": "round",
+      "width": 2,
+      "size": 54,
+      "prongs": 4,
+      "engraving": "",
+      "light": "studio",
+      "rotate": false,
+      "gemTone": "ice",
+      "sideTone": "ice",
+      "sideShape": "round",
+      "sideMode": "none",
+      "sideCarat": 0.3,
+      "sideMainGap": 0,
+      "sideSpacing": 0,
+      "setting": "claw",
+      "orientation": "north",
+      "headMetal": "match",
+      "coverage": "shoulders",
+      "accentSize": 1,
+      "accentRows": 1,
+      "halo": "single",
+      "haloSize": 1,
+      "height": 0,
+      "engravingFont": "serif",
+      "fire": 1,
+      "hiddenHalo": true,
+      "sculpt": 1.2,
+      "rhythm": 4,
+      "layers": 3,
+      "gap": 0.7,
+      "faceSize": 7,
+      "face": "oval",
+      "inlay": "metal",
+      "secondaryMetal": "white18",
+      "mixedMetal": false,
+      "dailyCount": 5,
+      "dailyCarat": 0.1,
+      "dailySpacing": 0.15,
+      "alternateGems": false,
+      "stoneLength": 2.6,
+      "stoneWidth": 2.6,
+      "stoneDepth": 1.6,
+      "thickness": 1.6,
+      "bezelWall": 0.45,
+      "fashionStone": true,
+      "motifDepth": 0.5,
+      "motifOffset": 0,
+      "edgeSoftness": 0.7
+    },
+    "issues": [],
+    "rawProngStone": {
+      "valid": true,
+      "collisions": [],
+      "toleranceMm3": 0.001
+    },
+    "sweeps": [
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820736082137568,
+        "tipDiameterMm": 0.7931554917967321,
+        "minimumBendRadiusOverDiameter": 1.1121683691498634
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820736082137568,
+        "tipDiameterMm": 0.793155521574126,
+        "minimumBendRadiusOverDiameter": 1.1121682844104472
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820736082137568,
+        "tipDiameterMm": 0.7931554917967321,
+        "minimumBendRadiusOverDiameter": 1.1121683691498634
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820736082137568,
+        "tipDiameterMm": 0.7931554917967321,
+        "minimumBendRadiusOverDiameter": 1.1121683691498634
+      }
+    ],
+    "culet": [
+      0.3
+    ],
+    "assembly": {
+      "valid": true,
+      "issues": [],
+      "blockedSupports": 0,
+      "stones": {
+        "valid": true,
+        "stoneCount": 25,
+        "collisions": [],
+        "toleranceMm3": 0.00001
+      },
+      "metal": {
+        "valid": true,
+        "collisions": [],
+        "toleranceMm3": 0.001
+      },
+      "minimumBoreRadiusMm": 8.594366641757949,
+      "requestedBoreRadiusMm": 8.594366926962348,
+      "boreToleranceMm": 0.03,
+      "requiresWorkshopApproval": true
+    },
+    "valid": true
+  },
+  {
+    "config": {
+      "style": "bezel",
+      "shape": "emerald",
+      "metal": "yellow18",
+      "finish": "polished",
+      "carat": 1.5,
+      "color": "F",
+      "clarity": "VS1",
+      "certificate": "IGI",
+      "origin": "lab",
+      "accents": "none",
+      "profile": "round",
+      "width": 3,
+      "size": 54,
+      "prongs": 4,
+      "engraving": "",
+      "light": "studio",
+      "rotate": false,
+      "gemTone": "ice",
+      "sideTone": "ice",
+      "sideShape": "round",
+      "sideMode": "none",
+      "sideCarat": 0.3,
+      "sideMainGap": 0,
+      "sideSpacing": 0,
+      "setting": "claw",
+      "orientation": "north",
+      "headMetal": "match",
+      "coverage": "shoulders",
+      "accentSize": 1,
+      "accentRows": 1,
+      "halo": "single",
+      "haloSize": 1,
+      "height": 0,
+      "engravingFont": "serif",
+      "fire": 1,
+      "hiddenHalo": false,
+      "sculpt": 1.2,
+      "rhythm": 4,
+      "layers": 3,
+      "gap": 0.7,
+      "faceSize": 7,
+      "face": "oval",
+      "inlay": "metal",
+      "secondaryMetal": "white18",
+      "mixedMetal": false,
+      "dailyCount": 5,
+      "dailyCarat": 0.1,
+      "dailySpacing": 0.15,
+      "alternateGems": false,
+      "stoneLength": 2.6,
+      "stoneWidth": 2.6,
+      "stoneDepth": 1.6,
+      "thickness": 1.6,
+      "bezelWall": 0.45,
+      "fashionStone": true,
+      "motifDepth": 0.5,
+      "motifOffset": 0,
+      "edgeSoftness": 0.7
+    },
+    "issues": [
+      "NO_CLEAR_SMOOTH_PRONG_PATH"
+    ],
+    "diagnostics": {
+      "clearanceMm": -0.01962829056582921,
+      "minimumBendRadiusOverDiameter": 1.4921706175683696
+    },
+    "valid": false
+  },
+  {
+    "config": {
+      "style": "tension",
+      "shape": "round",
+      "metal": "yellow18",
+      "finish": "polished",
+      "carat": 1.5,
+      "color": "F",
+      "clarity": "VS1",
+      "certificate": "IGI",
+      "origin": "lab",
+      "accents": "none",
+      "profile": "round",
+      "width": 3,
+      "size": 54,
+      "prongs": 4,
+      "engraving": "",
+      "light": "studio",
+      "rotate": false,
+      "gemTone": "ice",
+      "sideTone": "ice",
+      "sideShape": "round",
+      "sideMode": "none",
+      "sideCarat": 0.3,
+      "sideMainGap": 0,
+      "sideSpacing": 0,
+      "setting": "claw",
+      "orientation": "north",
+      "headMetal": "match",
+      "coverage": "shoulders",
+      "accentSize": 1,
+      "accentRows": 1,
+      "halo": "single",
+      "haloSize": 1,
+      "height": 0,
+      "engravingFont": "serif",
+      "fire": 1,
+      "hiddenHalo": false,
+      "sculpt": 1.2,
+      "rhythm": 4,
+      "layers": 3,
+      "gap": 0.7,
+      "faceSize": 7,
+      "face": "oval",
+      "inlay": "metal",
+      "secondaryMetal": "white18",
+      "mixedMetal": false,
+      "dailyCount": 5,
+      "dailyCarat": 0.1,
+      "dailySpacing": 0.15,
+      "alternateGems": false,
+      "stoneLength": 2.6,
+      "stoneWidth": 2.6,
+      "stoneDepth": 1.6,
+      "thickness": 1.6,
+      "bezelWall": 0.45,
+      "fashionStone": true,
+      "motifDepth": 0.5,
+      "motifOffset": 0,
+      "edgeSoftness": 0.7
+    },
+    "issues": [
+      "FINGER_CLEARANCE"
+    ],
+    "rawProngStone": {
+      "valid": true,
+      "collisions": [],
+      "toleranceMm3": 0.001
+    },
+    "sweeps": [
+      {
+        "topology": true,
+        "rootDiameterMm": 1.140210656399604,
+        "tipDiameterMm": 0.7931556382962177,
+        "minimumBendRadiusOverDiameter": 1.2296489509959139
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.140210656399604,
+        "tipDiameterMm": 0.7931556275744384,
+        "minimumBendRadiusOverDiameter": 1.2296455558683506
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.140210656399604,
+        "tipDiameterMm": 0.7931556646608875,
+        "minimumBendRadiusOverDiameter": 1.2296466481129549
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.140210656399604,
+        "tipDiameterMm": 0.7931556646608875,
+        "minimumBendRadiusOverDiameter": 1.2296466481129549
+      }
+    ],
+    "culet": [
+      0.3
+    ],
+    "assembly": {
+      "valid": false,
+      "issues": [
+        "FINGER_CLEARANCE"
+      ],
+      "blockedSupports": 0,
+      "stones": {
+        "valid": true,
+        "stoneCount": 1,
+        "collisions": [],
+        "toleranceMm3": 0.00001
+      },
+      "metal": {
+        "valid": true,
+        "collisions": [],
+        "toleranceMm3": 0.001
+      },
+      "minimumBoreRadiusMm": 3.614859973435519,
+      "requestedBoreRadiusMm": 8.594366926962348,
+      "boreToleranceMm": 0.03,
+      "requiresWorkshopApproval": true
+    },
+    "valid": false
+  },
+  {
+    "config": {
+      "style": "pave",
+      "shape": "oval",
+      "metal": "yellow18",
+      "finish": "polished",
+      "carat": 1.5,
+      "color": "F",
+      "clarity": "VS1",
+      "certificate": "IGI",
+      "origin": "lab",
+      "accents": "pave",
+      "profile": "round",
+      "width": 2,
+      "size": 54,
+      "prongs": 4,
+      "engraving": "",
+      "light": "studio",
+      "rotate": false,
+      "gemTone": "ice",
+      "sideTone": "ice",
+      "sideShape": "round",
+      "sideMode": "none",
+      "sideCarat": 0.3,
+      "sideMainGap": 0,
+      "sideSpacing": 0,
+      "setting": "claw",
+      "orientation": "north",
+      "headMetal": "match",
+      "coverage": "half",
+      "accentSize": 1,
+      "accentRows": 1,
+      "halo": "single",
+      "haloSize": 1,
+      "height": 0,
+      "engravingFont": "serif",
+      "fire": 1,
+      "hiddenHalo": false,
+      "sculpt": 1.2,
+      "rhythm": 4,
+      "layers": 3,
+      "gap": 0.7,
+      "faceSize": 7,
+      "face": "oval",
+      "inlay": "metal",
+      "secondaryMetal": "white18",
+      "mixedMetal": false,
+      "dailyCount": 5,
+      "dailyCarat": 0.1,
+      "dailySpacing": 0.15,
+      "alternateGems": false,
+      "stoneLength": 2.6,
+      "stoneWidth": 2.6,
+      "stoneDepth": 1.6,
+      "thickness": 1.6,
+      "bezelWall": 0.45,
+      "fashionStone": true,
+      "motifDepth": 0.5,
+      "motifOffset": 0,
+      "edgeSoftness": 0.7
+    },
+    "issues": [],
+    "rawProngStone": {
+      "valid": true,
+      "collisions": [],
+      "toleranceMm3": 0.001
+    },
+    "sweeps": [
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820736082137568,
+        "tipDiameterMm": 0.7931554917967321,
+        "minimumBendRadiusOverDiameter": 1.1121683691498634
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820736082137568,
+        "tipDiameterMm": 0.793155521574126,
+        "minimumBendRadiusOverDiameter": 1.1121682844104472
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820736082137568,
+        "tipDiameterMm": 0.7931554917967321,
+        "minimumBendRadiusOverDiameter": 1.1121683691498634
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820736082137568,
+        "tipDiameterMm": 0.7931554917967321,
+        "minimumBendRadiusOverDiameter": 1.1121683691498634
+      }
+    ],
+    "culet": [
+      0.3
+    ],
+    "assembly": {
+      "valid": true,
+      "issues": [],
+      "blockedSupports": 0,
+      "stones": {
+        "valid": true,
+        "stoneCount": 23,
+        "collisions": [],
+        "toleranceMm3": 0.00001
+      },
+      "metal": {
+        "valid": true,
+        "collisions": [],
+        "toleranceMm3": 0.001
+      },
+      "minimumBoreRadiusMm": 8.594366641757949,
+      "requestedBoreRadiusMm": 8.594366926962348,
+      "boreToleranceMm": 0.03,
+      "requiresWorkshopApproval": true
+    },
+    "valid": true
+  },
+  {
+    "config": {
+      "style": "solitaire",
+      "shape": "oval",
+      "metal": "yellow18",
+      "finish": "polished",
+      "carat": 1.5,
+      "color": "F",
+      "clarity": "VS1",
+      "certificate": "IGI",
+      "origin": "lab",
+      "accents": "none",
+      "profile": "round",
+      "width": 2,
+      "size": 54,
+      "prongs": 4,
+      "engraving": "",
+      "light": "studio",
+      "rotate": false,
+      "gemTone": "ice",
+      "sideTone": "ice",
+      "sideShape": "round",
+      "sideMode": "none",
+      "sideCarat": 0.3,
+      "sideMainGap": 0,
+      "sideSpacing": 0,
+      "setting": "claw",
+      "orientation": "north",
+      "headMetal": "match",
+      "coverage": "shoulders",
+      "accentSize": 1,
+      "accentRows": 1,
+      "halo": "single",
+      "haloSize": 1,
+      "height": 0,
+      "engravingFont": "serif",
+      "fire": 1,
+      "hiddenHalo": false,
+      "sculpt": 1.2,
+      "rhythm": 4,
+      "layers": 3,
+      "gap": 0.7,
+      "faceSize": 7,
+      "face": "oval",
+      "inlay": "metal",
+      "secondaryMetal": "white18",
+      "mixedMetal": false,
+      "dailyCount": 5,
+      "dailyCarat": 0.1,
+      "dailySpacing": 0.15,
+      "alternateGems": false,
+      "stoneLength": 2.6,
+      "stoneWidth": 2.6,
+      "stoneDepth": 1.6,
+      "thickness": 1.6,
+      "bezelWall": 0.45,
+      "fashionStone": true,
+      "motifDepth": 0.5,
+      "motifOffset": 0,
+      "edgeSoftness": 0.7
+    },
+    "issues": [],
+    "rawProngStone": {
+      "valid": true,
+      "collisions": [],
+      "toleranceMm3": 0.001
+    },
+    "sweeps": [
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820736082137568,
+        "tipDiameterMm": 0.7931554917967321,
+        "minimumBendRadiusOverDiameter": 1.1121683691498634
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820736082137568,
+        "tipDiameterMm": 0.793155521574126,
+        "minimumBendRadiusOverDiameter": 1.1121682844104472
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820736082137568,
+        "tipDiameterMm": 0.7931554917967321,
+        "minimumBendRadiusOverDiameter": 1.1121683691498634
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820736082137568,
+        "tipDiameterMm": 0.7931554917967321,
+        "minimumBendRadiusOverDiameter": 1.1121683691498634
+      }
+    ],
+    "culet": [
+      0.3
+    ],
+    "assembly": {
+      "valid": true,
+      "issues": [],
+      "blockedSupports": 0,
+      "stones": {
+        "valid": true,
+        "stoneCount": 1,
+        "collisions": [],
+        "toleranceMm3": 0.00001
+      },
+      "metal": {
+        "valid": true,
+        "collisions": [],
+        "toleranceMm3": 0.001
+      },
+      "minimumBoreRadiusMm": 8.594366641757949,
+      "requestedBoreRadiusMm": 8.594366926962348,
+      "boreToleranceMm": 0.03,
+      "requiresWorkshopApproval": true
+    },
+    "valid": true
+  },
+  {
+    "config": {
+      "style": "halo",
+      "shape": "round",
+      "metal": "white18",
+      "finish": "polished",
+      "carat": 2,
+      "color": "F",
+      "clarity": "VS1",
+      "certificate": "IGI",
+      "origin": "lab",
+      "accents": "pave",
+      "profile": "round",
+      "width": 2,
+      "size": 54,
+      "prongs": 4,
+      "engraving": "",
+      "light": "studio",
+      "rotate": false,
+      "gemTone": "ice",
+      "sideTone": "ice",
+      "sideShape": "round",
+      "sideMode": "none",
+      "sideCarat": 0.3,
+      "sideMainGap": 0,
+      "sideSpacing": 0,
+      "setting": "claw",
+      "orientation": "north",
+      "headMetal": "match",
+      "coverage": "shoulders",
+      "accentSize": 1,
+      "accentRows": 1,
+      "halo": "single",
+      "haloSize": 1,
+      "height": 0,
+      "engravingFont": "serif",
+      "fire": 1,
+      "hiddenHalo": false,
+      "sculpt": 1.2,
+      "rhythm": 4,
+      "layers": 3,
+      "gap": 0.7,
+      "faceSize": 7,
+      "face": "oval",
+      "inlay": "metal",
+      "secondaryMetal": "white18",
+      "mixedMetal": false,
+      "dailyCount": 5,
+      "dailyCarat": 0.1,
+      "dailySpacing": 0.15,
+      "alternateGems": false,
+      "stoneLength": 2.6,
+      "stoneWidth": 2.6,
+      "stoneDepth": 1.6,
+      "thickness": 1.6,
+      "bezelWall": 0.45,
+      "fashionStone": true,
+      "motifDepth": 0.5,
+      "motifOffset": 0,
+      "edgeSoftness": 0.7
+    },
+    "issues": [
+      "RAW_PRONG_STONE_INTERSECTION"
+    ],
+    "rawProngStone": {
+      "valid": false,
+      "collisions": [
+        {
+          "stone": 4,
+          "overlapMm3": 0.1424683655521186
+        },
+        {
+          "stone": 5,
+          "overlapMm3": 0.007651788187062663
+        },
+        {
+          "stone": 10,
+          "overlapMm3": 0.007667308214840192
+        },
+        {
+          "stone": 11,
+          "overlapMm3": 0.14242897965759269
+        },
+        {
+          "stone": 17,
+          "overlapMm3": 0.14246837203936927
+        },
+        {
+          "stone": 18,
+          "overlapMm3": 0.007651785852552374
+        },
+        {
+          "stone": 23,
+          "overlapMm3": 0.007668246410980906
+        },
+        {
+          "stone": 24,
+          "overlapMm3": 0.14243023305199348
+        }
+      ],
+      "toleranceMm3": 0.001
+    },
+    "sweeps": [
+      {
+        "topology": true,
+        "rootDiameterMm": 1.382073669014328,
+        "tipDiameterMm": 0.7931555882572807,
+        "minimumBendRadiusOverDiameter": 1.2759781603118083
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.382073669014328,
+        "tipDiameterMm": 0.7931555629616622,
+        "minimumBendRadiusOverDiameter": 1.2759815513280661
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.382073669014328,
+        "tipDiameterMm": 0.7931555551209628,
+        "minimumBendRadiusOverDiameter": 1.2759783608365969
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.382073669014328,
+        "tipDiameterMm": 0.7931555551209628,
+        "minimumBendRadiusOverDiameter": 1.2759783608365969
+      }
+    ],
+    "culet": [
+      0.3
+    ],
+    "assembly": {
+      "valid": true,
+      "issues": [],
+      "blockedSupports": 0,
+      "stones": {
+        "valid": true,
+        "stoneCount": 41,
+        "collisions": [],
+        "toleranceMm3": 0.00001
+      },
+      "metal": {
+        "valid": true,
+        "collisions": [],
+        "toleranceMm3": 0.001
+      },
+      "minimumBoreRadiusMm": 8.594366641757949,
+      "requestedBoreRadiusMm": 8.594366926962348,
+      "boreToleranceMm": 0.03,
+      "requiresWorkshopApproval": true
+    },
+    "valid": false
+  },
+  {
+    "config": {
+      "style": "vintage",
+      "shape": "pear",
+      "metal": "rose18",
+      "finish": "polished",
+      "carat": 1.5,
+      "color": "F",
+      "clarity": "VS1",
+      "certificate": "IGI",
+      "origin": "lab",
+      "accents": "none",
+      "profile": "round",
+      "width": 2,
+      "size": 54,
+      "prongs": 4,
+      "engraving": "",
+      "light": "studio",
+      "rotate": false,
+      "gemTone": "ice",
+      "sideTone": "ice",
+      "sideShape": "round",
+      "sideMode": "none",
+      "sideCarat": 0.3,
+      "sideMainGap": 0,
+      "sideSpacing": 0,
+      "setting": "claw",
+      "orientation": "north",
+      "headMetal": "match",
+      "coverage": "shoulders",
+      "accentSize": 1,
+      "accentRows": 1,
+      "halo": "single",
+      "haloSize": 1,
+      "height": 0,
+      "engravingFont": "serif",
+      "fire": 1,
+      "hiddenHalo": true,
+      "sculpt": 1.2,
+      "rhythm": 4,
+      "layers": 3,
+      "gap": 0.7,
+      "faceSize": 7,
+      "face": "oval",
+      "inlay": "metal",
+      "secondaryMetal": "white18",
+      "mixedMetal": false,
+      "dailyCount": 5,
+      "dailyCarat": 0.1,
+      "dailySpacing": 0.15,
+      "alternateGems": false,
+      "stoneLength": 2.6,
+      "stoneWidth": 2.6,
+      "stoneDepth": 1.6,
+      "thickness": 1.6,
+      "bezelWall": 0.45,
+      "fashionStone": true,
+      "motifDepth": 0.5,
+      "motifOffset": 0,
+      "edgeSoftness": 0.7
+    },
+    "issues": [
+      "RAW_PRONG_STONE_INTERSECTION",
+      "METAL_NOT_CLOSED"
+    ],
+    "rawProngStone": {
+      "valid": false,
+      "collisions": [
+        {
+          "stone": 3,
+          "overlapMm3": 0.11778466082355177
+        },
+        {
+          "stone": 4,
+          "overlapMm3": 0.008716251949451848
+        },
+        {
+          "stone": 10,
+          "overlapMm3": 0.026193389842310313
+        },
+        {
+          "stone": 11,
+          "overlapMm3": 0.08321035743483879
+        },
+        {
+          "stone": 15,
+          "overlapMm3": 0.016946929303760933
+        },
+        {
+          "stone": 16,
+          "overlapMm3": 0.09446525219441852
+        },
+        {
+          "stone": 23,
+          "overlapMm3": 0.1261771931277649
+        },
+        {
+          "stone": 24,
+          "overlapMm3": 0.004223831202554711
+        }
+      ],
+      "toleranceMm3": 0.001
+    },
+    "sweeps": [
+      {
+        "topology": true,
+        "rootDiameterMm": 1.382073845412656,
+        "tipDiameterMm": 0.7931556840659911,
+        "minimumBendRadiusOverDiameter": 1.1220174717410278
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820738183465158,
+        "tipDiameterMm": 0.7931556843709766,
+        "minimumBendRadiusOverDiameter": 1.1220273689388311
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820739354216316,
+        "tipDiameterMm": 0.7931556562262373,
+        "minimumBendRadiusOverDiameter": 1.1445200438048946
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820739594297127,
+        "tipDiameterMm": 0.7931556235971366,
+        "minimumBendRadiusOverDiameter": 1.1445089182678605
+      }
+    ],
+    "culet": [
+      0.3
+    ],
+    "assembly": {
+      "valid": false,
+      "issues": [
+        "METAL_NOT_CLOSED"
+      ],
+      "blockedSupports": 0,
+      "stones": {
+        "valid": true,
+        "stoneCount": 50,
+        "collisions": [],
+        "toleranceMm3": 0.00001
+      },
+      "metal": null,
+      "minimumBoreRadiusMm": 8.594366641757949,
+      "requestedBoreRadiusMm": 8.594366926962348,
+      "boreToleranceMm": 0.03,
+      "requiresWorkshopApproval": true
+    },
+    "reason": "Assembly is not a single metal solid; component volumes mm3: 194.727941, 0.032400, 0.032400, 0.032400, 0.032400, 0.032400, 0.032400, 0.032400, 0.032400, 0.032400, 0.032400, 0.032400, 0.032400",
+    "valid": false
+  },
+  {
+    "config": {
+      "style": "cathedral",
+      "shape": "cushion",
+      "metal": "white18",
+      "finish": "polished",
+      "carat": 1.5,
+      "color": "F",
+      "clarity": "VS1",
+      "certificate": "IGI",
+      "origin": "lab",
+      "accents": "none",
+      "profile": "round",
+      "width": 2,
+      "size": 54,
+      "prongs": 4,
+      "engraving": "",
+      "light": "studio",
+      "rotate": false,
+      "gemTone": "sapphire",
+      "sideTone": "ice",
+      "sideShape": "round",
+      "sideMode": "pair",
+      "sideCarat": 0.4,
+      "sideMainGap": 0,
+      "sideSpacing": 0,
+      "setting": "claw",
+      "orientation": "north",
+      "headMetal": "match",
+      "coverage": "shoulders",
+      "accentSize": 1,
+      "accentRows": 1,
+      "halo": "single",
+      "haloSize": 1,
+      "height": 0,
+      "engravingFont": "serif",
+      "fire": 1,
+      "hiddenHalo": false,
+      "sculpt": 1.2,
+      "rhythm": 4,
+      "layers": 3,
+      "gap": 0.7,
+      "faceSize": 7,
+      "face": "oval",
+      "inlay": "metal",
+      "secondaryMetal": "white18",
+      "mixedMetal": false,
+      "dailyCount": 5,
+      "dailyCarat": 0.1,
+      "dailySpacing": 0.15,
+      "alternateGems": false,
+      "stoneLength": 2.6,
+      "stoneWidth": 2.6,
+      "stoneDepth": 1.6,
+      "thickness": 1.6,
+      "bezelWall": 0.45,
+      "fashionStone": true,
+      "motifDepth": 0.5,
+      "motifOffset": 0,
+      "edgeSoftness": 0.7
+    },
+    "issues": [],
+    "rawProngStone": {
+      "valid": true,
+      "collisions": [],
+      "toleranceMm3": 0.001
+    },
+    "sweeps": [
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820738343281778,
+        "tipDiameterMm": 0.7931555181117389,
+        "minimumBendRadiusOverDiameter": 1.1145327470607738
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820737260284495,
+        "tipDiameterMm": 0.7931554735004125,
+        "minimumBendRadiusOverDiameter": 1.1145278243952805
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820738343281778,
+        "tipDiameterMm": 0.7931555181117389,
+        "minimumBendRadiusOverDiameter": 1.1145327470607738
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820738343281778,
+        "tipDiameterMm": 0.7931555181117389,
+        "minimumBendRadiusOverDiameter": 1.1145327470607738
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820738160592374,
+        "tipDiameterMm": 0.793155758523191,
+        "minimumBendRadiusOverDiameter": 1.0876242747787628
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820738160592374,
+        "tipDiameterMm": 0.7931557585231912,
+        "minimumBendRadiusOverDiameter": 1.0876217928684433
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820738567972266,
+        "tipDiameterMm": 0.7931557631329861,
+        "minimumBendRadiusOverDiameter": 1.0876506458699964
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820738567972266,
+        "tipDiameterMm": 0.7931557631329861,
+        "minimumBendRadiusOverDiameter": 1.0876506458699964
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820738160592374,
+        "tipDiameterMm": 0.793155758523191,
+        "minimumBendRadiusOverDiameter": 1.0876242747787628
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820738160592374,
+        "tipDiameterMm": 0.7931557585231912,
+        "minimumBendRadiusOverDiameter": 1.0876217928684433
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820738567972266,
+        "tipDiameterMm": 0.7931557631329861,
+        "minimumBendRadiusOverDiameter": 1.0876506458699964
+      },
+      {
+        "topology": true,
+        "rootDiameterMm": 1.3820738567972266,
+        "tipDiameterMm": 0.7931557631329861,
+        "minimumBendRadiusOverDiameter": 1.0876506458699964
+      }
+    ],
+    "culet": [
+      0.3,
+      0.3,
+      0.3
+    ],
+    "assembly": {
+      "valid": true,
+      "issues": [],
+      "blockedSupports": 0,
+      "stones": {
+        "valid": true,
+        "stoneCount": 3,
+        "collisions": [],
+        "toleranceMm3": 0.00001
+      },
+      "metal": {
+        "valid": true,
+        "collisions": [],
+        "toleranceMm3": 0.001
+      },
+      "minimumBoreRadiusMm": 8.594366641757949,
+      "requestedBoreRadiusMm": 8.594366926962348,
+      "boreToleranceMm": 0.03,
+      "requiresWorkshopApproval": true
+    },
+    "valid": true
+  }
+]
