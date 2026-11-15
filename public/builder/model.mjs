@@ -337,11 +337,13 @@ const headDrop = scale => Math.max(HEAD_DROP * scale, .88 * scale + 2.2 * rodRad
       // hidden halo is threaded onto them: it sits on that straight line, at
       // the first height below the girdle where it clears the pavilion.
       const baseY = -headDrop(scale) / scale, topY = s.setting === "bezel" ? -.2 : -.12;
-      const topK = s.setting === "bezel" ? 1 : ringFactor(shape, planes, topY, (1.2 * r + CLEARANCE + .02) / scale);
+      const topK = s.setting === "bezel" ? 1 : ringFactor(shape, planes, topY, (1.1 * r + CLEARANCE + .014) / scale);
       const line = y => topK * (y - baseY) / (topY - baseY), need = y => ringFactor(shape, planes, y, (railRadius + CLEARANCE + .02) / scale);
       galleryY = topY - .16;
       while (galleryY > baseY * .7 && line(galleryY) < need(galleryY)) galleryY -= .02;
-      galleryK = Math.max(line(galleryY), need(galleryY)) * 1.006;
+      // …half a rod further out than their centre line: the ring clearly
+      // breaks through the claws' outer side (never a surface grazing a surface).
+      galleryK = Math.max(line(galleryY), need(galleryY)) + .5 * r / scale;
     }
     const gallery = basket ? tag(loop(shape, galleryK * scale, galleryY * scale, railRadius, assembly), 'gallery', stone, {melee, host: hiddenHalo}) : null;
     const posts = [];
@@ -367,7 +369,7 @@ const headDrop = scale => Math.max(HEAD_DROP * scale, .88 * scale + 2.2 * rodRad
       // …carried by four tapering legs that rise from the base in the shank,
       // like the claws of a claw head, and end inside the collar wall.
       for (const angle of [1, 3, 5, 7].map(i => i * Math.PI / 4)) {
-        const [x, z] = outline(shape, angle), l = Math.hypot(x, z), k = mid(x, z), spread = baseR * .4;
+        const [x, z] = outline(shape, angle), l = Math.hypot(x, z), k = mid(x, z), spread = baseR * .16;
         const foot = [x / l * spread, baseY, z / l * spread], end = [x * k, low + .1 * scale, z * k];
         // The leg meets the collar clear of the stone (measured, not assumed: on
         // a pointed cut a radial step is not the distance to the stone).
@@ -414,7 +416,7 @@ const headDrop = scale => Math.max(HEAD_DROP * scale, .88 * scale + 2.2 * rodRad
       // itself is joined to the shank after all assemblies are placed.
       const fit = fitClaws(shape, scale, s.prongs, s.setting === "doubleclaw");
       baseCount = fit.count;
-      const baseR = 1.6 * r, stemR = baseR * 1.2, spread = baseR * .4;
+      const baseR = 1.6 * r, stemR = baseR * 1.2, spread = baseR * .16; // the claws leave from inside the base, not beside it
       const baseY = -headDrop(scale);
       stem = {y: baseY, radius: stemR};
       const wide = (baseR + CLEARANCE) / scale, free = p => clearance(planes, p.x / scale, p.y / scale, p.z / scale) * scale;
@@ -446,8 +448,8 @@ const headDrop = scale => Math.max(HEAD_DROP * scale, .88 * scale + 2.2 * rodRad
           const radii = lengths.map(l => to + (from - to) * Math.pow(1 - l / lengths.at(-1), 1.4));
           const last = dense.length - 1;
           // (The first point lies inside what the rod grows out of: the base or a trunk.)
-          const clear = dense.every((p, i) => (keepLast && i === last) || ((i === 0 || free(p) >= radii[i] + CLEARANCE + .03)
-            && (i === last || (keepLast && i + 1 === last) || free(p.clone().lerp(dense[i + 1], .5)) >= radii[i] + CLEARANCE + .03)));
+          const clear = dense.every((p, i) => (keepLast && i === last) || ((i === 0 || free(p) >= radii[i] + CLEARANCE + .012)
+            && (i === last || (keepLast && i + 1 === last) || free(p.clone().lerp(dense[i + 1], .5)) >= radii[i] + CLEARANCE + .012)));
           return {points: dense.map(p => p.toArray()), radii, clear};
         };
         let result;
@@ -455,20 +457,23 @@ const headDrop = scale => Math.max(HEAD_DROP * scale, .88 * scale + 2.2 * rodRad
           for (const fillet of [2.2 * from, 1.4 * from, .8 * from, .4 * from]) { result = build(fillet); if (result.clear) return result; }
           for (let i = 1; i < points.length - (keepLast ? 2 : 1); i++) points[i].addScaledVector(away(points[i]), .012 * scale);
           if (keepLast && points.length > 2) { const shaftTop = points.at(-2); shaftTop.addScaledVector(away(shaftTop), .012 * scale); }
+          // A trunk has no tip to keep: its upper end gives way.
+          if (!keepLast) { const end = points.at(-1); end.addScaledVector(away(end), .012 * scale); }
         }
         return result;
       };
       const direction = angle => { const [x, z] = outline(shape, angle), l = Math.hypot(x, z); return [x / l * spread, baseY, z / l * spread]; };
       // Where a claw meets the stone just under the girdle and hugs it: the
       // seat the stone rests in. Lower on a step cut whose pavilion is in the way.
-      const hug = y => ringFactor(shape, planes, y, (1.2 * r + CLEARANCE + .02) / scale);
-      const seatOf = (angle, foot) => {
+      // (The claw is about 1.07 r thick there: 0.03–0.06 mm of air, a seat, on any size of stone.)
+      const hug = (y, thick = 1.1 * r) => ringFactor(shape, planes, y, (thick + CLEARANCE + .014) / scale);
+      const seatOf = (angle, foot, thick) => {
         const [ox, oz] = outline(shape, angle);
         // The leg tapers on its way up: it is measured with the thickness it has at each point.
-        const legClear = y => { const from = new T.Vector3(...foot), to = new T.Vector3(ox * hug(y) * scale, y * scale, oz * hug(y) * scale);
-          return [0, 1, 2, 3, 4, 5, 6, 7, 8].every(i => free(from.clone().lerp(to, i / 8)) >= r + (baseR - r) * Math.pow(1 - .8 * i / 8, 1.4) + CLEARANCE + .03); };
+        const legClear = y => { const from = new T.Vector3(...foot), to = new T.Vector3(ox * hug(y, thick) * scale, y * scale, oz * hug(y, thick) * scale);
+          return [0, 1, 2, 3, 4, 5, 6, 7, 8].every(i => free(from.clone().lerp(to, i / 8)) >= r + (baseR - r) * Math.pow(1 - .8 * i / 8, 1.4) + CLEARANCE + .012); };
         const y = [-.12, -.2, -.28, -.36, -.45].find(legClear) ?? -.45;
-        return [ox * hug(y) * scale, y * scale, oz * hug(y) * scale];
+        return [ox * hug(y, thick) * scale, y * scale, oz * hug(y, thick) * scale];
       };
       // Through the basket ring a hair off its centre line: two tubes that
       // share a centre point would meet in coincident facets.
@@ -501,13 +506,10 @@ const headDrop = scale => Math.max(HEAD_DROP * scale, .88 * scale + 2.2 * rodRad
         for (let i = 0; i < angles.length; i += 2) {
           const centre = (angles[i] + angles[i + 1]) / 2, foot = direction(centre);
           const guide = postPath(shape, planes, centre, {scale, radius: r, galleryK: guideK});
-          const fork = seatOf(centre, foot);
-          const trunk = sweep([foot, fork], baseR, 1.25 * r, 14, false);
+          const fork = seatOf(centre, foot, 1.2 * r); // the trunk is thicker than a claw where it ends // the trunk is thicker than a claw where it ends
+          const trunk = sweep([foot, fork], baseR, 1.15 * r, 14, false);
           tag(rod(trunk.points, trunk.radii, assembly, head), 'post', stone, {ends: [1, 1], melee});
-          // The branches start inside the trunk, a little below its domed end
-          // (a start in the dome itself would leave the two surfaces grazing).
-          const end = new T.Vector3(...trunk.points.at(-1)), back = new T.Vector3(...trunk.points.at(-2)).sub(end);
-          const top = end.addScaledVector(back.normalize(), Math.min(back.length(), .45 * r)).toArray();
+          const top = trunk.points.at(-1);
           posts.push({...guide, points: trunk.points, reach: baseR});
           for (const angle of [angles[i], angles[i + 1]]) claw(angle, post => {
             // Each branch leaves the trunk's end towards its own side (two rods
@@ -542,7 +544,7 @@ const headDrop = scale => Math.max(HEAD_DROP * scale, .88 * scale + 2.2 * rodRad
     };
     const postSegments = posts.flatMap(p => p.points.slice(1).map((b, i) => new T.Line3(new T.Vector3(...p.points[i]), new T.Vector3(...b))));
     const row = [], nearest = new T.Vector3();
-    for (const [x, z] of symmetricRow(shape, k, HIDDEN_STONE * 2 + .08, 48)) {
+    for (const [x, z] of symmetricRow(shape, k, HIDDEN_STONE * 2 + .1, 48)) {
       const {along, normal} = frame(x, z);
       const centre = new T.Vector3(x, y, z).addScaledVector(normal, HIDDEN_RAIL - .03);
       const reach = posts.length ? Math.min(...postSegments.map(line => line.closestPointToPoint(centre, true, nearest).distanceTo(centre))) : Infinity;
