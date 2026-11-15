@@ -23,6 +23,10 @@ export const LIMITS = Object.freeze({
   contactGapMm: .1,
   mirrorVolumeRatio: .001,
   boreMm: .03,
+  // Form of a claw: largest turn between two neighbouring sections of its
+  // sweep, and the least rise of its tip over the crown (below that it is a hook).
+  clawBendDegrees: 32,
+  clawTipRiseDegrees: 12,
 });
 
 // Rule A: an element that is asymmetric on purpose must be listed here with

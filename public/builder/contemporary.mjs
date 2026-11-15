@@ -1,12 +1,39 @@
 import * as T from 'three';
 import { getKernel } from './kernel.mjs';
+import { creasedNormals } from './shading.mjs';
 import { gemGeometry, gemstoneMaterial, gemFootprint } from './optics.mjs';
 import { FASHION_STYLES, ATELIER_STYLES, stoneDimensions, longestStone } from './state.mjs';
+
+// A faceted girdle is a polygon. Where it stands for a curve (round, oval,
+// the bow of a pear), the collar and its opening follow that curve instead of
+// repeating the facets as flats in the metal: a spline through the girdle's
+// corners, which stays just outside the stone. Real corners and straight
+// sides (emerald, princess, the point of a pear) are kept as they are.
+export function smoothFootprint(points,steps=6){
+  const n=points.length; if(n<8) return points;
+  const turn=points.map((p,i)=>{const a=points[(i+n-1)%n],b=points[(i+1)%n];
+    const u=[p[0]-a[0],p[1]-a[1]],v=[b[0]-p[0],b[1]-p[1]];
+    return Math.abs(Math.atan2(u[0]*v[1]-u[1]*v[0],u[0]*v[0]+u[1]*v[1]));});
+  const limit=Math.PI/5,out=[];
+  for(let i=0;i<n;i++){
+    const p0=points[(i+n-1)%n],p1=points[i],p2=points[(i+1)%n],p3=points[(i+2)%n];
+    out.push(p1);
+    // Both ends must be gentle bends, and the side itself part of a curve.
+    if(turn[i]>limit||turn[(i+1)%n]>limit||turn[i]<1e-3||turn[(i+1)%n]<1e-3) continue;
+    for(let k=1;k<steps;k++){const t=k/steps,t2=t*t,t3=t2*t;
+      out.push([0,1].map(j=>.5*(2*p1[j]+(-p0[j]+p2[j])*t+(2*p0[j]-5*p1[j]+4*p2[j]-p3[j])*t2+(-p0[j]+3*p1[j]-3*p2[j]+p3[j])*t3)));}
+  }
+  // The curve keeps the girdle's own length and width: everything else in the
+  // design (band width, stone spacing) is laid out for those.
+  const span=(list,j)=>Math.max(...list.map(p=>Math.abs(p[j])));
+  const kx=Math.min(1,span(points,0)/span(out,0)),kz=Math.min(1,span(points,1)/span(out,1));
+  return out.map(p=>[p[0]*kx,p[1]*kz]);
+}
 
 export const MODERN_STYLES = ['bezelrow','scatter','chevron','ribbon','graduated','eastwest','alternating','crown','wave','rope','dome','signet','open','stack','band','eternity','curvedoval','wavebezel','openpair','contour','asymmetric','fullcircle'];
 export const SCALE = .8;
 MODERN_STYLES.push(...FASHION_STYLES.filter(s=>!MODERN_STYLES.includes(s)));
-export const MODEL_REVISION = 'geometry-rules-10';
+export const MODEL_REVISION = 'geometry-rules-11';
 const single = s => ['band','eastwest','curvedoval','wavebezel'].includes(s.style) || FASHION_STYLES.includes(s.style);
 export function modernLayout(s) {
   const inner = s.size / (2*Math.PI);
@@ -116,7 +143,7 @@ export function buildContemporary(s, environment, colors) {
   let report;
   try {
     const makeBand=(offset=0, widthFactor=1) => {
-      const positions=[],indices=[],n=256,m=48;
+      const positions=[],indices=[],n=ATELIER_STYLES.includes(s.style)?384:256,m=ATELIER_STYLES.includes(s.style)?96:48; // sculpted relief needs a finer skin
       for(let i=0;i<n;i++) {
         const a=2*Math.PI*i/n, width=widthAt(a)*widthFactor;
         for(let j=0;j<m;j++) {
@@ -161,9 +188,11 @@ export function buildContemporary(s, environment, colors) {
         .multiply(new T.Matrix4().makeRotationY(stone.rotation));
       // Derive both the collar and the aperture from the actual faceted girdle.
       // A generic ellipse both erased pointed cuts and intersected their crowns.
-      const footprint=gemFootprint(geometry,scale);
-      const section=own(new CrossSection([footprint]));
-      const perimeter=own(section.offset(s.bezelWall,'Round',2,64));
+      const footprint=smoothFootprint(gemFootprint(geometry,scale));
+      // …a hair (12 µm) outside the girdle, so the opening's wall never passes
+      // exactly through the girdle's corners (two surfaces meeting in a line).
+      const section=own(own(new CrossSection([footprint])).offset(.012,'Round',2,128));
+      const perimeter=own(section.offset(s.bezelWall,'Round',2,128));
       const collarHeight=stone.depth*.72+.6;
       const collarRaw=own(perimeter.extrude(collarHeight));
       const collarTurned=own(collarRaw.rotate([90,0,0]));
@@ -197,11 +226,15 @@ export function buildContemporary(s, environment, colors) {
     const components=body.decompose();
     const componentCount=components.length;components.forEach(x=>x.delete());
     if(componentCount!==1) throw new Error('Metal body must be a single connected solid');
-    const mesh=body.getMesh(), geo=new T.BufferGeometry();
+    // Collapse sub-micron Boolean slivers (0.3 µm) before the single-precision
+    // mesh is written: two vertices that close together round to the same point.
+    const mesh=own(body.simplify(.0003)).getMesh(), geo=new T.BufferGeometry();
     const xyz=[];
     for(let i=0;i<mesh.vertProperties.length;i+=mesh.numProp) xyz.push(mesh.vertProperties[i]*SCALE,mesh.vertProperties[i+1]*SCALE,mesh.vertProperties[i+2]*SCALE);
-    geo.setAttribute('position',new T.Float32BufferAttribute(xyz,3));geo.setIndex(Array.from(mesh.triVerts));geo.computeVertexNormals();
-    const metal=new T.Mesh(geo,material);metal.userData.role='unified-metal';group.add(metal);
+    geo.setAttribute('position',new T.Float32BufferAttribute(xyz,3));geo.setIndex(Array.from(mesh.triVerts));
+    // Sculpted relief is meant to read as one flowing surface: only real edges (collars, seats, grooves) are creased.
+    const shaded=creasedNormals(geo,55);geo.dispose();
+    const metal=new T.Mesh(shaded,material);metal.userData.role='unified-metal';group.add(metal);
     report={version:MODEL_REVISION,units:'mm',status:'geometry_checked',metalSolids:componentCount,volumeMm3:body.volume(),innerDiameterMm:inner*2,
       nominalInnerCircumferenceMm:s.size,bandWidthMm:width,minimumBaseThicknessMm:layout.thickness,bezelWallMm:s.bezelWall,
       tessellation:{angularSegments:256,maxRadialChordErrorMm:(inner+layout.thickness+2)*(1-Math.cos(Math.PI/256))},stones:schedule,

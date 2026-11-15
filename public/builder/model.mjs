@@ -54,7 +54,10 @@ export function buildRing(s, environment) {
   // How far below the girdle the base of a claw head sits, in stone radii.
   const HEAD_DROP = 1.12;
   // …but never so little that the base would reach the culet of a small stone.
-  const headDrop = scale => Math.max(HEAD_DROP * scale, .7 * scale + 1.92 * rodRadius(scale) + .12);
+  // The base under the culet is as thick as the claws that leave it. On a small
+// stone the claws are thick for its size, so the base sits lower: the claws
+// still run straight up along the pavilion instead of bowing around it.
+const headDrop = scale => Math.max(HEAD_DROP * scale, .88 * scale + 2.2 * rodRadius(scale) + .05);
   const tag = (o, role, holds, extra) => {
     o.userData.role = role;
     if (holds) o.userData.holds = holds;
@@ -321,13 +324,26 @@ export function buildRing(s, environment) {
     stone.userData.set = s.setting;
     const {planes} = cut(shape), r = rodRadius(scale), melee = isMelee(scale), margin = (r + CLEARANCE) / scale;
     const railRadius = hiddenHalo ? Math.max(r, HIDDEN_RAIL) : r;
-    const galleryK = Math.max(.72, ringFactor(shape, planes, GALLERY_Y, (railRadius + CLEARANCE) / scale));
+    const guideK = Math.max(.72, ringFactor(shape, planes, GALLERY_Y, (railRadius + CLEARANCE) / scale));
+    let galleryK = guideK, galleryY = GALLERY_Y;
     // A claw head has no basket ring of its own. The ring exists only where
     // something is carried on it: a bezel's posts, a hidden halo, a halo's ribs.
     // Side stones keep their small basket on posts; the classic head is the centre stone's.
     const classicHead = centre && s.setting !== "bezel";
     const basket = !centre || hiddenHalo || ["halo", "vintage"].includes(s.style);
-    const gallery = basket ? tag(loop(shape, galleryK * scale, GALLERY_Y * scale, railRadius, assembly), 'gallery', stone, {melee, host: hiddenHalo}) : null;
+    if (centre && basket) {
+      // The claws (or a bezel's legs) of a classic head run straight from the
+      // base under the culet to the girdle. The ring that carries a halo or a
+      // hidden halo is threaded onto them: it sits on that straight line, at
+      // the first height below the girdle where it clears the pavilion.
+      const baseY = -headDrop(scale) / scale, topY = s.setting === "bezel" ? -.2 : -.12;
+      const topK = s.setting === "bezel" ? 1 : ringFactor(shape, planes, topY, (1.2 * r + CLEARANCE + .02) / scale);
+      const line = y => topK * (y - baseY) / (topY - baseY), need = y => ringFactor(shape, planes, y, (railRadius + CLEARANCE + .02) / scale);
+      galleryY = topY - .16;
+      while (galleryY > baseY * .7 && line(galleryY) < need(galleryY)) galleryY -= .02;
+      galleryK = Math.max(line(galleryY), need(galleryY)) * 1.006;
+    }
+    const gallery = basket ? tag(loop(shape, galleryK * scale, galleryY * scale, railRadius, assembly), 'gallery', stone, {melee, host: hiddenHalo}) : null;
     const posts = [];
     let baseCount = 8, stem = null;
     if (s.setting === "bezel" && centre) {
@@ -340,11 +356,13 @@ export function buildRing(s, environment) {
       const outer = (x, z) => scale + wall / Math.hypot(x, z), inner = (x, z) => scale - lip / Math.hypot(x, z);
       // The collar: a closed wall around the girdle, open above and below.
       const low = -.3 * scale, mid = (x, z) => scale + (wall - lip) / 2 / Math.hypot(x, z);
-      const {Manifold} = getKernel(), owned = [], own = o => (owned.push(o), o);
+      // A true offset of the girdle outline: the wall has the same thickness
+      // all round, flat sides stay flat and corners are rounded.
+      const {CrossSection} = getKernel(), owned = [], own = o => (owned.push(o), o);
       try {
-        const wallBody = own(Manifold.hull([...ringPoints(shape, outer, rimY), ...ringPoints(shape, outer, low)]));
-        const opening = own(Manifold.hull([...ringPoints(shape, inner, low - scale), ...ringPoints(shape, inner, rimY + scale)]));
-        tag(solidMesh(own(wallBody.subtract(opening)), head, assembly), 'bezel', stone, {melee, host: true});
+        const section = own(new CrossSection([ringPoints(shape, scale, 0).map(([x, , z]) => [x, z])]));
+        const prism = (offset, from, to) => own(own(own(own(section.offset(offset, 'Round', 2, 48)).extrude(to - from)).rotate([90, 0, 0])).translate([0, to, 0]));
+        tag(solidMesh(own(prism(wall, low, rimY).subtract(prism(-lip, low - scale, rimY + scale))), head, assembly), 'bezel', stone, {melee, host: true});
       } finally { owned.reverse().forEach(o => o.delete()); }
       // …carried by four tapering legs that rise from the base in the shank,
       // like the claws of a claw head, and end inside the collar wall.
@@ -353,10 +371,12 @@ export function buildRing(s, environment) {
         const foot = [x / l * spread, baseY, z / l * spread], end = [x * k, low + .1 * scale, z * k];
         // The leg meets the collar clear of the stone (measured, not assumed: on
         // a pointed cut a radial step is not the distance to the stone).
-        for (let n = 0; n < 80 && clearance(planes, end[0] / scale, end[1] / scale, end[2] / scale) * scale < r * 1.1 + CLEARANCE + .04; n++) { end[0] += x / l * .01 * scale; end[2] += z / l * .01 * scale; }
+        // Its end stays inside the wall: no thicker there than the wall carries.
+        const endR = Math.max(.335, Math.min(r * 1.1, (wall + lip) * .36));
+        for (let n = 0; n < 80 && clearance(planes, end[0] / scale, end[1] / scale, end[2] / scale) * scale < endR + CLEARANCE + .04; n++) { end[0] += x / l * .01 * scale; end[2] += z / l * .01 * scale; }
         const length = Math.hypot(end[0] - foot[0], end[1] - foot[1], end[2] - foot[2]), steps = Math.max(2, Math.ceil(length / (.35 * scale)));
         const path = Array.from({length: steps + 1}, (_, i) => foot.map((v, j) => v + (end[j] - v) * i / steps));
-        tag(rod(path, path.map((_, i) => r * 1.1 + (baseR - r * 1.1) * Math.pow(1 - i / steps, 1.4)), assembly, head), 'post', stone, {ends: [1, 1], melee});
+        tag(rod(path, path.map((_, i) => endR + (baseR - endR) * Math.pow(1 - i / steps, 1.4)), assembly, head), 'post', stone, {ends: [1, 1], melee});
       }
       // What stands around the stone (halo rows, hidden-halo stones) keeps clear of the collar.
       for (let i = 0; i < 16; i++) {
@@ -367,13 +387,13 @@ export function buildRing(s, environment) {
       // hidden halo's stones stay clear of them too.
       for (let i = 0; i < 8; i++) {
         const angle = i * Math.PI / 4, [x, z] = outline(shape, angle), k = outer(x, z), g = galleryK * scale;
-        posts.push({angle, shaftK: k / scale, reach: .22, points: [[x * g, GALLERY_Y * scale, z * g], [x * g * 1.35, GALLERY_Y * scale + .25 * scale, z * g * 1.35]]});
+        posts.push({angle, shaftK: k / scale, reach: .22, points: [[x * g, galleryY * scale, z * g], [x * g * 1.35, galleryY * scale + .25 * scale, z * g * 1.35]]});
       }
     } else if (s.setting === "bezel") {
       const seatY = -(.018 + margin * 1.15), seatK = ringFactor(shape, planes, seatY, margin);
       const tipHeight = rimHeight(shape, planes, scale, r);
       for (let i = 0; i < 8; i++) {
-        const post = postPath(shape, planes, i * Math.PI / 4, {scale, radius: r, galleryK, tipHeight, seat: {k: seatK, y: seatY}});
+        const post = postPath(shape, planes, i * Math.PI / 4, {scale, radius: r, galleryK: guideK, tipHeight, seat: {k: seatK, y: seatY}});
         posts.push(post);
         tag(tube(post.points, r, assembly, head), 'post', stone, {ends: [1, 1], melee});
       }
@@ -383,7 +403,7 @@ export function buildRing(s, environment) {
       const fit = fitClaws(shape, scale, s.prongs, s.setting === "doubleclaw");
       baseCount = fit.count;
       for (const angle of clawAngles(shape, scale, fit.count, fit.double, r)) {
-        const post = postPath(shape, planes, angle, {scale, radius: r, galleryK});
+        const post = postPath(shape, planes, angle, {scale, radius: r, galleryK: guideK});
         posts.push(post);
         tag(tube(post.points, r, assembly, head), 'claw', stone, {ends: [1, 0], melee});
       }
@@ -425,7 +445,8 @@ export function buildRing(s, environment) {
           for (let i = 1; i < dense.length; i++) lengths.push(lengths[i - 1] + dense[i].distanceTo(dense[i - 1]));
           const radii = lengths.map(l => to + (from - to) * Math.pow(1 - l / lengths.at(-1), 1.4));
           const last = dense.length - 1;
-          const clear = dense.every((p, i) => (keepLast && i === last) || (free(p) >= radii[i] + CLEARANCE + .03
+          // (The first point lies inside what the rod grows out of: the base or a trunk.)
+          const clear = dense.every((p, i) => (keepLast && i === last) || ((i === 0 || free(p) >= radii[i] + CLEARANCE + .03)
             && (i === last || (keepLast && i + 1 === last) || free(p.clone().lerp(dense[i + 1], .5)) >= radii[i] + CLEARANCE + .03)));
           return {points: dense.map(p => p.toArray()), radii, clear};
         };
@@ -443,19 +464,23 @@ export function buildRing(s, environment) {
       const hug = y => ringFactor(shape, planes, y, (1.2 * r + CLEARANCE + .02) / scale);
       const seatOf = (angle, foot) => {
         const [ox, oz] = outline(shape, angle);
-        const y = [-.12, -.28, -.45].find(y => segmentClear(planes, foot.map(v => v / scale), [ox * hug(y), y, oz * hug(y)], wide)) ?? -.45;
+        // The leg tapers on its way up: it is measured with the thickness it has at each point.
+        const legClear = y => { const from = new T.Vector3(...foot), to = new T.Vector3(ox * hug(y) * scale, y * scale, oz * hug(y) * scale);
+          return [0, 1, 2, 3, 4, 5, 6, 7, 8].every(i => free(from.clone().lerp(to, i / 8)) >= r + (baseR - r) * Math.pow(1 - .8 * i / 8, 1.4) + CLEARANCE + .03); };
+        const y = [-.12, -.2, -.28, -.36, -.45].find(legClear) ?? -.45;
         return [ox * hug(y) * scale, y * scale, oz * hug(y) * scale];
       };
       // Through the basket ring a hair off its centre line: two tubes that
       // share a centre point would meet in coincident facets.
       // The foot of a claw's upright part, just under the girdle.
       const shaftFoot = post => { const top = post.points.at(-2); return [top[0], -.03 * scale, top[2]]; };
-      const throughRing = post => post.points[0].map((v, i) => i === 1 ? v - .007 * scale : v * 1.006);
       const angles = clawAngles(shape, scale, fit.count, fit.double, r);
       const claw = (angle, start, from) => {
-        const post = postPath(shape, planes, angle, {scale, radius: r, galleryK});
+        const post = postPath(shape, planes, angle, {scale, radius: r, galleryK: guideK});
         posts.push(post);
-        const body = sweep([...start(post), ...post.points.slice(-2)], from, r, 22, true);
+        // The claw rises all the way: a lead-in point at or above the bend into the tip is dropped.
+        const bend = post.points.at(-2), lead = start(post).filter((p, i) => i === 0 || p[1] < bend[1] - .5 * r);
+        const body = sweep([...lead, ...post.points.slice(-2)], from, r, 22, true);
         tag(rod(body.points, body.radii, assembly, head), 'claw', stone, {ends: [1, 0], melee});
         // What stands near the claw (hidden-halo stones, halo rows) keeps clear of its real, tapered body.
         post.points = body.points; post.reach = from;
@@ -463,40 +488,48 @@ export function buildRing(s, environment) {
       if (!fit.double) {
         for (const angle of angles) {
           const foot = direction(angle);
-          claw(angle, post => basket ? [foot, throughRing(post), post.points[1]] : [foot, seatOf(angle, foot), shaftFoot(post)], baseR);
+          claw(angle, post => {
+            // Where the seat already lies right under the girdle, the claw goes on
+            // from it directly: two corners a claw's width apart would read as a knuckle.
+            const seat = seatOf(angle, foot), under = shaftFoot(post);
+            return Math.hypot(seat[0] - under[0], seat[1] - under[1], seat[2] - under[2]) < 3 * r ? [foot, seat] : [foot, seat, under];
+          }, baseR);
         }
       } else {
         // Double claws: each pair rises as ONE tapered trunk from the base and
         // forks into its two claws just under the girdle.
         for (let i = 0; i < angles.length; i += 2) {
           const centre = (angles[i] + angles[i + 1]) / 2, foot = direction(centre);
-          const guide = postPath(shape, planes, centre, {scale, radius: r, galleryK});
-          const fork = basket ? guide.points[1] : seatOf(centre, foot);
-          const trunk = sweep(basket ? [foot, throughRing(guide), fork] : [foot, fork], baseR, 1.25 * r, 14, false);
+          const guide = postPath(shape, planes, centre, {scale, radius: r, galleryK: guideK});
+          const fork = seatOf(centre, foot);
+          const trunk = sweep([foot, fork], baseR, 1.25 * r, 14, false);
           tag(rod(trunk.points, trunk.radii, assembly, head), 'post', stone, {ends: [1, 1], melee});
-          const top = trunk.points.at(-1);
+          // The branches start inside the trunk, a little below its domed end
+          // (a start in the dome itself would leave the two surfaces grazing).
+          const end = new T.Vector3(...trunk.points.at(-1)), back = new T.Vector3(...trunk.points.at(-2)).sub(end);
+          const top = end.addScaledVector(back.normalize(), Math.min(back.length(), .45 * r)).toArray();
           posts.push({...guide, points: trunk.points, reach: baseR});
           for (const angle of [angles[i], angles[i + 1]]) claw(angle, post => {
             // Each branch leaves the trunk's end towards its own side (two rods
             // starting in the very same point would share coincident facets).
             const shaft = post.points.at(-2), side = new T.Vector3(shaft[0] - top[0], 0, shaft[2] - top[2]).normalize().multiplyScalar(.45 * r);
             return [[top[0] + side.x, top[1], top[2] + side.z], [shaft[0], Math.max(top[1] + .3 * r, -.03 * scale), shaft[2]]];
-          }, 1.2 * r);
+          }, 1.05 * r);
         }
       }
     }
     // Where the basket's posts stand (one angle per claw pair): anything else
     // that leaves the gallery starts there, clear of a hidden halo's stones.
     const postAngles = Array.from({length: baseCount}, (_, i) => s.setting === "bezel" ? i * Math.PI / 4 : 2 * Math.PI * (i + .5) / baseCount);
-    const mount = {assembly, shape, scale, gallery, stone, galleryK, radius: r, melee, posts, planes, postAngles, stem};
+    const mount = {assembly, shape, scale, gallery, stone, galleryK, galleryY, radius: r, melee, posts, planes, postAngles, stem};
     if (hiddenHalo) addHiddenHalo(mount);
     mountings.push(mount);
     return assembly;
   };
   // Hidden halo: the gallery ring itself becomes a pavé rail. Stones face
   // outwards between the posts; no stone is placed where a post passes.
-  const addHiddenHalo = ({assembly, shape, scale, galleryK, posts}) => {
-    const y = GALLERY_Y * scale, k = galleryK * scale;
+  const addHiddenHalo = ({assembly, shape, scale, galleryK, galleryY, posts}) => {
+    const y = galleryY * scale, k = galleryK * scale;
     const samples = Array.from({length: 512}, (_, i) => outline(shape, i / 512 * Math.PI * 2).map(v => v * k));
     const frame = (x, z) => {
       let best = 0, distance = Infinity;
@@ -560,7 +593,7 @@ export function buildRing(s, environment) {
         // The first row also keeps clear of the centre stone's claws: measured
         // stone by stone, because a scaled outline is not a constant offset.
         const shafts = mainMount.posts.map(p => { const [x, z] = outline(s.shape, p.angle); return [x * p.shaftK * size, z * p.shaftK * size]; });
-        for (let attempt = 0; !n && attempt < 200 && points.some(p => shafts.some(q => Math.hypot(p[0] - q[0], p[1] - q[1]) < haloR + r + .03)); attempt++) {
+        for (let attempt = 0; !n && attempt < 200 && points.some(p => shafts.some(q => Math.hypot(p[0] - q[0], p[1] - q[1]) < haloR + r * 1.15 + .04)); attempt++) {
           ring += .02; points = symmetricRow(s.shape, ring, pitch, 64);
         }
         // On non-circular cuts a radial row step is not the stone-to-stone
@@ -606,33 +639,55 @@ export function buildRing(s, environment) {
         // Ribs join the gallery to the underside of the plate, below the culets.
         if (!n) for (const a of mainMount.postAngles) {
           const [x, z] = outline(s.shape, a);
-          tag(tube([[x * mainMount.galleryK * size, GALLERY_Y * size, z * mainMount.galleryK * size], [x * ring, -(haloR * .7 + .2 + CLEARANCE), z * ring]], .2, main, head), 'rib', null, {ends: [1, 1], melee: true});
+          tag(tube([[x * mainMount.galleryK * size, mainMount.galleryY * size, z * mainMount.galleryK * size], [x * ring, -(haloR * .7 + .2 + CLEARANCE), z * ring]], .2, main, head), 'rib', null, {ends: [1, 1], melee: true});
         }
       });
       for (const g of layout) grain([g.position[0], -depth / 2, g.position[2]], g, main, head, row[0].stone);
     }
     if (s.sideMode !== "none") {
-      const scale = 2.4 * Math.cbrt(s.sideCarat), y = top - size * 0.22;
+      const scale = 2.4 * Math.cbrt(s.sideCarat);
       const mainBox = extentOf(main), mainExtent = Math.max(Math.abs(mainBox.min.x), Math.abs(mainBox.max.x));
+      // A side stone stands on the band like the centre stone does: its head
+      // points away from the ring's axis and its base sits in the shank, so the
+      // neck is as short as the centre stone's. It is turned along the band
+      // just far enough to stand clear of its neighbour.
+      const lift = s.accents !== 'none' ? s.accentSize * .14 + .2 : 0;
+      main.updateMatrixWorld(true);
+      const mainPoints = [], v = new T.Vector3();
+      main.traverse(o => { if (!o.isMesh) return; const p = o.geometry.attributes.position; for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i).applyMatrix4(o.matrixWorld); mainPoints.push(Math.abs(v.x), v.y); } });
+      const mainReach = y => { let reach = 0; for (let i = 0; i < mainPoints.length; i += 2) if (mainPoints[i + 1] <= y && mainPoints[i] > reach) reach = mainPoints[i]; return reach; };
+      const seat = (object, stoneScale, angle, drop) => {
+        const d = radius + thick * .5 + lift + drop;
+        object.rotation.z = -angle;
+        object.position.x = Math.sin(angle) * d; object.position.y = Math.cos(angle) * d;
+      };
       for (const sign of [-1, 1]) {
-        // Neighbouring baskets are placed by their measured extents, so the
+        // Neighbouring heads are placed by their measured extents, so the
         // claws of one stone never run through the stone beside it.
-        const inward = box => sign > 0 ? -box.min.x : box.max.x, outward = box => sign > 0 ? box.max.x : -box.min.x;
-        const side = setting(s.sideShape, scale, [0, y, 0], s.sideTone, 0, true, false, true);
-        side.rotation.z = sign * -0.14;
-        side.position.x = sign * (mainExtent + inward(extentOf(side)) + .06 + (s.sideMainGap || 0) * 0.8);
+        const inward = box => sign > 0 ? box.min.x : -box.max.x;
+        const side = setting(s.sideShape, scale, [0, 0, 0], s.sideTone, 0, true, false, true);
+        // The centre head narrows towards its base, so a lower side stone may
+        // stand closer: only the part of the centre head below the side
+        // stone's top is in its way.
+        let sideAngle = .1;
+        for (; sideAngle < 1.5; sideAngle += .01) {
+          seat(side, scale, sign * sideAngle, headDrop(scale));
+          const box = extentOf(side);
+          if (inward(box) >= mainReach(box.max.y + .05) + .06 + (s.sideMainGap || 0) * 0.8) break;
+        }
         const sideBox = extentOf(side);
         if (s.sideMode === "cluster")
           for (const z of [-1, 1]) {
-            const satellite = setting("round", scale * 0.45, [side.position.x + sign * .3, y - 0.5, 0], s.sideTone);
-            satellite.rotation.z = sign * -0.14;
+            const small = scale * 0.45, satellite = setting("round", small, [0, 0, 0], s.sideTone);
+            seat(satellite, small, sign * (sideAngle + .04), headDrop(scale) - (scale - small) * .35);
             const box = extentOf(satellite);
             satellite.position.z = z * (Math.max(-sideBox.min.z, sideBox.max.z) + Math.max(-box.min.z, box.max.z) + .06 + (s.sideSpacing || 0) * 0.8);
           }
         if (s.sideMode === "five") {
-          const o = setting(s.sideShape, scale * 0.65, [0, y - scale * 0.9, 0], s.sideTone, 0, false);
-          o.rotation.z = sign * -0.4;
-          o.position.x = sign * (outward(sideBox) + inward(extentOf(o)) + .06 + (s.sideSpacing || 0) * 0.8);
+          const small = scale * 0.65, o = setting(s.sideShape, small, [0, 0, 0], s.sideTone, 0, false);
+          // The outer stone follows on the band, just clear of the side stone.
+          const keep = sideBox.clone().expandByScalar(.06 + (s.sideSpacing || 0) * 0.8);
+          for (let angle = sideAngle + .1; angle < 1.5; angle += .01) { seat(o, small, sign * angle, headDrop(scale) - (scale - small) * .35); if (!extentOf(o).intersectsBox(keep)) break; }
         }
       }
     }
@@ -756,7 +811,7 @@ export function buildRing(s, environment) {
   // quadrant by mirroring, so the search for a clear route tries mirrored
   // candidates in the same order: a symmetric ring gets symmetric posts, and
   // on a split shank each rail receives exactly two of them.
-  for(const {assembly,shape,scale,gallery,stone,galleryK,radius:r,stem} of mountings) {
+  for(const {assembly,shape,scale,gallery,stone,galleryK,galleryY,radius:r,stem} of mountings) {
     if(stem){
       // The base of a claw head grows out of the shank: one solid neck from
       // under the culet into the ring body (into both rails of a split shank).
@@ -777,7 +832,7 @@ export function buildRing(s, environment) {
     const route=([sx,sz],offset)=>{
       const quadrant=t=>sx>0?(sz>0?t:-t):(sz>0?Math.PI-t:Math.PI+t);
       const [x,z]=outline(shape,quadrant(Math.PI/4+offset));
-      const end=assembly.localToWorld(new T.Vector3(x*scale*galleryK,GALLERY_Y*scale,z*scale*galleryK));
+      const end=assembly.localToWorld(new T.Vector3(x*scale*galleryK,galleryY*scale,z*scale*galleryK));
       const lean=Math.abs(end.x)>1e-6?Math.sign(end.x):sx,side=Math.abs(end.z)>1e-6?Math.sign(end.z):sz;
       const angle=Math.atan2(end.x,end.y);
       let fallback;

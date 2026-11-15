@@ -69,7 +69,7 @@ export function restingHeight(planes, x, z, margin) {
 // and bends over the crown; only its tip touches the stone.
 export function postPath(shape, planes, angle, {scale, radius, galleryK, tipHeight, seat}) {
   const [ox, oz] = outline(shape, angle), reach = Math.hypot(ox, oz), margin = (radius + CLEARANCE) / scale;
-  const tipK = 1 - .9 * radius / scale / reach;
+  const tipK = 1 - .6 * radius / scale / reach;
   const tipY = tipHeight ?? restingHeight(planes, ox * tipK, oz * tipK, margin);
   const foot = [ox * galleryK, GALLERY_Y, oz * galleryK], tip = [ox * tipK, tipY, oz * tipK];
   const clear = path => path.slice(1).every((point, i) => segmentClear(planes, path[i], point, margin - 1e-6));
@@ -82,7 +82,21 @@ export function postPath(shape, planes, angle, {scale, radius, galleryK, tipHeig
       const bendK = Math.max(galleryK, seat ? seat.k : k) + elbow;
       const bend = elbow ? [[ox * bendK, (GALLERY_Y + lower[0][1]) / 2, oz * bendK]] : [];
       const path = [foot, ...bend, ...lower, [ox * k, tipY, oz * k], tip];
-      if (clear(path)) return {points: path.map(p => p.map(v => v * scale)), shaftK: k, tipK, tipY, angle};
+      if (clear(path)) {
+        if (tipHeight === undefined) {
+          // A claw's tip is not a hook: past the girdle the claw leans inwards and
+          // lies along the crown. The bend starts as low as the stone allows.
+          const top = path.at(-2), floor = Math.max(path.at(-3)[1] + .04, tipY - 1.3 * (k - tipK) * reach);
+          const free = y => segmentClear(planes, [top[0], y, top[2]], tip, margin - 1e-6);
+          if (floor < tipY && free(tipY)) {
+            let low = floor, high = tipY;
+            if (free(low)) high = low;
+            else for (let i = 0; i < 18; i++) { const mid = (low + high) / 2; if (free(mid)) high = mid; else low = mid; }
+            top[1] = high;
+          }
+        }
+        return {points: path.map(p => p.map(v => v * scale)), shaftK: k, tipK, tipY, angle};
+      }
       if (!clear(path.slice(0, 2 + bend.length))) break; // the lower leg is the problem: try the next elbow
     }
   }

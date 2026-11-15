@@ -15,7 +15,7 @@ export const VIEWS = {
   iso: [22, 19, 31],
 };
 
-export function renderModel(model, view = 'iso', {width = 640, height = 560, zoom = 1, target} = {}) {
+export function renderModel(model, view = 'iso', {width = 640, height = 560, zoom = 1, target, shading = 'smooth'} = {}) {
   model.group.updateMatrixWorld(true);
   const box = new T.Box3().setFromObject(model.group), centre = target || box.getCenter(new T.Vector3());
   const span = box.getSize(new T.Vector3()).length();
@@ -28,20 +28,25 @@ export function renderModel(model, view = 'iso', {width = 640, height = 560, zoo
   const colour = new Uint8ClampedArray(width * height * 3).fill(250), depth = new Float32Array(width * height).fill(Infinity);
   const keyLight = new T.Vector3(-.45, .8, .6).normalize(), fill = new T.Vector3(.7, .2, .5).normalize();
   const view4 = camera.matrixWorldInverse, a = new T.Vector3(), b = new T.Vector3(), c = new T.Vector3(), n = new T.Vector3(), e1 = new T.Vector3(), e2 = new T.Vector3();
+  const na = new T.Vector3(), nb = new T.Vector3(), nc = new T.Vector3(), pn = new T.Vector3(), refl = new T.Vector3();
+  const normalMatrix = new T.Matrix3();
   model.group.traverse(o => {
     if (!o.isMesh) return;
     const g = o.geometry, p = g.attributes.position, idx = g.index, count = idx ? idx.count : p.count;
     const m = new T.Matrix4().multiplyMatrices(view4, o.matrixWorld);
-    const gem = !!o.userData.gem;
+    normalMatrix.getNormalMatrix(m);
+    const gem = !!o.userData.gem, vn = !gem && shading !== 'flat' ? g.attributes.normal : null;
     const base = gem ? new T.Color(o.userData.hero === false ? '#9fd0ea' : '#7fbfe6') : (o.material?.color?.clone() || new T.Color('#e8c887'));
     if (!gem && o.material?.vertexColors) base.set('#e8c887');
     for (let i = 0; i < count; i += 3) {
-      a.fromBufferAttribute(p, idx ? idx.getX(i) : i).applyMatrix4(m);
-      b.fromBufferAttribute(p, idx ? idx.getX(i + 1) : i + 1).applyMatrix4(m);
-      c.fromBufferAttribute(p, idx ? idx.getX(i + 2) : i + 2).applyMatrix4(m);
+      const ia = idx ? idx.getX(i) : i, ib = idx ? idx.getX(i + 1) : i + 1, ic = idx ? idx.getX(i + 2) : i + 2;
+      a.fromBufferAttribute(p, ia).applyMatrix4(m);
+      b.fromBufferAttribute(p, ib).applyMatrix4(m);
+      c.fromBufferAttribute(p, ic).applyMatrix4(m);
       n.crossVectors(e1.subVectors(b, a), e2.subVectors(c, a));
       if (n.lengthSq() < 1e-18) continue;
       n.normalize(); if (n.z < 0) n.negate(); // view-space; shade both sides
+      if (vn) { na.fromBufferAttribute(vn, ia).applyMatrix3(normalMatrix); nb.fromBufferAttribute(vn, ib).applyMatrix3(normalMatrix); nc.fromBufferAttribute(vn, ic).applyMatrix3(normalMatrix); }
       const worldNormal = n.clone().transformDirection(camera.matrixWorld);
       const lit = gem ? .62 + .38 * Math.abs(worldNormal.dot(keyLight))
         : .2 + .62 * Math.max(0, worldNormal.dot(keyLight)) + .22 * Math.max(0, worldNormal.dot(fill)) + .12 * n.z;
@@ -60,7 +65,23 @@ export function renderModel(model, view = 'iso', {width = 640, height = 560, zoo
         if (w0 < 0 || w1 < 0 || w2 < 0) continue;
         const z = -(w0 * a.z + w1 * b.z + w2 * c.z), k = y * width + x;
         if (z >= depth[k]) continue;
-        depth[k] = z; colour[k * 3] = r; colour[k * 3 + 1] = gg; colour[k * 3 + 2] = bb;
+        depth[k] = z;
+        if (vn) {
+          // Polished-metal shading from the interpolated vertex normals, the
+          // same normals the WebGL viewer uses. The reflection of a striped
+          // studio makes every normal discontinuity (ridge, facet) visible.
+          pn.set(0, 0, 0).addScaledVector(na, w0).addScaledVector(nb, w1).addScaledVector(nc, w2).normalize();
+          if (pn.z < 0) pn.negate();
+          refl.set(2 * pn.z * pn.x, 2 * pn.z * pn.y, 2 * pn.z * pn.z - 1).transformDirection(camera.matrixWorld);
+          let s;
+          if (shading === 'zebra') s = Math.sin(18 * Math.atan2(refl.y, Math.hypot(refl.x, refl.z))) > 0 ? 1 : .25;
+          else {
+            const up = .5 + .5 * refl.y, soft = Math.max(0, refl.dot(keyLight)), box = Math.max(0, refl.dot(fill));
+            s = .28 + .5 * up + .55 * Math.pow(soft, 6) + .3 * Math.pow(box, 12) - .18 * (1 - pn.z);
+          }
+          s = Math.max(0, Math.min(1.25, s));
+          colour[k * 3] = base.r * s * 255; colour[k * 3 + 1] = base.g * s * 255; colour[k * 3 + 2] = base.b * s * 255;
+        } else { colour[k * 3] = r; colour[k * 3 + 1] = gg; colour[k * 3 + 2] = bb; }
       }
     }
   });

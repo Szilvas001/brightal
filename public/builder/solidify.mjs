@@ -11,6 +11,7 @@ export function checkModel(model) {
 }
 
 import {mergeVertices} from 'three/addons/utils/BufferGeometryUtils.js';
+import {creasedNormals} from './shading.mjs';
 
 // One raw metal part as a closed Manifold solid in world coordinates. Shared by
 // the union below and by the independent rule audit (geometry-rules.mjs).
@@ -118,12 +119,15 @@ export function unifyLegacy(model) {
     const color=faceColors.get(Array.from(index.slice(i,i+3)).join(','))||sourceMaterials.at(-1).color;
     for(let j=0;j<3;j++)colors.push(color.r,color.g,color.b);
    }
-   const coloured=geo.toNonIndexed();geo.dispose();
+   const shaded=creasedNormals(geo);geo.dispose();
+   const coloured=shaded.toNonIndexed();shaded.dispose();
    coloured.setAttribute('color',new T.Float32BufferAttribute(colors,3));
    material.color.set(0xffffff);material.vertexColors=true;
    const metal=new T.Mesh(coloured,material);metal.userData.role='unified-metal';model.group.add(metal);
   } else {
-   const metal=new T.Mesh(geo,material);metal.userData.role='unified-metal';model.group.add(metal);
+   // Shading normals with real creases (see shading.mjs); positions and triangles are unchanged.
+   const shaded=creasedNormals(geo);geo.dispose();
+   const metal=new T.Mesh(shaded,material);metal.userData.role='unified-metal';model.group.add(metal);
   }
   metals.forEach(o=>o.removeFromParent());
   const geometry=new Set(metals.map(o=>o.geometry)),materials=new Set(metals.map(o=>o.material));geometry.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());

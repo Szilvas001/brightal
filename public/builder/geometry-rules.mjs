@@ -249,6 +249,18 @@ export function inspectDesign(input, {exportCheck = true, keepModel = false, mut
         // Single claws: one gap value. Double claws: two alternating values.
         if (distinct.length > (s.setting === 'doubleclaw' ? 2 : 1)) add('A', 'CLAWS_UNEVEN_ANGLES', `claw gaps ${distinct.join('/')} rad on a round stone`);
       }
+      // Form of each claw: one continuous sweep without kinks, whose tip leans
+      // over the crown instead of hooking across it.
+      for (const claw of claws) {
+        const p = claw.path;
+        if (p.length > 5) {
+          let bend = 0;
+          for (let i = 1; i + 1 < p.length; i++) bend = Math.max(bend, p[i].clone().sub(p[i - 1]).angleTo(p[i + 1].clone().sub(p[i])) * 180 / Math.PI);
+          if (bend > LIMITS.clawBendDegrees) add('A', 'CLAW_KINKED', `claw turns ${bend.toFixed(0)}° between two sections (limit ${LIMITS.clawBendDegrees}°)`);
+        }
+        const [before, tip] = localSet(stone, p.slice(-2)), rise = Math.asin((tip.y - before.y) / (tip.distanceTo(before) || 1)) * 180 / Math.PI;
+        if (rise < LIMITS.clawTipRiseDegrees) add('A', 'CLAW_HOOKED', `claw tip rises only ${rise.toFixed(0)}° over the crown (a hook, limit ${LIMITS.clawTipRiseDegrees}°)`);
+      }
       const radii = claws.map(c => c.radius), lengths = claws.map(c => c.path.slice(1).reduce((sum, p, i) => sum + p.distanceTo(c.path[i]), 0));
       if (Math.max(...radii) - Math.min(...radii) > Math.max(.016, .08 * Math.min(...radii))) add('A', 'CLAWS_UNEQUAL_THICKNESS', `claw radii ${Math.min(...radii).toFixed(3)}–${Math.max(...radii).toFixed(3)}`);
       // Claws that are mirror images of each other (only across axes the cut really has).
