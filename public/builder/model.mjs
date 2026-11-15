@@ -339,7 +339,10 @@ const headDrop = scale => Math.max(HEAD_DROP * scale, .88 * scale + 2.2 * rodRad
       const baseY = -headDrop(scale) / scale, topY = s.setting === "bezel" ? -.2 : -.12;
       const topK = s.setting === "bezel" ? 1 : ringFactor(shape, planes, topY, (1.1 * r + CLEARANCE + .014) / scale);
       const line = y => topK * (y - baseY) / (topY - baseY), need = y => ringFactor(shape, planes, y, (railRadius + CLEARANCE + .02) / scale);
-      galleryY = topY - .16;
+      // A hidden halo's stones and beads need their own room under the girdle,
+      // and under the stones of a halo above them.
+      const room = hiddenHalo ? HIDDEN_STONE + (["halo", "vintage"].includes(s.style) ? 2 * GRAIN + .36 * s.haloSize + .1 : .15) : 0;
+      galleryY = Math.min(topY - .16, -room / scale);
       while (galleryY > baseY * .7 && line(galleryY) < need(galleryY)) galleryY -= .02;
       // …half a rod further out than their centre line: the ring clearly
       // breaks through the claws' outer side (never a surface grazing a surface).
@@ -774,11 +777,12 @@ const headDrop = scale => Math.max(HEAD_DROP * scale, .88 * scale + 2.2 * rodRad
   if (s.style === "vintage") {
     // Milgrain: a row of beads along both shoulders of the band, half sunk
     // into the surface of whichever profile is selected.
-    const [edgeR, edgeZ] = profilePoint(1.08), [innerR, innerZ] = profilePoint(1.08 + .02);
-    const slope = Math.hypot(innerR - edgeR, innerZ - edgeZ), normal = [(innerZ - edgeZ) / slope, -(innerR - edgeR) / slope];
-    const beadR = edgeR - normal[0] * .07, beadZ = edgeZ - normal[1] * .07;
+    // (Measured at every bead: the band narrows towards the head.)
     for (let i = 0; i < 100; i++) {
       const a = (i / 100) * Math.PI * 2;
+      const [edgeR, edgeZ] = profilePoint(1.08, a), [innerR, innerZ] = profilePoint(1.08 + .02, a);
+      const slope = Math.hypot(innerR - edgeR, innerZ - edgeZ), normal = [(innerZ - edgeZ) / slope, -(innerR - edgeR) / slope];
+      const beadR = edgeR - normal[0] * .07, beadZ = edgeZ - normal[1] * .07;
       for (const side of [-1, 1])
         tag(bead(0.085, [Math.sin(a) * beadR, Math.cos(a) * beadR, side * beadZ], group, metal), 'milgrain');
     }

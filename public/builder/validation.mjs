@@ -57,3 +57,35 @@ export function removeOppositeCoincidentTriangles(geometry) {
  geometry.setIndex([...faces.values()].flatMap(list=>list.flatMap(f=>f.raw)));
  return geometry;
 }
+
+// Two parts of one closed body that touch in a single point share that vertex:
+// a pinch of zero thickness. It is not a connection and not a gap, only two
+// surfaces grazing (a claw beside its neighbour). Each further fan of triangles
+// around such a point gets its own vertex, drawn 0.25 µm into its own metal, so
+// the surface is an ordinary closed skin again. Returns the number of pinches.
+export function separatePinches(geometry,epsilon=2e-4){
+ const pos=geometry.attributes.position,idx=geometry.index,keys=new Map(),ids=[];
+ for(let i=0;i<pos.count;i++){const key=[pos.getX(i),pos.getY(i),pos.getZ(i)].join(',');if(!keys.has(key))keys.set(key,keys.size);ids.push(keys.get(key));}
+ const index=Array.from(idx.array),fans=new Map();
+ for(let c=0;c<index.length;c++){const v=ids[index[c]];if(!fans.has(v))fans.set(v,[]);fans.get(v).push(c);}
+ const P=Array.from(pos.array);let fixed=0;
+ const point=i=>[P[i*3],P[i*3+1],P[i*3+2]];
+ for(const corners of fans.values()){
+  const parent=new Map(),root=x=>{while(parent.get(x)!==x)x=parent.get(x);return x;};
+  const others=c=>{const t=c-c%3;return [ids[index[t+(c%3+1)%3]],ids[index[t+(c%3+2)%3]]];};
+  for(const c of corners){const [a,b]=others(c);if(!parent.has(a))parent.set(a,a);if(!parent.has(b))parent.set(b,b);parent.set(root(a),root(b));}
+  const groups=new Map();
+  for(const c of corners){const r=root(others(c)[0]);if(!groups.has(r))groups.set(r,[]);groups.get(r).push(c);}
+  if(groups.size<2)continue;
+  [...groups.values()].slice(1).forEach(group=>{
+   const n=[0,0,0];
+   for(const c of group){const t=c-c%3,[a,b,d]=[0,1,2].map(k=>point(index[t+k]));const u=b.map((v,j)=>v-a[j]),w=d.map((v,j)=>v-a[j]);n[0]+=u[1]*w[2]-u[2]*w[1];n[1]+=u[2]*w[0]-u[0]*w[2];n[2]+=u[0]*w[1]-u[1]*w[0];}
+   const l=Math.hypot(...n)||1,at=point(index[group[0]]),fresh=P.length/3;
+   P.push(at[0]-n[0]/l*epsilon,at[1]-n[1]/l*epsilon,at[2]-n[2]/l*epsilon);
+   for(const c of group)index[c]=fresh;
+  });
+  fixed++;
+ }
+ if(fixed){geometry.setAttribute('position',new pos.constructor(new Float32Array(P),3));geometry.setIndex(index);}
+ return fixed;
+}

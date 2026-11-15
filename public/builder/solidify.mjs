@@ -1,6 +1,6 @@
 import * as T from 'three';
 import {getKernel} from './kernel.mjs';
-import {validateMesh,removeCollapsedTriangles,removeOppositeCoincidentTriangles} from './validation.mjs';
+import {validateMesh,removeCollapsedTriangles,removeOppositeCoincidentTriangles,separatePinches} from './validation.mjs';
 // Failed legacy assemblies are diagnostic concepts only. The UI must not
 // display them as finished models, and exports retain the failed validation.
 export function checkModel(model) {
@@ -104,6 +104,11 @@ export function unifyLegacy(model) {
     }
     if(checked.valid)break;
   }
+  // What can remain is a closed, single body whose surfaces graze in a point.
+  let separatedPinches=0;
+  if(!checked.valid&&checked.nonManifoldVertices>0&&checked.nonManifoldVertices<=8&&checked.boundaryEdges===0&&checked.inconsistentEdges===0&&checked.degenerate===0&&checked.components===1){
+    separatedPinches=separatePinches(geo);checked=validateMesh(geo);
+  }
   if(!checked.valid){geo.dispose();throw new Error('Triangle validation failed: '+JSON.stringify(checked));}
   const material=metals[0].material.clone();
   if(sourceMaterials.length>1) {
@@ -131,7 +136,7 @@ export function unifyLegacy(model) {
   }
   metals.forEach(o=>o.removeFromParent());
   const geometry=new Set(metals.map(o=>o.geometry)),materials=new Set(metals.map(o=>o.material));geometry.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());
-  model.engineering={status:'geometry_checked',removedDebrisMm3:removedDebris,metalSolids:1,volumeMm3:body.volume()/(.8**3),units:'mm',requiresWorkshopApproval:true};return checkModel(model);
+  model.engineering={status:'geometry_checked',separatedPinches,removedDebrisMm3:removedDebris,metalSolids:1,volumeMm3:body.volume()/(.8**3),units:'mm',requiresWorkshopApproval:true};return checkModel(model);
  } catch(error){checkModel(model);model.engineering.status='requires_cad_repair';model.engineering.reason=error.message;return model;}
  finally{for(let i=owned.length-1;i>=0;i--)owned[i].delete();}
 }
