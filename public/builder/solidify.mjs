@@ -40,9 +40,11 @@ export function unifyLegacy(model) {
  model.group.traverse(o=>{if(o.isMesh)(o.userData.gem?gems:metals).push(o);});
  try {
   const sourceMaterials=[...new Set(metals.map(o=>o.material))];
-  const materialIds=new Map(sourceMaterials.map(m=>[m,Manifold.reserveIDs(1)]));
-  const colorsById=new Map(sourceMaterials.map(m=>[materialIds.get(m),m.color]));
-  const solids=metals.map(o=>own(meshToSolid(o,materialIds.get(o.material))));
+  // Every raw part keeps its own id through the Booleans: it tells which
+  // alloy a face has, and which part's surface it belongs to (shading).
+  const partIds=new Map(metals.map(o=>[o,Manifold.reserveIDs(1)]));
+  const colorsById=new Map(metals.map(o=>[partIds.get(o),o.material.color]));
+  const solids=metals.map(o=>own(meshToSolid(o,partIds.get(o))));
   let body=own(Manifold.union(solids));
   // All stone cavities are cut in one Boolean: stones never overlap each other.
   const cavities=gems.map(o=>{const p=o.geometry.attributes.position,verts=[];const center=o.getWorldPosition(new T.Vector3());for(let i=0;i<p.count;i++){const v=new T.Vector3().fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld);v.add(v.clone().sub(center).normalize().multiplyScalar(.008));verts.push(v.toArray());}return own(Manifold.hull(verts));});
@@ -111,6 +113,9 @@ export function unifyLegacy(model) {
   }
   if(!checked.valid){geo.dispose();throw new Error('Triangle validation failed: '+JSON.stringify(checked));}
   const material=metals[0].material.clone();
+  const partByFace=new Map();
+  for(let run=0;run<mesh.runOriginalID.length;run++)for(let i=mesh.runIndex[run];i<mesh.runIndex[run+1];i+=3)partByFace.set(mesh.triVerts.slice(i,i+3).join(','),mesh.runOriginalID[run]);
+  const partOfFace=Int32Array.from({length:geo.index.count/3},(_,f)=>partByFace.get(Array.from(geo.index.array.slice(f*3,f*3+3)).join(','))??-1);
   if(sourceMaterials.length>1) {
    // Preserve the alloy of each original face through the Boolean union.
    // Vertex colours keep one closed mesh and one physical finish/material.
@@ -124,14 +129,14 @@ export function unifyLegacy(model) {
     const color=faceColors.get(Array.from(index.slice(i,i+3)).join(','))||sourceMaterials.at(-1).color;
     for(let j=0;j<3;j++)colors.push(color.r,color.g,color.b);
    }
-   const shaded=creasedNormals(geo);geo.dispose();
+   const shaded=creasedNormals(geo,undefined,partOfFace);geo.dispose();
    const coloured=shaded.toNonIndexed();shaded.dispose();
    coloured.setAttribute('color',new T.Float32BufferAttribute(colors,3));
    material.color.set(0xffffff);material.vertexColors=true;
    const metal=new T.Mesh(coloured,material);metal.userData.role='unified-metal';model.group.add(metal);
   } else {
    // Shading normals with real creases (see shading.mjs); positions and triangles are unchanged.
-   const shaded=creasedNormals(geo);geo.dispose();
+   const shaded=creasedNormals(geo,undefined,partOfFace);geo.dispose();
    const metal=new T.Mesh(shaded,material);metal.userData.role='unified-metal';model.group.add(metal);
   }
   metals.forEach(o=>o.removeFromParent());

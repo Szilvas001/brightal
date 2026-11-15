@@ -315,7 +315,10 @@ const headDrop = scale => Math.max(HEAD_DROP * scale, .88 * scale + 2.2 * rodRad
   // side stones and cluster satellites, in every classic style:
   //   gallery ring → equally spaced posts → claw tips over the crown,
   //   or (bezel) posts that carry a seat ring and a rim on the crown edge.
-  const setting = (shape, scale, pos, tone, rotation = 0, hero = true, hiddenHalo = false, centre = false) => {
+  // `drop` is how far below the girdle the head's base lies. A higher setting
+  // is a taller head: its base stays in the shank and the claws grow longer
+  // (never a bare neck between the head and the band).
+  const setting = (shape, scale, pos, tone, rotation = 0, hero = true, hiddenHalo = false, centre = false, drop = headDrop(scale)) => {
     const assembly = new T.Group();
     assembly.position.set(...pos);
     assembly.rotation.y = rotation;
@@ -336,7 +339,7 @@ const headDrop = scale => Math.max(HEAD_DROP * scale, .88 * scale + 2.2 * rodRad
       // base under the culet to the girdle. The ring that carries a halo or a
       // hidden halo is threaded onto them: it sits on that straight line, at
       // the first height below the girdle where it clears the pavilion.
-      const baseY = -headDrop(scale) / scale, topY = s.setting === "bezel" ? -.2 : -.12;
+      const baseY = -drop / scale, topY = s.setting === "bezel" ? -.2 : -.12;
       const topK = s.setting === "bezel" ? 1 : ringFactor(shape, planes, topY, (1.1 * r + CLEARANCE + .014) / scale);
       const line = y => topK * (y - baseY) / (topY - baseY), need = y => ringFactor(shape, planes, y, (railRadius + CLEARANCE + .02) / scale);
       // A hidden halo's stones and beads need their own room under the girdle,
@@ -356,7 +359,7 @@ const headDrop = scale => Math.max(HEAD_DROP * scale, .88 * scale + 2.2 * rodRad
       // crown, standing on the same base in the shank as a claw head. The
       // stone's seat is cut into the collar.
       const wall = Math.max(.62, .2 * scale), lip = Math.min(.3, .12 * scale), rimY = .06 * scale + .14;
-      const baseR = 1.6 * r, baseY = -headDrop(scale);
+      const baseR = 1.6 * r, baseY = -drop;
       stem = {y: baseY, radius: baseR * 1.2};
       const outer = (x, z) => scale + wall / Math.hypot(x, z), inner = (x, z) => scale - lip / Math.hypot(x, z);
       // The collar: a closed wall around the girdle, open above and below.
@@ -420,7 +423,7 @@ const headDrop = scale => Math.max(HEAD_DROP * scale, .88 * scale + 2.2 * rodRad
       const fit = fitClaws(shape, scale, s.prongs, s.setting === "doubleclaw");
       baseCount = fit.count;
       const baseR = 1.6 * r, stemR = baseR * 1.2, spread = baseR * .16; // the claws leave from inside the base, not beside it
-      const baseY = -headDrop(scale);
+      const baseY = -drop;
       stem = {y: baseY, radius: stemR};
       const wide = (baseR + CLEARANCE) / scale, free = p => clearance(planes, p.x / scale, p.y / scale, p.z / scale) * scale;
       const away = p => Math.hypot(p.x, p.z) > .05 * scale ? new T.Vector3(p.x, 0, p.z).normalize() : new T.Vector3(0, -1, 0);
@@ -573,13 +576,22 @@ const headDrop = scale => Math.max(HEAD_DROP * scale, .88 * scale + 2.2 * rodRad
   if (s.style === "duet") {
     const other = 2.4 * Math.cbrt(s.sideCarat),
       gap = (size + other) * 0.54;
-    const first=setting(s.shape, size, [-gap, top, 0.65], s.gemTone, rotation - 0.23, true, s.hiddenHalo, true);
-    const second=setting(s.sideShape, other, [gap, top - 0.35, -0.65], s.sideTone, 0.3, true, s.hiddenHalo, true);
-    const leftBox=extentOf(first),rightBox=extentOf(second);
-    const apart=Math.max(0,(leftBox.max.x-rightBox.min.x+.12)/2);
-    first.position.x-=apart+(s.sideMainGap||0)*.4;second.position.x+=apart+(s.sideMainGap||0)*.4;
+    // Both stones stand on the band like a single centre stone would: each
+    // head points away from the ring's axis, its base in the shank. They are
+    // turned apart along the band just far enough to clear each other.
+    const lift = top - headDrop(size) - radius - thick * .5, rise = s.height * .45;
+    const first = setting(s.shape, size, [0, 0, 0.65], s.gemTone, rotation - 0.23, true, s.hiddenHalo, true, headDrop(size) + rise);
+    const second = setting(s.sideShape, other, [0, 0, -0.65], s.sideTone, 0.3, true, s.hiddenHalo, true, headDrop(other) + rise);
+    // (The base follows the band; the head leans only half as far, so the two stones stay close.)
+    const stand = (object, angle, drop) => { const b = radius + thick * .5 + lift - rise, tilt = angle * .45; object.rotation.z = -tilt; object.position.x = Math.sin(angle) * b + Math.sin(tilt) * drop; object.position.y = Math.cos(angle) * b + Math.cos(tilt) * drop; };
+    const d1 = radius + thick * .5 + headDrop(size), d2 = radius + thick * .5 + headDrop(other);
+    for (let spread = 0; spread < 1.2; spread += .01) {
+      stand(first, -(Math.asin(Math.min(.9, gap / d1)) * .5 + spread), headDrop(size) + rise);
+      stand(second, Math.asin(Math.min(.9, gap / d2)) * .5 + spread, headDrop(other) + rise);
+      if (extentOf(second).min.x - extentOf(first).max.x >= .12 + (s.sideMainGap || 0) * .8) break;
+    }
   } else {
-    const main = setting(s.shape, size, [0, top, 0], s.gemTone, rotation, true, s.hiddenHalo, true);
+    const main = setting(s.shape, size, [0, top, 0], s.gemTone, rotation, true, s.hiddenHalo, true, headDrop(size) + s.height * .45);
     const mainMount = mountings[0];
     if (["halo", "vintage"].includes(s.style)) {
       const haloR = s.haloSize * 0.4, r = mainMount.radius * 1.25; // the tapered claw is thicker below its tip

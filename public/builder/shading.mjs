@@ -15,7 +15,11 @@ import * as T from 'three';
 
 export const CREASE_DEGREES = 38;
 
-export function creasedNormals(geometry, creaseDegrees = CREASE_DEGREES) {
+// `partOfFace` (optional, one id per triangle) names the part each face came
+// from. Faces of different parts never share a normal, however flat the angle
+// between them: where a collar or a claw rises out of a band at a shallow
+// angle, each keeps its own surface direction (no streaks along the joint).
+export function creasedNormals(geometry, creaseDegrees = CREASE_DEGREES, partOfFace = null) {
   const position = geometry.attributes.position, index = geometry.index;
   if (!index) throw new Error('creasedNormals needs an indexed geometry');
   const faces = index.count / 3, ids = index.array, P = position.array;
@@ -63,7 +67,8 @@ export function creasedNormals(geometry, creaseDegrees = CREASE_DEGREES) {
         if (j === undefined) { byOther.set(other, i); continue; }
         const g = (corners[from + j] / 3) | 0;
         const dot = normal[f * 3] * normal[g * 3] + normal[f * 3 + 1] * normal[g * 3 + 1] + normal[f * 3 + 2] * normal[g * 3 + 2];
-        if (!solid[f] || !solid[g] || dot >= cosCrease) parent[root(i)] = root(j);
+        const samePart = !partOfFace || partOfFace[f] === partOfFace[g] || partOfFace[f] < 0 || partOfFace[g] < 0;
+        if (samePart && (!solid[f] || !solid[g] || dot >= cosCrease)) parent[root(i)] = root(j);
       }
     }
     const groups = new Map();

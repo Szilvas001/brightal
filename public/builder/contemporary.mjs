@@ -33,7 +33,7 @@ export function smoothFootprint(points,steps=6){
 export const MODERN_STYLES = ['bezelrow','scatter','chevron','ribbon','graduated','eastwest','alternating','crown','wave','rope','dome','signet','open','stack','band','eternity','curvedoval','wavebezel','openpair','contour','asymmetric','fullcircle'];
 export const SCALE = .8;
 MODERN_STYLES.push(...FASHION_STYLES.filter(s=>!MODERN_STYLES.includes(s)));
-export const MODEL_REVISION = 'geometry-rules-11';
+export const MODEL_REVISION = 'geometry-rules-12';
 const single = s => ['band','eastwest','curvedoval','wavebezel'].includes(s.style) || FASHION_STYLES.includes(s.style);
 export function modernLayout(s) {
   const inner = s.size / (2*Math.PI);
@@ -233,7 +233,9 @@ export function buildContemporary(s, environment, colors) {
     for(let i=0;i<mesh.vertProperties.length;i+=mesh.numProp) xyz.push(mesh.vertProperties[i]*SCALE,mesh.vertProperties[i+1]*SCALE,mesh.vertProperties[i+2]*SCALE);
     geo.setAttribute('position',new T.Float32BufferAttribute(xyz,3));geo.setIndex(Array.from(mesh.triVerts));
     // Sculpted relief is meant to read as one flowing surface: only real edges (collars, seats, grooves) are creased.
-    const shaded=creasedNormals(geo,55);geo.dispose();
+    const partOfFace=new Int32Array(mesh.triVerts.length/3).fill(-1);
+    for(let run=0;run<mesh.runOriginalID.length;run++)for(let i=mesh.runIndex[run];i<mesh.runIndex[run+1];i+=3)partOfFace[i/3]=mesh.runOriginalID[run];
+    const shaded=creasedNormals(geo,55,partOfFace);geo.dispose();
     const metal=new T.Mesh(shaded,material);metal.userData.role='unified-metal';group.add(metal);
     report={version:MODEL_REVISION,units:'mm',status:'geometry_checked',metalSolids:componentCount,volumeMm3:body.volume(),innerDiameterMm:inner*2,
       nominalInnerCircumferenceMm:s.size,bandWidthMm:width,minimumBaseThicknessMm:layout.thickness,bezelWallMm:s.bezelWall,
