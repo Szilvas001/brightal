@@ -113,7 +113,7 @@ export function unifyLegacy(model) {
     geo.dispose();mesh=own(body.simplify(.0005)).getMesh();geo=new T.BufferGeometry();const xyz=[];for(let i=0;i<mesh.vertProperties.length;i+=mesh.numProp)xyz.push(...mesh.vertProperties.slice(i,i+3));
     geo.setAttribute('position',new T.Float32BufferAttribute(xyz,3));geo.setIndex(Array.from(mesh.triVerts));
     for(let round=0;round<3;round++){const moved=separateCoincident(geo);separatedPinches+=moved;if(!moved)break;}
-    if(separatedPinches<=64){
+    if(separatedPinches<=400){
       // A bubble or crumb that hung on such a pinch is now a shell of its own.
       const shells=dropTinyShells(geo);
       if(shells){removedShells=shells;checked=validateMesh(removeCollapsedTriangles(geo));}
