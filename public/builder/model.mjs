@@ -197,7 +197,12 @@ const headDrop = scale => Math.max(HEAD_DROP * scale, .88 * scale + 2.2 * rodRad
       const a = (i / uN) * Math.PI * 2;
       for (let j = 0; j <= vN; j++) {
         const b = (j / vN) * Math.PI * 2;
-        const [r, offset] = profilePoint(b, a), z = offset + splitSign * separation(a);
+        const [r, offset] = profilePoint(b, a), free = offset + splitSign * separation(a);
+        // Where the two rails of a split shank run into each other, each ends
+        // at the ring's centre plane: they meet in one clean line there instead
+        // of two almost identical surfaces cutting through one another.
+        // (…a hair past it, 0.02 mm, so the two are welded through and not merely touching.)
+        const z = splitSign ? splitSign * Math.max(-.015, splitSign * free) : free;
         vertices.push(Math.sin(a) * r, Math.cos(a) * r, z);
         if (i < uN && j < vN) {
           const k = i * (vN + 1) + j;

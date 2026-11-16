@@ -400,7 +400,9 @@ export function inspectDesign(input, {exportCheck = true, keepModel = false, mut
       }
     mark('seated');
       // D: every radial cross-section of the ring body contains a 1 mm disc.
-      const sectionSources = legacy ? shanks.map(x => x.solid) : [body];
+      // (The rails of a split shank are one ring body where they have merged:
+      // the shank is measured as a whole, each separate rail on its own.)
+      const sectionSources = legacy ? [shanks.slice(1).reduce((all, x) => own(all.add(x.solid)), shanks[0].solid)] : [body];
       const blocked = legacy ? [] : modernLayout(s).stones.map(x => [x.angle, Math.asin(Math.min(1, (Math.max(x.length, x.width) / 2 + s.bezelWall + .4) / (s.size / (2 * Math.PI))))]);
       let thinnest = Infinity;
       for (let i = 0; i < 24; i++) {
