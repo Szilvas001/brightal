@@ -704,24 +704,64 @@ const headDrop = scale => Math.max(HEAD_DROP * scale, .88 * scale + 2.2 * rodRad
         const tilt = .56, sideDrop = headDrop(scale);
         const side = setting(s.sideShape, scale, [0, 0, 0], s.sideTone, 0, true, false, true, sideDrop);
         side.rotation.z = -sign * tilt;
+        let sideAt = .1;
         for (let at = .1; at < 1.4; at += .01) {
+          sideAt = at;
           side.position.x = sign * (Math.sin(at) * bandR + Math.sin(tilt) * sideDrop); side.position.y = Math.cos(at) * bandR + Math.cos(tilt) * sideDrop;
           const box = extentOf(side);
           if (inward(box) >= mainReach(box.max.y + .05) + .06 + (s.sideMainGap || 0) * 0.8) break;
         }
         const sideAngle = Math.atan2(Math.abs(side.position.x) + scale, side.position.y);
         const sideBox = extentOf(side);
-        // Cathedral shoulders of a three-stone ring: from the shank an arm rises
-        // on each side of the band to the outer legs of the side stone's head
-        // and carries it (on a split shank, one arm from each rail).
-        if (s.sideMode === "pair") {
-          const sideMount = mountings.at(-1);
-          side.updateMatrixWorld(true);
+        // Companions are measured in the side stone's own frame (its head is
+        // turned, so a box along the world's axes would keep them needlessly far).
+        const within = (object, frame) => {
+          object.updateWorldMatrix(true, true); frame.updateWorldMatrix(true, true);
+          const box = new T.Box3(), v = new T.Vector3();
+          object.traverse(o => { if (!o.isMesh) return; const p = o.geometry.attributes.position; for (let i = 0; i < p.count; i++) box.expandByPoint(frame.worldToLocal(v.fromBufferAttribute(p, i).applyMatrix4(o.matrixWorld))); });
+          return box;
+        };
+        const sideOwn = within(side, side).expandByScalar(.06 + (s.sideSpacing || 0) * 0.8), mainKeep = mainBox.clone().expandByScalar(.06);
+        let carried = side, carriedScale = scale;
+        if (s.sideMode === "five") {
+          // The outer stone continues the fan: its base stands on the band right
+          // after the side stone's, and its head leans further out.
+          const small = scale * 0.65, drop = headDrop(small), lean = tilt + .46;
+          const o = setting(s.sideShape, small, [0, 0, 0], s.sideTone, 0, false, false, true, drop);
+          o.rotation.z = -sign * lean;
+          for (let at = sideAt + .08; at < 1.5; at += .01) {
+            o.position.x = sign * (Math.sin(at) * bandR + Math.sin(lean) * drop); o.position.y = Math.cos(at) * bandR + Math.cos(lean) * drop;
+            if (!within(o, side).intersectsBox(sideOwn)) break;
+          }
+          carried = o; carriedScale = small;
+        }
+        if (s.sideMode === "cluster")
+          for (const z of [-1, 1]) {
+            // The cluster is a trefoil: after each side stone two small stones
+            // continue the fan side by side, leaning apart across the band just
+            // far enough to clear each other.
+            const small = scale * 0.45, drop = headDrop(small), satellite = setting("round", small, [0, 0, 0], s.sideTone, 0, true, false, true, drop);
+            const out = tilt + .4;
+            satellite.rotation.order = 'ZYX';
+            for (let at = sideAt + .08; at < 1.5; at += .01) {
+              const track = split ? z * separation(sign * at) : z * bandWidth * .2;
+              const apart = Math.asin(Math.min(.65, Math.max(0, (small * 1.2 + .05 - Math.abs(track)) / drop)));
+              satellite.rotation.z = -sign * out; satellite.rotation.x = z * apart;
+              satellite.position.set(sign * (Math.sin(at) * bandR + Math.sin(out) * Math.cos(apart) * drop), Math.cos(at) * bandR + Math.cos(out) * Math.cos(apart) * drop, track + z * Math.sin(apart) * drop);
+              if (!within(satellite, side).intersectsBox(sideOwn) && !extentOf(satellite).intersectsBox(mainKeep)) break;
+            }
+          }
+        // Cathedral shoulders: from the shank an arm rises on each side of the
+        // band to the outer legs of the outermost head of the row and carries it
+        // (on a split shank, one arm from each rail).
+        if (s.sideMode === "pair" || s.sideMode === "five") {
+          const mount = mountings.find(m => m.assembly === carried);
+          carried.updateMatrixWorld(true);
           for (const zs of [-1, 1]) {
             let join = null;
             // (Only a leg that comes up from the base: not the short branch of a double claw.)
-            for (const leg of sideMount.legs.filter(leg => Math.hypot(...leg.at(-1).map((v, i) => v - leg[0][i])) > scale * .7)) {
-              const p = side.localToWorld(new T.Vector3(...leg[Math.floor(leg.length * .5)]));
+            for (const leg of mount.legs.filter(leg => Math.hypot(...leg.at(-1).map((v, i) => v - leg[0][i])) > carriedScale * .7)) {
+              const p = carried.localToWorld(new T.Vector3(...leg[Math.floor(leg.length * .5)]));
               if (zs * p.z > .02 && (!join || sign * p.x > sign * join.x)) join = p;
             }
             if (!join) continue;
@@ -729,37 +769,10 @@ const headDrop = scale => Math.max(HEAD_DROP * scale, .88 * scale + 2.2 * rodRad
             const start = new T.Vector3(sign * Math.sin(a0) * rs, Math.cos(a0) * rs, split ? zs * separation(sign * a0) : zs * Math.min(bandWidth * .22, Math.abs(join.z)));
             // It leaves the band along the band and then turns up to the leg.
             const control = start.clone().addScaledVector(new T.Vector3(-sign * Math.cos(a0), Math.sin(a0), 0), start.distanceTo(join) * .55);
-            const from = Math.max(.38, rodRadius(scale) * 1.15), to = Math.max(.335, rodRadius(scale) * .95), steps = 14, path = [], radii = [];
+            const from = Math.max(.38, rodRadius(carriedScale) * 1.15), to = Math.max(.335, rodRadius(carriedScale) * .95), steps = 14, path = [], radii = [];
             for (let i = 0; i <= steps; i++) { const t = i / steps, u = 1 - t; path.push(start.clone().multiplyScalar(u * u).addScaledVector(control, 2 * u * t).addScaledVector(join, t * t).toArray()); radii.push(from + (to - from) * t); }
             tag(rod(path, radii, group, metal), 'shoulder', null, {ends: [1, 1]});
           }
-        }
-        // Smaller companions get the same head as every other stone (claws from
-        // a base in the shank), not a wire cage on struts.
-        if (s.sideMode === "cluster")
-          for (const z of [-1, 1]) {
-            // The cluster is a trefoil: beyond each side stone two small stones
-            // stand side by side on the band, leaning apart just far enough to
-            // clear each other.
-            const small = scale * 0.45, drop = headDrop(small), satellite = setting("round", small, [0, 0, 0], s.sideTone, 0, true, false, true, drop);
-            const keep = sideBox.clone().expandByScalar(.06 + (s.sideSpacing || 0) * 0.8), mainKeep = mainBox.clone().expandByScalar(.06);
-            const base = radius + thick * .5 + lift;
-            satellite.rotation.order = 'ZYX';
-            for (let along = .05; along < 1.2; along += .02) {
-              const angle = sign * (sideAngle + along), track = split ? z * separation(angle) : z * bandWidth * .2;
-              const lean = Math.asin(Math.min(.65, Math.max(0, (small * 1.2 + .05 - Math.abs(track)) / drop)));
-              satellite.rotation.z = -angle; satellite.rotation.x = z * lean;
-              satellite.position.set(Math.sin(angle) * (base + Math.cos(lean) * drop), Math.cos(angle) * (base + Math.cos(lean) * drop), track + z * Math.sin(lean) * drop);
-              const box = extentOf(satellite);
-              if (!box.intersectsBox(keep) && !box.intersectsBox(mainKeep)) break;
-            }
-          }
-        if (s.sideMode === "five") {
-          // The outer stone continues the row low on the shoulder: it stands
-          // straight out of the band, just clear of the side stone.
-          const small = scale * 0.65, o = setting(s.sideShape, small, [0, 0, 0], s.sideTone, 0, false, false, true);
-          const keep = sideBox.clone().expandByScalar(.06 + (s.sideSpacing || 0) * 0.8);
-          for (let angle = .3; angle < 1.5; angle += .01) { seat(o, small, sign * angle, headDrop(small)); const box = extentOf(o); if (!box.intersectsBox(keep) && inward(box) > Math.abs(side.position.x)) break; }
         }
       }
     }
