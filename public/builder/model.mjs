@@ -796,7 +796,10 @@ const headDrop = scale => Math.max(HEAD_DROP * scale, .88 * scale + 2.2 * rodRad
     // Accent stones begin beyond every basket: the posts of the centre and
     // side stones come down onto plain metal, never between or onto stones.
     const footprint = Math.max(size + (s.style === "duet" ? size * 0.5 : 0), ...mountings.map(m => { const box = extentOf(m.assembly); return Math.max(-box.min.x, box.max.x) + .1; }));
-    const opening = Math.asin(Math.min(0.97, footprint / (radius + thick + .05)));
+    // A head that stands far down the shoulder (the outer stones of a row on a
+    // small ring) is measured by the angle it reaches round the band.
+    const reach = Math.max(0, ...mountings.map(m => { const box = extentOf(m.assembly); return Math.max(...[box.min.x, box.max.x].flatMap(x => [box.min.y, box.max.y].map(y => Math.atan2(Math.abs(x), y)))) + .05; }));
+    const opening = Math.max(Math.asin(Math.min(0.97, footprint / (radius + thick + .05))), Math.min(2.4, reach));
     // On a split shank each rail carries its own row while the rails are fully
     // apart, and one shared row once they have merged. No stone is set in the
     // short stretch where the rails are only partly merged: there is no seat.

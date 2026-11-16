@@ -76,15 +76,15 @@ test('the checker reports planted defects of every rule class', async () => {
   const A = await setup(), T = A.T;
   const inspect = (style, patch, mutate) => A.inspectDesign(A.normalize({...A.stylePreset(style), ...patch}), {exportCheck: false, mutate});
   const meshes = (raw, role) => { const found = []; raw.group.traverse(o => { if (o.isMesh && o.userData.role === role) found.push(o); }); return found; };
-  // A: one support removed → posts and body are no longer mirrored.
-  const cluster = {sideMode: 'cluster', setting: 'claw'};
-  let result = inspect('trilogy', cluster, raw => meshes(raw, 'support')[0].removeFromParent());
-  assert.ok(codes(result).includes('SUPPORTS_NOT_MIRRORED') && codes(result).includes('ELEMENTS_NOT_MIRRORED'), report(result));
+  // A: one cathedral shoulder removed → the elements are no longer mirrored.
+  const row = {sideMode: 'pair', setting: 'claw'};
+  let result = inspect('trilogy', row, raw => meshes(raw, 'shoulder')[0].removeFromParent());
+  assert.ok(codes(result).includes('ELEMENTS_NOT_MIRRORED'), report(result));
   // A: one claw turned around the stone → uneven angles.
   result = inspect('solitaire', {shape: 'round'}, raw => { const claw = meshes(raw, 'claw')[0]; claw.geometry.rotateY(.3); claw.userData.rod.points.forEach(p => p.applyAxisAngle(new T.Vector3(0, 1, 0), .3)); });
   assert.ok(codes(result).includes('CLAWS_NOT_MIRRORED') || codes(result).includes('CLAWS_UNEVEN_ANGLES'), report(result));
-  // B: a support lifted off the shank → floating end.
-  result = inspect('trilogy', cluster, raw => { for (const o of meshes(raw, 'support')) { o.geometry.translate(0, .9, 0); o.userData.rod.points.forEach(p => { p.y += .9; }); } });
+  // B: the shoulders lifted off the shank → floating ends.
+  result = inspect('trilogy', row, raw => { for (const o of meshes(raw, 'shoulder')) { o.geometry.translate(0, .9, 0); o.userData.rod.points.forEach(p => { p.y += .9; }); } });
   assert.ok(codes(result).includes('END_NOT_EMBEDDED') || codes(result).includes('NOT_ONE_CLOSED_SOLID'), report(result));
   // C: a pavé grain moved into its stone.
   result = inspect('pave', {}, raw => {

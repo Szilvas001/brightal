@@ -41,13 +41,17 @@ test('two closed solids touching at a single vertex are not a manufacturable con
  finally{a.dispose();b.dispose();joined.dispose();}
 });
 
-test('reported pavé supports avoid stones before cavity subtraction, so cutting cannot conceal severed rods',async()=>{
+test('reported pavé five-stone row: every stone stands on its own head in the shank, no strut runs through a stone',async()=>{
  await(await import('../public/builder/kernel.mjs')).initKernel();
  const T=await import('three'),{buildRing}=await import('../public/builder/model.mjs'),{normalize}=await import('../public/builder/state.mjs'),{auditMetalPenetration}=await import('../public/builder/assembly-audit.mjs');
  const c=normalize({style:'pave',shape:'pear',metal:'yellow14',carat:1.3,accents:'pave',width:2.4,size:50,prongs:8,sideShape:'princess',sideMode:'five',sideCarat:.3,height:.5,thickness:2}),m=buildRing(c),group=new T.Group();
  try{
-  assert.equal(m.contacts.length,m.mountings.filter(x=>!x.stem).length*4);assert.equal(m.contacts.length,8);assert.ok(m.contacts.every(c=>c.support.userData.stoneClearanceValid));
-  for(const mesh of [...m.contacts.map(c=>c.support),...m.gems]){const copy=mesh.clone();copy.matrixAutoUpdate=false;copy.matrix.copy(mesh.matrixWorld);group.add(copy);}
+  // The reported ring carried its outer stones on wire struts that passed through pavé stones.
+  // Every stone now has a head of its own with a neck in the shank: no struts at all.
+  assert.equal(m.contacts.length,0);assert.equal(m.mountings.length,5);assert.ok(m.mountings.every(x=>x.stem));
+  const necks=[],carriers=[];m.group.updateMatrixWorld(true);m.group.traverse(o=>{if(o.userData.role==='head-base')necks.push(o);if(o.isMesh&&['claw','post','head-base'].includes(o.userData.role))carriers.push(o);});
+  assert.equal(necks.length,5);
+  for(const mesh of [...carriers,...m.gems]){const copy=mesh.clone();copy.matrixAutoUpdate=false;copy.matrix.copy(mesh.matrixWorld);group.add(copy);}
   const audit=auditMetalPenetration({group});assert.equal(audit.valid,true,JSON.stringify(audit));
  }finally{m.group.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}
 });
