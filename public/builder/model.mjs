@@ -389,7 +389,10 @@ const headDrop = scale => Math.max(HEAD_DROP * scale, .88 * scale + 2.2 * rodRad
         // a pointed cut a radial step is not the distance to the stone).
         // Its end stays inside the wall: no thicker there than the wall carries.
         const endR = Math.max(.335, Math.min(r * 1.1, (wall + lip) * .36));
-        for (let n = 0; n < 80 && clearance(planes, end[0] / scale, end[1] / scale, end[2] / scale) * scale < endR + CLEARANCE + .04; n++) { end[0] += x / l * .01 * scale; end[2] += z / l * .01 * scale; }
+        // (The whole leg is measured with the thickness it has at each point, not only its end.)
+        const legFree = () => clearance(planes, end[0] / scale, end[1] / scale, end[2] / scale) * scale >= endR + CLEARANCE + .04
+          && [1, 2, 3, 4, 5, 6, 7].every(i => { const t = i / 8, p = foot.map((v, j) => (v + (end[j] - v) * t) / scale); return clearance(planes, p[0], p[1], p[2]) * scale >= endR + (baseR - endR) * Math.pow(1 - t, 1.4) + CLEARANCE + .012; });
+        for (let n = 0; n < 80 && !legFree(); n++) { end[0] += x / l * .01 * scale; end[2] += z / l * .01 * scale; }
         const length = Math.hypot(end[0] - foot[0], end[1] - foot[1], end[2] - foot[2]), steps = Math.max(2, Math.ceil(length / (.35 * scale)));
         const path = Array.from({length: steps + 1}, (_, i) => foot.map((v, j) => v + (end[j] - v) * i / steps));
         tag(rod(path, path.map((_, i) => endR + (baseR - endR) * Math.pow(1 - i / steps, 1.4)), assembly, head), 'post', stone, {ends: [1, 1], melee});
@@ -754,14 +757,17 @@ const headDrop = scale => Math.max(HEAD_DROP * scale, .88 * scale + 2.2 * rodRad
         // Cathedral shoulders: from the shank an arm rises on each side of the
         // band to the outer legs of the outermost head of the row and carries it
         // (on a split shank, one arm from each rail).
-        if (s.sideMode === "pair" || s.sideMode === "five") {
+        // A band set with stones has no room for them: there the heads stand on
+        // their own bases alone.
+        // (The outer stones of a five-stone row already lie low on the shoulder: no arm there either.)
+        if (s.sideMode === "pair" && s.accents === 'none') {
           const mount = mountings.find(m => m.assembly === carried);
           carried.updateMatrixWorld(true);
           for (const zs of [-1, 1]) {
             let join = null;
             // (Only a leg that comes up from the base: not the short branch of a double claw.)
             for (const leg of mount.legs.filter(leg => Math.hypot(...leg.at(-1).map((v, i) => v - leg[0][i])) > carriedScale * .7)) {
-              const p = carried.localToWorld(new T.Vector3(...leg[Math.floor(leg.length * .5)]));
+              const p = carried.localToWorld(new T.Vector3(...leg[Math.floor(leg.length * .36)]));
               if (zs * p.z > .02 && (!join || sign * p.x > sign * join.x)) join = p;
             }
             if (!join) continue;
