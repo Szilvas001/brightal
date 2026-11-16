@@ -1,6 +1,6 @@
 import * as T from 'three';
 import {getKernel} from './kernel.mjs';
-import {validateMesh,removeCollapsedTriangles,removeOppositeCoincidentTriangles,separatePinches} from './validation.mjs';
+import {validateMesh,removeCollapsedTriangles,removeOppositeCoincidentTriangles,separatePinches,separateCoincident,dropTinyShells} from './validation.mjs';
 // Failed legacy assemblies are diagnostic concepts only. The UI must not
 // display them as finished models, and exports retain the failed validation.
 export function checkModel(model) {
@@ -107,9 +107,17 @@ export function unifyLegacy(model) {
     if(checked.valid)break;
   }
   // What can remain is a closed, single body whose surfaces graze in a point.
-  let separatedPinches=0;
-  if(!checked.valid&&checked.nonManifoldVertices>0&&checked.nonManifoldVertices<=8&&checked.boundaryEdges===0&&checked.inconsistentEdges===0&&checked.degenerate===0&&checked.components===1){
-    separatedPinches=separatePinches(geo);checked=validateMesh(geo);
+  let separatedPinches=0,removedShells=[];
+  if(!checked.valid&&checked.nonFinite===0&&checked.components===1){
+    // Rebuild from the kernel's own numbering (the attempts above may have snapped it).
+    geo.dispose();mesh=own(body.simplify(.0005)).getMesh();geo=new T.BufferGeometry();const xyz=[];for(let i=0;i<mesh.vertProperties.length;i+=mesh.numProp)xyz.push(...mesh.vertProperties.slice(i,i+3));
+    geo.setAttribute('position',new T.Float32BufferAttribute(xyz,3));geo.setIndex(Array.from(mesh.triVerts));
+    for(let round=0;round<3;round++){const moved=separateCoincident(geo);separatedPinches+=moved;if(!moved)break;}
+    if(separatedPinches<=64){
+      // A bubble or crumb that hung on such a pinch is now a shell of its own.
+      const shells=dropTinyShells(geo);
+      if(shells){removedShells=shells;checked=validateMesh(removeCollapsedTriangles(geo));}
+    }
   }
   if(!checked.valid){geo.dispose();throw new Error('Triangle validation failed: '+JSON.stringify(checked));}
   const material=metals[0].material.clone();
@@ -141,7 +149,7 @@ export function unifyLegacy(model) {
   }
   metals.forEach(o=>o.removeFromParent());
   const geometry=new Set(metals.map(o=>o.geometry)),materials=new Set(metals.map(o=>o.material));geometry.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());
-  model.engineering={status:'geometry_checked',separatedPinches,removedDebrisMm3:removedDebris,metalSolids:1,volumeMm3:body.volume()/(.8**3),units:'mm',requiresWorkshopApproval:true};return checkModel(model);
+  model.engineering={status:'geometry_checked',separatedPinches,removedShellsMm3:removedShells.map(v=>v/.512),removedDebrisMm3:removedDebris,metalSolids:1,volumeMm3:body.volume()/(.8**3),units:'mm',requiresWorkshopApproval:true};return checkModel(model);
  } catch(error){checkModel(model);model.engineering.status='requires_cad_repair';model.engineering.reason=error.message;return model;}
  finally{for(let i=owned.length-1;i>=0;i--)owned[i].delete();}
 }

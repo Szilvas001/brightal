@@ -111,7 +111,7 @@ export function clawAngles(shape, scale, count, double, radius) {
     if (!double) { angles.push(a); continue; }
     const before = outline(shape, a - .001), after = outline(shape, a + .001);
     const tangent = Math.hypot(after[0] - before[0], after[1] - before[1]) / .002;
-    const pair = Math.min(Math.PI / count * .45, (radius + .06) / (scale * tangent));
+    const pair = Math.min(Math.PI / count * .45, (radius + .09) / (scale * tangent)); // the two tips lean towards each other: room for both
     angles.push(a - pair, a + pair);
   }
   return angles;

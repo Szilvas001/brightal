@@ -89,3 +89,54 @@ export function separatePinches(geometry,epsilon=2e-4){
  if(fixed){geometry.setAttribute('position',new pos.constructor(new Float32Array(P),3));geometry.setIndex(index);}
  return fixed;
 }
+
+// The kernel's mesh is a proper closed skin by its own vertex numbering. Where
+// two of its surfaces graze, two different vertices can land on the very same
+// single-precision point, and a file format without vertex numbers (STL) would
+// read them as one: a pinch of zero thickness, in a point or along an edge.
+// Each such vertex is drawn 0.4 µm into its own metal, along its own surface
+// normal, so the two surfaces are distinct again. Returns the number moved.
+export function separateCoincident(geometry,epsilon=3e-4){
+ const pos=geometry.attributes.position,index=geometry.index.array,groups=new Map();
+ for(let i=0;i<pos.count;i++){const key=[pos.getX(i),pos.getY(i),pos.getZ(i)].join(',');if(!groups.has(key))groups.set(key,[]);groups.get(key).push(i);}
+ const moved=new Set();for(const list of groups.values())if(list.length>1)for(const i of list)moved.add(i);
+ if(!moved.size)return 0;
+ const normal=new Map([...moved].map(i=>[i,[0,0,0]])),P=i=>[pos.getX(i),pos.getY(i),pos.getZ(i)];
+ for(let t=0;t<index.length;t+=3){
+  if(!moved.has(index[t])&&!moved.has(index[t+1])&&!moved.has(index[t+2]))continue;
+  const v=[P(index[t]),P(index[t+1]),P(index[t+2])];
+  for(let k=0;k<3;k++){
+   const n=normal.get(index[t+k]);if(!n)continue;
+   const a=v[k],u=v[(k+1)%3].map((x,j)=>x-a[j]),w=v[(k+2)%3].map((x,j)=>x-a[j]);
+   const c=[u[1]*w[2]-u[2]*w[1],u[2]*w[0]-u[0]*w[2],u[0]*w[1]-u[1]*w[0]],l=Math.hypot(...c);
+   if(!(l>0))continue;
+   const angle=Math.atan2(l,u[0]*w[0]+u[1]*w[1]+u[2]*w[2]);
+   for(let j=0;j<3;j++)n[j]+=c[j]/l*angle;
+  }
+ }
+ for(const [i,n] of normal){const l=Math.hypot(...n);if(!(l>0))continue;const a=P(i);pos.setXYZ(i,a[0]-n[0]/l*epsilon,a[1]-n[1]/l*epsilon,a[2]-n[2]/l*epsilon);}
+ pos.needsUpdate=true;
+ return moved.size;
+}
+
+// Closed shells of a mesh by its own vertex numbering, with their signed
+// volumes; drops every shell but the largest when all the others are smaller
+// than `limit` (a bubble or a crumb left where surfaces graze). Returns the
+// volumes removed, or null if a larger second shell exists.
+export function dropTinyShells(geometry,limit=1e-3){
+ const pos=geometry.attributes.position,index=geometry.index.array,parent=Int32Array.from({length:pos.count},(_,i)=>i);
+ const root=x=>{while(parent[x]!==x)x=parent[x]=parent[parent[x]];return x;};
+ for(let t=0;t<index.length;t+=3){parent[root(index[t])]=root(index[t+1]);parent[root(index[t+1])]=root(index[t+2]);}
+ const volume=new Map();
+ for(let t=0;t<index.length;t+=3){
+  const [a,b,c]=[0,1,2].map(k=>[pos.getX(index[t+k]),pos.getY(index[t+k]),pos.getZ(index[t+k])]);
+  const v=(a[0]*(b[1]*c[2]-b[2]*c[1])-a[1]*(b[0]*c[2]-b[2]*c[0])+a[2]*(b[0]*c[1]-b[1]*c[0]))/6,r=root(index[t]);
+  volume.set(r,(volume.get(r)||0)+v);
+ }
+ if(volume.size<2)return [];
+ const main=[...volume].sort((a,b)=>Math.abs(b[1])-Math.abs(a[1]))[0][0],removed=[...volume].filter(([r])=>r!==main).map(([,v])=>v);
+ if(removed.some(v=>Math.abs(v)>limit))return null;
+ const kept=[];for(let t=0;t<index.length;t+=3)if(root(index[t])===main)kept.push(index[t],index[t+1],index[t+2]);
+ geometry.setIndex(kept);
+ return removed;
+}
