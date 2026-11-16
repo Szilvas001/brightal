@@ -698,16 +698,17 @@ const headDrop = scale => Math.max(HEAD_DROP * scale, .88 * scale + 2.2 * rodRad
         // takes for its base to reach the shank: the claws run down to the band
         // in a long V, like the centre head's.
         const bandR = radius + thick * .5 + lift;
-        const stand = (shape, stoneScale, hero, tilt, y, clear, from) => {
-          const dropAt = x => { const along = x * Math.sin(tilt) + y * Math.cos(tilt); return along - Math.sqrt(Math.max(0, along * along - (x * x + y * y - bandR * bandR))); };
-          let x = from + (stoneScale * 1.1 + .3) * Math.cos(tilt);
-          const object = setting(shape, stoneScale, [0, 0, 0], s.sideTone, 0, hero, false, true, Math.max(headDrop(stoneScale), dropAt(x)));
-          object.rotation.z = -sign * tilt;
-          for (let n = 0; n < 300; n++, x += .02) { object.position.x = sign * x; object.position.y = y; if (clear(extentOf(object))) break; }
-          return object;
-        };
-        const sideY = top - size * .2 - Math.max(0, size - scale) * .12;
-        const side = stand(s.sideShape, scale, true, .3, sideY, box => inward(box) >= mainReach(box.max.y + .05) + .06 + (s.sideMainGap || 0) * 0.8, mainReach(sideY + .3 * scale) + (s.sideMainGap || 0) * 0.8);
+        // Its head is no taller than a centre head of its size: the base stands
+        // on the band close beside the centre head's base, and the head leans
+        // outwards from there, so the two heads open like a fan.
+        const tilt = .56, sideDrop = headDrop(scale);
+        const side = setting(s.sideShape, scale, [0, 0, 0], s.sideTone, 0, true, false, true, sideDrop);
+        side.rotation.z = -sign * tilt;
+        for (let at = .1; at < 1.4; at += .01) {
+          side.position.x = sign * (Math.sin(at) * bandR + Math.sin(tilt) * sideDrop); side.position.y = Math.cos(at) * bandR + Math.cos(tilt) * sideDrop;
+          const box = extentOf(side);
+          if (inward(box) >= mainReach(box.max.y + .05) + .06 + (s.sideMainGap || 0) * 0.8) break;
+        }
         const sideAngle = Math.atan2(Math.abs(side.position.x) + scale, side.position.y);
         const sideBox = extentOf(side);
         // Cathedral shoulders of a three-stone ring: from the shank an arm rises
@@ -724,7 +725,7 @@ const headDrop = scale => Math.max(HEAD_DROP * scale, .88 * scale + 2.2 * rodRad
               if (zs * p.z > .02 && (!join || sign * p.x > sign * join.x)) join = p;
             }
             if (!join) continue;
-            const a0 = Math.atan2(Math.abs(join.x), join.y) + .5, rs = radius + thick * .55;
+            const a0 = Math.atan2(Math.abs(join.x), join.y) + .32, rs = radius + thick * .55;
             const start = new T.Vector3(sign * Math.sin(a0) * rs, Math.cos(a0) * rs, split ? zs * separation(sign * a0) : zs * Math.min(bandWidth * .22, Math.abs(join.z)));
             // It leaves the band along the band and then turns up to the leg.
             const control = start.clone().addScaledVector(new T.Vector3(-sign * Math.cos(a0), Math.sin(a0), 0), start.distanceTo(join) * .55);
