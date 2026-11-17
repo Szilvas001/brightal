@@ -6,9 +6,10 @@ import {getKernel} from './kernel.mjs';
 // Boolean work for distant stones; intersections are measured in mm³.
 function checkedVolume(solid) {
  const volume=solid.volume();
- if(solid.status()!=='NoError'||!Number.isFinite(volume)||volume<0)
+ // A grazing contact can measure a hair below zero (-1e-10): that is zero, not an invalid solid.
+ if(solid.status()!=='NoError'||!Number.isFinite(volume)||volume<-1e-6)
   throw new Error('Invalid solid in independent collision audit');
- return volume;
+ return Math.max(0,volume);
 }
 export function auditStoneCollisions(model) {
  const {Manifold}=getKernel(),stones=[],solids=new Map(),collisions=[];
@@ -46,8 +47,15 @@ export function auditMetalPenetration(model){
  model.group.updateMatrixWorld(true);
  try{
   model.group.traverse(o=>{if(!o.isMesh)return;if(o.userData.gem){stones.push(o);return;}
-   let g=o.geometry.clone();g.applyMatrix4(o.matrixWorld);for(const key of Object.keys(g.attributes))if(key!=='position')g.deleteAttribute(key);const welded=mergeVertices(g,1e-6);g.dispose();g=welded;
-   const mesh=new Mesh({numProp:3,vertProperties:g.attributes.position.array,triVerts:new Uint32Array(g.index.array)});mesh.merge();g.dispose();const s=new Manifold(mesh);owned.push(s);if(checkedVolume(s)<=0)throw new Error('Empty metal in collision audit');metals.push(s);
+   // The shading copy splits vertices along creases; they are welded again. A
+   // finished solid can hold two distinct vertices a hair apart where surfaces
+   // graze (see validation.mjs); a coarse weld would fuse them and pinch the
+   // skin, so the weld is tried from coarse to exact.
+   const build=tolerance=>{let g=o.geometry.clone();g.applyMatrix4(o.matrixWorld);for(const key of Object.keys(g.attributes))if(key!=='position')g.deleteAttribute(key);const welded=mergeVertices(g,tolerance);g.dispose();
+    const mesh=new Mesh({numProp:3,vertProperties:welded.attributes.position.array,triVerts:new Uint32Array(welded.index.array)});mesh.merge();welded.dispose();return new Manifold(mesh);};
+   let s=null;
+   for(const tolerance of [1e-6,1e-9]){if(s)s.delete();s=build(tolerance);if(s.status()==='NoError')break;}
+   owned.push(s);if(checkedVolume(s)<=0)throw new Error('Empty metal in collision audit');metals.push(s);
   });
   for(let i=0;i<stones.length;i++){const o=stones[i],p=o.geometry.attributes.position,vertices=[];for(let j=0;j<p.count;j++)vertices.push(new T.Vector3().fromBufferAttribute(p,j).applyMatrix4(o.matrixWorld).toArray());const stone=Manifold.hull(vertices);owned.push(stone);if(checkedVolume(stone)<=0)throw new Error('Empty stone in collision audit');
    for(const metal of metals){const part=metal.intersect(stone);try{const volume=checkedVolume(part)/.8**3;if(volume>.001)collisions.push({stone:i,overlapMm3:volume});}finally{part.delete();}}

@@ -33,7 +33,7 @@ export function smoothFootprint(points,steps=6){
 export const MODERN_STYLES = ['bezelrow','scatter','chevron','ribbon','graduated','eastwest','alternating','crown','wave','rope','dome','signet','open','stack','band','eternity','curvedoval','wavebezel','openpair','contour','asymmetric','fullcircle'];
 export const SCALE = .8;
 MODERN_STYLES.push(...FASHION_STYLES.filter(s=>!MODERN_STYLES.includes(s)));
-export const MODEL_REVISION = 'geometry-rules-17';
+export const MODEL_REVISION = 'geometry-rules-18';
 const single = s => ['band','eastwest','curvedoval','wavebezel'].includes(s.style) || FASHION_STYLES.includes(s.style);
 export function modernLayout(s) {
   const inner = s.size / (2*Math.PI);
@@ -104,12 +104,17 @@ export function modernLayout(s) {
   for(let i=0;i<count;i++) {
     const angle=(i-(count-1)/2)*(s.style==='openpair'?angularStep+s.gap/radius:angularStep)+(s.style==='asymmetric'?.3:0);
     const factor=['graduated','asymmetric'].includes(s.style)?1-.3*Math.abs(i-(count-1)/2)/Math.max(1,(count-1)/2):1;
-    const shape=s.style==='alternating'&&i%2?s.sideShape:s.shape;
-    const z=shift(angle)+(['scatter','asymmetric'].includes(s.style)?(i%2?1:-1)*Math.max(0,(widthAt(angle)-s.stoneLength-2*s.bezelWall)/2)*.6:0);
+    // Every alternation along the row (shape, edge, colour) is mirrored about
+    // the centre: with an even count the two middle stones are alike (an
+    // alternation by index would turn the row instead of mirroring it).
+    const odd=count%2===0?Math.floor(Math.abs(i-(count-1)/2))%2:i%2;
+    const shape=s.style==='alternating'&&odd?s.sideShape:s.shape;
+    const side=s.style==='scatter'?(odd?1:-1):(i%2?1:-1);
+    const z=shift(angle)+(['scatter','asymmetric'].includes(s.style)?side*Math.max(0,(widthAt(angle)-s.stoneLength-2*s.bezelWall)/2)*.6:0);
     const surface=inner+thicknessAt(angle);
     stones.push({ id:`S${i+1}`, shape, length:stoneDimensions(s,shape).length*factor,width:s.stoneWidth*factor,depth:s.stoneDepth*factor,
       angle,rotation:east?Math.PI/2:s.style==='crown'?angle*.25:0,z,
-      girdleRadius:surface+.1, tone:s.alternateGems&&i%2?s.sideTone:s.gemTone });
+      girdleRadius:surface+.1, tone:s.alternateGems&&odd?s.sideTone:s.gemTone });
   }
   // A tapering band must still carry every bezel completely: wherever a stone
   // sits, the band is at least as wide as that stone's collar (rule C: no
@@ -164,7 +169,8 @@ export function buildContemporary(s, environment, colors) {
       // an architectural double band with one connected metal body.
       const grooveWidth=Math.min(width*.24,s.gap);
       const outer=own(Manifold.cylinder(40,inner+20,inner+20,128,true));
-      const innerCut=own(Manifold.cylinder(42,inner+.55,inner+.55,128,true));
+      // (The groove floor keeps 1.06 mm of metal: the minimum wall, however wide the grooves.)
+      const innerCut=own(Manifold.cylinder(42,inner+.85,inner+.85,128,true));
       const annulus=own(outer.subtract(innerCut));
       const frontRaw=own(Manifold.cube([60,30,60],true));
       const front=own(frontRaw.translate([0,15-inner*.25,0]));
