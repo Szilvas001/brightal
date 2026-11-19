@@ -74,3 +74,21 @@ test('durable email queue deduplicates, retains SMTP failures and retries before
  Mail.isSimulated=()=>false;require('../server/order-preview').attachment=async()=>null;Mail.send=async()=>{throw Error('SMTP temporarily unavailable');};await queue.tick();assert.equal(db.mailJobs.find(j=>j.id===first.id).status,'retry');
  let sent=0;Mail.send=async()=>{sent++;return{simulated:false};};await queue.tick();assert.equal(sent,0);await queue.retry(first.id);await queue.tick();await queue.tick();assert.equal(sent,2);assert.ok(db.mailJobs.all().every(j=>j.status==='sent'));
 });
+test('every notice is queued durably: admin, payment, acceptance and rejection mails wait for SMTP, then go out in process order',async t=>{
+ const cfg=require('../server/config');
+ const original={requests:db.requests,jobs:db.mailJobs,send:Mail.send,simulated:Mail.isSimulated,admin:cfg.admin.email,shop:cfg.shop.email};db.mailJobs=memory();db.requests=memory();
+ t.after(()=>{db.requests=original.requests;db.mailJobs=original.jobs;Mail.send=original.send;Mail.isSimulated=original.simulated;cfg.admin.email=original.admin;cfg.shop.email=original.shop;});
+ const r={...R.build({user:{id:'u',name:'Buyer',email:'buyer@example.test'},body:{},files:[],lang:'hu'}),status:'approved',paidAt:'now',finalOffer:null};
+ await db.requests.insert(r);
+ Mail.isSimulated=()=>true;cfg.admin.email='';cfg.shop.email='shop@example.test';
+ await Mail.contractAccepted(r);await Mail.paymentReceived(r);await Mail.adminNewRequest(r);await Mail.requestRejected(r);await Mail.paymentReceived(r);
+ assert.deepEqual(db.mailJobs.all().map(j=>j.kind).sort(),['admin','contract','payment','rejected']);
+ await queue.tick();assert.ok(db.mailJobs.all().every(j=>j.status==='pending'),'nothing is lost or dropped while SMTP is off');
+ const sent=[];Mail.isSimulated=()=>false;Mail.send=async(to,subject)=>{sent.push([to,subject]);return{simulated:false};};
+ await queue.tick();
+ assert.ok(db.mailJobs.all().every(j=>j.status==='sent'));
+ assert.deepEqual(sent.map(([to])=>to).sort(),['buyer@example.test','buyer@example.test','buyer@example.test','shop@example.test']);
+ const customer=sent.filter(([to])=>to==='buyer@example.test').map(([,s])=>s);
+ assert.ok(customer.findIndex(s=>/Fizetés/.test(s))<customer.findIndex(s=>/elfogadva/.test(s)),'payment confirmation precedes the acceptance mail');
+ const revised={...r,updatedAt:'later'};await Mail.adminNewRequest(revised);assert.equal(db.mailJobs.filter(j=>j.kind==='admin').length,2,'a revision request notifies the admin again');
+});

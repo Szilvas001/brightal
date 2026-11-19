@@ -3,8 +3,8 @@ import {inspectDesign} from './geometry-rules.mjs';
 // workshop. It is always run through the complete rule check (A–F, see
 // geometry-rules.mjs): a design that breaks any rule is marked invalid, so the
 // UI refuses to present it as finished and the server refuses the order.
-export function buildFinishedRing(config){
- const result=inspectDesign(config,{keepModel:true,exportCheck:false}),model=result.model;
+export function buildFinishedRing(config,{onSolid}={}){
+ const result=inspectDesign(config,{keepModel:true,exportCheck:false,onSolid}),model=result.model;
  if(!model)throw new Error(result.violations.map(v=>v.details[0]).join('; ')||'Ring geometry could not be built');
  const audit=model.engineering.assemblyValidation;
  const codes=result.violations.map(v=>v.code).filter(code=>!audit.issues.includes(code));

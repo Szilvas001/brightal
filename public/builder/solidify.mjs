@@ -91,9 +91,9 @@ export function unifyLegacy(model) {
     geo?.dispose();
     const cleaned=own(body.simplify(tolerance));
     mesh=cleaned.getMesh();geo=new T.BufferGeometry();const xyz=[];for(let i=0;i<mesh.vertProperties.length;i+=mesh.numProp)xyz.push(...mesh.vertProperties.slice(i,i+3));
-    geo.setAttribute('position',new T.Float32BufferAttribute(xyz,3));geo.setIndex(Array.from(mesh.triVerts));geo.computeVertexNormals();
+    // (Shading normals are computed once, at the end: creasedNormals.)
+    geo.setAttribute('position',new T.Float32BufferAttribute(xyz,3));geo.setIndex(Array.from(mesh.triVerts));
     removeOppositeCoincidentTriangles(geo);
-    geo.computeVertexNormals();
     checked=validateMesh(removeCollapsedTriangles(geo));
     if(!checked.valid&&checked.nonFinite===0&&checked.components===1){
       // Float32 exports can separate the ends of a collapsed edge by one ULP.
@@ -101,7 +101,7 @@ export function unifyLegacy(model) {
       // Keep original indices for material provenance, and recheck every surface.
       const p=geo.attributes.position,grid=.000001;
       for(let i=0;i<p.count;i++)p.setXYZ(i,Math.round(p.getX(i)/grid)*grid,Math.round(p.getY(i)/grid)*grid,Math.round(p.getZ(i)/grid)*grid);
-      removeOppositeCoincidentTriangles(geo);removeCollapsedTriangles(geo);geo.computeVertexNormals();
+      removeOppositeCoincidentTriangles(geo);removeCollapsedTriangles(geo);
       checked=validateMesh(geo);
     }
     if(checked.valid)break;

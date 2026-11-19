@@ -184,7 +184,10 @@ export function buildContemporary(s, environment, colors) {
         body=own(body.subtract(cut));
       }
     }
-    const schedule=[];
+    // All collars are joined to the band in one Boolean and all seats cut in
+    // another: much faster than stone by stone, and no collar can fill the seat
+    // of a stone placed before it.
+    const schedule=[],collars=[],cuts=[];
     for(const stone of stones) {
       const {geometry,planes}=gemGeometry(stone.shape);
       geometry.computeBoundingBox();
@@ -205,30 +208,32 @@ export function buildContemporary(s, environment, colors) {
       const collarTurned=own(collarRaw.rotate([90,0,0]));
       const collarMoved=own(collarTurned.translate([0,.18,0]));
       const collar=own(collarMoved.transform(matrix.elements));
-      body=own(body.add(collar));
+      collars.push(collar);
       // Cut the exact scaled stone volume plus a small radial setting clearance.
       const points=geometry.attributes.position;
       const verts=[];
       for(let i=0;i<points.count;i++) verts.push(new T.Vector3().fromBufferAttribute(points,i).multiply(scale).applyMatrix4(matrix).toArray());
       const cavity=own(Manifold.hull(verts));
-      body=own(body.subtract(cavity));
+      cuts.push(cavity);
       // Open the top of the seat above the girdle to allow insertion. Final lip
       // burnishing and allowance are workshop operations, not simulated claims.
       const openRaw=own(section.extrude(4));
       const openRotated=own(openRaw.rotate([90,0,0]));
       const openTurned=own(openRotated.translate([0,4,0]));
       const openCut=own(openTurned.transform(matrix.elements));
-      body=own(body.subtract(openCut));
+      cuts.push(openCut);
       const boreRaw=own(Manifold.cylinder(stone.depth+thicknessAt(stone.angle)+4,Math.min(stone.width,stone.length)*.19,Math.min(stone.width,stone.length)*.19,32));
       const boreTurned=own(boreRaw.rotate([90,0,0]));
       const bore=own(boreTurned.transform(matrix.elements));
-      body=own(body.subtract(bore));
+      cuts.push(bore);
       const gem=new T.Mesh(geometry,gemstoneMaterial(planes,environment,stone.tone,s.color,s.light,s.fire));
       gem.matrixAutoUpdate=false;
       gem.matrix.copy(new T.Matrix4().makeScale(SCALE,SCALE,SCALE).multiply(matrix).multiply(new T.Matrix4().makeScale(scale.x,scale.y,scale.z)));
       gem.userData={gem:true,tone:stone.tone,stoneId:stone.id,shape:stone.shape,onBand:true,set:'collar'};group.add(gem);gems.push(gem);
       schedule.push({...stone,positionMm:[Math.sin(stone.angle)*stone.girdleRadius,Math.cos(stone.angle)*stone.girdleRadius,stone.z]});
     }
+    if(collars.length)body=own(Manifold.union([body,...collars]));
+    if(cuts.length)body=own(body.subtract(own(Manifold.union(cuts))));
     if(body.status()!=='NoError'||body.isEmpty()) throw new Error(`Invalid solid: ${body.status()}`);
     const components=body.decompose();
     const componentCount=components.length;components.forEach(x=>x.delete());

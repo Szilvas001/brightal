@@ -16,9 +16,11 @@ export class GeometryClient {
     this.worker = worker;
     worker.onmessage = ({ data }) => {
       if (this.disposed || worker !== this.worker || data.id !== this.id) return;
+      // An early message carries the finished solid while its checks still run.
+      if (data.early) { this.onModel(data.packed, { early: true }); return; }
       this.busy = false;
       if (data.error) this.fail(data.error);
-      else this.onModel(data.packed);
+      else this.onModel(data.packed, { early: false });
     };
     worker.onerror = event => {
       if (this.disposed || worker !== this.worker) return;

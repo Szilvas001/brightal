@@ -129,7 +129,7 @@ export function oddMoments(object) {
 
 // `mutate` receives the raw (uncut) model before any check; the regression
 // tests use it to plant known defects and prove that the checker reports them.
-export function inspectDesign(input, {exportCheck = true, keepModel = false, mutate} = {}) {
+export function inspectDesign(input, {exportCheck = true, keepModel = false, mutate, onSolid} = {}) {
   const s = normalize(input), {Manifold} = getKernel();
   const owned = [], own = x => (owned.push(x), x);
   const violations = [], metrics = {};
@@ -344,6 +344,9 @@ export function inspectDesign(input, {exportCheck = true, keepModel = false, mut
     metrics.boreMarginMm = audit.minimumBoreRadiusMm - audit.requestedBoreRadiusMm;
 
     mark('unify');
+    // The solid is complete: a caller may show it while the remaining checks
+    // run (the verdict follows; nothing is ordered before it).
+    if (onSolid && metalMeshes.length === 1 && engineering.meshValidation?.valid && !violations.length) onSolid(model);
     if (metalMeshes.length === 1 && engineering.meshValidation?.valid) {
       const body = meshSolid(metalMeshes[0], own), bodyVolume = volume(body);
       metrics.metalVolumeMm3 = bodyVolume / MM3;

@@ -83,14 +83,15 @@ const money = v => new Intl.NumberFormat('hu-HU').format(v) + ' ' + cfg.currency
    ══════════════════════════════════════════════════════════════════ */
 
 const escapeHtml=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function notice(r,subject,text){return send(r.customer.email,subject,text,wrap(subject,`<div style="white-space:pre-wrap;line-height:1.7">${escapeHtml(text)}</div>`));}
+function message(r,subject,text){return {to:r.customer.email,subject,text,html:wrap(subject,`<div style="white-space:pre-wrap;line-height:1.7">${escapeHtml(text)}</div>`)};}
 function offerText(r){const o=r.finalOffer;if(!o)return `Azonosító: ${r.requestNumber}\nÁr: ${money(r.price)}`;return `Azonosító: ${r.requestNumber}\n${o.specification}\n\nÉkszer: ${money(o.productPrice)}\nSzállítás: ${money(o.shippingFee)}\nFizetendő végösszeg: ${money(o.total)}\nGyártási idő: ${o.productionTime}\nÁtadás / feladás: ${o.deliveryTime}\nSzállítás: ${o.shippingMethod}\nFizetési feltételek: ${o.paymentTerms}\nÉrvényesség: ${o.validUntil}\nLátványterv: ${o.previewUrl.startsWith('/')?cfg.publicUrl:''}${o.previewUrl}\nAjánlat azonosítója: ${o.id}`;}
 function requestReceived(r){return require('./order-mail-queue').enqueue(r,'received');}
 function requestApproved(r){return require('./order-mail-queue').enqueue(r,'approved');}
-function contractAccepted(r){return notice(r,`Megrendelés elfogadva — ${r.requestNumber}`,`Kedves ${r.customer.name}!\n\nMegrendelését elfogadtuk. Fizetése beérkezett, a teljesítés előtti ellenőrzések lezárultak.\n\n${offerText(r)}\n\nJóváhagyás: ${r.acceptance?.at}\nSzállítási cím: ${r.acceptance?.shippingAddress}\nA gyártás és a kiszállítás állapotát a privát hivatkozáson követheti: ${require("./guest-access").url(r)}`);}
+function composeContract(r){return message(r,`Megrendelés elfogadva — ${r.requestNumber}`,`Kedves ${r.customer.name}!\n\nMegrendelését elfogadtuk. Fizetése beérkezett, a teljesítés előtti ellenőrzések lezárultak.\n\n${offerText(r)}\n\nJóváhagyás: ${r.acceptance?.at}\nSzállítási cím: ${r.acceptance?.shippingAddress}\nA gyártás és a kiszállítás állapotát a privát hivatkozáson követheti: ${require("./guest-access").url(r)}`);}
 
 /** 3) Elutasítva */
-function requestRejected(req_, lang = 'hu') {
+function composeRejected(req_) {
+  const lang = req_.lang || 'hu';
   const hu = lang === 'hu';
   const subject = hu ? `A kérésedről — ${req_.requestNumber}` : `About your request — ${req_.requestNumber}`;
   const text = hu
@@ -100,27 +101,40 @@ function requestRejected(req_, lang = 'hu') {
     : `Dear ${req_.customer.name},\n\nUnfortunately we are unable to craft this particular ring.\n\n`
     + (req_.adminNote ? `Reason: ${req_.adminNote}\n\n` : '')
     + `You are welcome to upload another photo — we are happy to help.\n\nWarm regards,\n${cfg.shop.name}`;
-  return send(req_.customer.email, subject, text, wrap(hu ? 'A kérésedről' : 'About your request',
-    `<p style="color:#4A2C1F;line-height:1.75;font-size:15px">${text.split('\n\n').slice(1).join('<br><br>')}</p>`));
+  return { to: req_.customer.email, subject, text, html: wrap(hu ? 'A kérésedről' : 'About your request',
+    `<p style="color:#4A2C1F;line-height:1.75;font-size:15px">${text.split('\n\n').slice(1).join('<br><br>')}</p>`) };
 }
 
-function paymentReceived(r,lang='hu') {
- return notice(r,`${lang==='hu'?'Fizetés beérkezett':'Payment received'} — ${r.requestNumber}`,`Kedves ${r.customer.name}!\n\nFizetése beérkezett. Köszönjük!\n\n${offerText(r)}\n\nA fizetés visszaigazolása önmagában nem jelenti a gyártás megkezdését. A megrendelés elfogadásáról és teljesítéséről külön értesítjük. A számlát a számlázási szolgáltatón keresztül küldjük meg.\n\n${require("./guest-access").url(r)}`);
+function composePayment(r) {
+ const lang=r.lang||'hu';
+ return message(r,`${lang==='hu'?'Fizetés beérkezett':'Payment received'} — ${r.requestNumber}`,`Kedves ${r.customer.name}!\n\nFizetése beérkezett. Köszönjük!\n\n${offerText(r)}\n\nA fizetés visszaigazolása önmagában nem jelenti a gyártás megkezdését. A megrendelés elfogadásáról és teljesítéséről külön értesítjük. A számlát a számlázási szolgáltatón keresztül küldjük meg.\n\n${require("./guest-access").url(r)}`);
 }
 
 /** 5) Admin értesítés új kérésről */
-function adminNewRequest(req_) {
+function adminRecipient(){const from=String(cfg.mail.from||'').match(/<([^>]+)>/)?.[1]||cfg.mail.from;return cfg.admin.email||cfg.shop.email||from||'';}
+function composeAdmin(req_) {
   const url = `${cfg.publicUrl}/admin`;
   const text = `Új kérés érkezett.\n\nAzonosító: ${req_.requestNumber}\n`
     + `Ügyfél: ${req_.customer.name} (${req_.customer.email})\n`
-    + `Képek: ${req_.images.length} db\n`
+    + `Képek: ${(req_.images||[]).length} db\n`
     + (req_.note ? `Megjegyzés: ${req_.note}\n` : '')
     + `\nÁrazás: ${url}`;
-  return send(cfg.admin.email, `[ADMIN] Új kérés — ${req_.requestNumber}`, text,
-    wrap('Új kérés érkezett', `<pre style="font-family:Helvetica,Arial,sans-serif;font-size:14px;color:#4A2C1F;white-space:pre-wrap">${escapeHtml(text)}</pre>`));
+  return { to: adminRecipient(), subject: `[ADMIN] Új kérés — ${req_.requestNumber}`, text,
+    html: wrap('Új kérés érkezett', `<pre style="font-family:Helvetica,Arial,sans-serif;font-size:14px;color:#4A2C1F;white-space:pre-wrap">${escapeHtml(text)}</pre>`) };
 }
 
+/* Every message goes through the durable queue: it is recorded, retried when
+   SMTP fails or is not configured yet, and listed for the order in the admin. */
+const queue=(r,kind)=>require('./order-mail-queue').enqueue(r,kind);
+const contractAccepted=r=>queue(r,'contract');
+const paymentReceived=r=>queue(r,'payment');
+const requestRejected=r=>queue(r,'rejected');
+const adminNewRequest=r=>queue(r,'admin');
+const COMPOSERS={contract:composeContract,payment:composePayment,rejected:composeRejected,admin:composeAdmin};
+function compose(request,kind){return COMPOSERS[kind](request);}
+
 module.exports = {
+  compose, adminRecipient,
   send, contractAccepted, requestReceived, requestApproved, requestRejected, paymentReceived, adminNewRequest,
   startWorker: () => require('./order-mail-queue').start().catch(e=>console.error('[mail queue]',e.message)),
   isSimulated: () => !transporter

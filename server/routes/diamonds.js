@@ -20,7 +20,7 @@ router.post('/sourcing',auth.requireUser,async(req,res)=>{try{
  request.note=`Laboratóriumi kő beszerzési igény · ${c.shape} · ${c.carat} ct · ${c.color}/${c.clarity}. Készlet, IGI és végleges ár egyeztetendő.`;
  request.details.metal='Loose diamond';request.sourcing=c;
  try{const estimate=supplier.estimate(c);request.estimatedPrice=estimate.retailGrossHuf;request.note+=` Tájékoztató becsült bruttó ár: ${estimate.retailGrossHuf} Ft.`;}catch{}
- await db.requests.insert(request);await require('../mailer').requestReceived(request);res.json({request:R.toPublic(request)});
+ await db.requests.insert(request);await require('../mailer').requestReceived(request);require('../mailer').adminNewRequest(request).catch(e=>console.error('[mail]',e.message));res.json({request:R.toPublic(request)});
 }catch(e){res.status(400).json({error:e.message});}});
 router.get('/',(req,res)=>{try{
  const items=D.filter(D.catalogue().map(D.publicStone),req.query);
@@ -56,7 +56,7 @@ router.post('/combination/order',auth.requireUser,(req,res)=>{
   request.details.metal='Loose diamond';
   request.note=`Egyedileg beszerzendő laboratóriumi gyémánt · ${c.shape} · ${c.carat} ct · ${c.color}/${c.clarity}. A megrendelésben rögzített bruttó ár: ${offer.price} Ft. Tanúsítvány a beszerzéskor.`;
   request.history.push({at:offer.acceptedAt,event:'combination_order',price:offer.price});
-  await db.requests.insert(request);await require('../mailer').requestReceived(request);res.json({request:R.toPublic(request)});
+  await db.requests.insert(request);await require('../mailer').requestReceived(request);require('../mailer').adminNewRequest(request).catch(e=>console.error('[mail]',e.message));res.json({request:R.toPublic(request)});
  };
  ordering=ordering.then(run,run).catch(e=>{if(!res.headersSent)res.status(409).json({error:['INVALID_COMBINATION','PRICE_CHANGED','NO_SUPPLIER_OBSERVATIONS','PRICE_UNAVAILABLE'].includes(e.message)?e.message:'ORDER_FAILED'});});
 });
@@ -91,7 +91,7 @@ router.post('/order',auth.requireUser,(req,res)=>{
   request.diamond=D.publicStone(stone);request.price=checked.price;request.accounting=checked.accounting;if(require('../config').payment.method!=='bank_transfer'){request.status='approved';request.approvedAt=new Date().toISOString();}
   request.note=`Laboratóriumi gyémánt · ${stone.shape} · ${stone.carat} ct · ${stone.color}/${stone.clarity} · IGI ${stone.certificate.number}`;
   request.details.metal='Loose diamond';request.history.push({at:request.approvedAt,event:'diamond_order'});
-  await db.requests.insert(request);await require('../mailer').requestReceived(request);res.json({request:R.toPublic(request)});
+  await db.requests.insert(request);await require('../mailer').requestReceived(request);require('../mailer').adminNewRequest(request).catch(e=>console.error('[mail]',e.message));res.json({request:R.toPublic(request)});
  };
  ordering=ordering.then(run,run).catch(e=>{console.error('Diamond order:',e.message);if(!res.headersSent)res.status(500).json({error:'SERVER_ERROR'});});
 });

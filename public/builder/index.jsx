@@ -259,6 +259,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
   const thumbs = PRESETS.map(p=>thumbnailUrl(p.config));
   const worker = useRef(null);
   const [refining,setRefining] = useState(true);
+  const [checking,setChecking] = useState(false);
   const [family, setFamily] = useState("all");
   const [styleSearch, setStyleSearch] = useState("");
   const controls = useRef(null);
@@ -322,16 +323,23 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
   useEffect(() => {
     try {
       engine.current = new RingRenderer(host.current, () => setError(true));
-      worker.current = new GeometryClient(packed => {
+      worker.current = new GeometryClient((packed,{early}={}) => {
         if(!engine.current)return;
         const issues=packed.engineering?.assemblyValidation?.issues||['METAL_AUDIT_FAILED'];
-        if(!issues.length){engine.current.update(latest.current,unpackModel(packed,engine.current.studioTexture));engine.current.group.visible=true;}
+        // The solid is shown as soon as it exists; the design counts as ready
+        // (orderable) only once every rule check has passed.
+        if(early){
+          if(!issues.length){engine.current.update(latest.current,unpackModel(packed,engine.current.studioTexture));engine.current.group.visible=true;}
+          host.current.dataset.quality='checking';host.current.dataset.renderedStyle=latest.current.style;
+          setChecking(!issues.length);setError(false);return;
+        }
+        if(!issues.length){if(packed.object){engine.current.update(latest.current,unpackModel(packed,engine.current.studioTexture));}engine.current.group.visible=true;}
         else {engine.current.disposeModel();engine.current.config=null;}
         host.current.dataset.geometryMs=packed.buildMs.toFixed(1);
         host.current.dataset.quality=issues.length?'invalid':'detailed';
         host.current.dataset.renderedStyle=latest.current.style;
-        setRefining(false);setError(false);setGeometryIssues(issues);setReady(!issues.length);
-      }, error => {console.error(error);setError(true);setRefining(false);});
+        setRefining(false);setChecking(false);setError(false);setGeometryIssues(issues);setReady(!issues.length);
+      }, error => {console.error(error);setError(true);setRefining(false);setChecking(false);});
     } catch(e) {console.error(e);setError(true);}
     return () => {worker.current?.dispose();engine.current?.dispose();engine.current=null;clearTimeout(timer.current);};
   }, []);
@@ -345,7 +353,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
       // Never show uncut preview metal or a stale design while checking seats.
       engine.current.group.visible=false;
       host.current.dataset.previewMs=(performance.now()-start).toFixed(1);
-      host.current.dataset.quality='preview';setReady(false);setRefining(true);setError(false);
+      host.current.dataset.quality='preview';setReady(false);setRefining(true);setChecking(false);setError(false);
       host.current.dataset.renderedStyle=s.style;
       worker.current.request(s);
     } catch(e){console.error(e);setError(true);}
@@ -763,7 +771,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
           <div ref={host} className="rb-canvas" />
           {!ready && !error && (
             <div className="rb-progress">
-              {L("Részletes modell betöltése…", "Opening the atelier…")}
+              {checking?L("Gyárthatósági ellenőrzés…", "Checking manufacturability…"):L("Részletes modell betöltése…", "Opening the atelier…")}
             </div>
           )}
           {!refining&&geometryIssues.length>0&&<div className="rb-geometry-warning" role="alert"><strong>{L('Ez a beállítás még nem adható le.', 'This configuration cannot be submitted yet.')}</strong><p>{geometryIssues.map(issue=>({SUPPORT_INTERSECTS_STONE:L('A tartórúd útjában kő van. Módosítsd a kőméretet vagy a térközt.','A support route is obstructed by a stone. Change the stone size or spacing.'),METAL_INTERSECTS_STONE:L('A foglalat belenyúlik a kőbe. Válassz más foglalatot vagy kőméretet.','The setting intersects a stone. Change the setting or stone dimensions.'),METAL_AUDIT_FAILED:L('A fém és a kövek illeszkedése nem igazolható. Módosítsd a tervet.','Metal/stone fit could not be verified. Revise the design.'),STONES_INTERSECT:L('Egyes kövek egymásba érnek. Csökkentsd a kőméretet vagy növeld a térközt.','Some stones overlap. Reduce stone size or increase spacing.'),METAL_NOT_CLOSED:L('A foglalat vagy a gyűrűtest nem alkot megfelelően zárt testet. Módosítsd a foglalatot vagy az arányokat.','The setting or band is not a valid closed solid. Change the setting or proportions.'),FINGER_CLEARANCE:L('A belső méretbe kő vagy foglalat nyúlik. Csökkentsd a követ vagy emeld a foglalatot.','A stone or setting intrudes into the finger opening. Reduce the stone or raise the setting.')}[issue]||issue)).join(' ')}</p><button type="button" onClick={undo}>{L('Utolsó módosítás visszavonása','Undo last change')}</button></div>}

@@ -1,54 +1,86 @@
+// Vertices are identified by their exact coordinates (the same rule as before,
+// written with typed arrays and numeric keys: a finished ring has 10⁵ vertices
+// and these checks run on every design shown).
+function positionIds(pos) {
+ const n=pos.count,ids=new Int32Array(n),bits=new Uint32Array(3),view=new Float32Array(bits.buffer);
+ let size=1;while(size<n*2)size<<=1;
+ const table=new Int32Array(size).fill(-1),first=[];let unique=0;
+ const x=new Float64Array(n),y=new Float64Array(n),z=new Float64Array(n);
+ for(let i=0;i<n;i++){
+  const px=pos.getX(i),py=pos.getY(i),pz=pos.getZ(i);x[i]=px;y[i]=py;z[i]=pz;
+  view[0]=px+0;view[1]=py+0;view[2]=pz+0;
+  let h=(Math.imul(bits[0]^(bits[0]>>>15),0x2c1b3c6d)^Math.imul(bits[1]^(bits[1]>>>13),0x297a2d39)^Math.imul(bits[2]^(bits[2]>>>11),0x5bd1e995))>>>0;
+  // (Exact equality of the stored values; +0 and -0 count as equal.)
+  for(let slot=h&(size-1);;slot=(slot+1)&(size-1)){
+   const j=table[slot];
+   if(j<0){table[slot]=i;ids[i]=unique++;first.push(i);break;}
+   if(x[j]===px&&y[j]===py&&z[j]===pz){ids[i]=ids[j];break;}
+  }
+ }
+ return {ids,unique,first,x,y,z};
+}
 export function removeCollapsedTriangles(geometry) {
- const p=geometry.attributes.position,idx=geometry.index,kept=[];
- const count=idx?idx.count:p.count;
- for(let i=0;i<count;i+=3){const raw=[0,1,2].map(k=>idx?idx.getX(i+k):i+k);const keys=raw.map(k=>[p.getX(k),p.getY(k),p.getZ(k)].join(','));if(new Set(keys).size===3)kept.push(...raw);}
+ const p=geometry.attributes.position,idx=geometry.index,count=idx?idx.count:p.count,{ids}=positionIds(p),kept=[];
+ for(let i=0;i<count;i+=3){const a=idx?idx.getX(i):i,b=idx?idx.getX(i+1):i+1,c=idx?idx.getX(i+2):i+2;if(ids[a]!==ids[b]&&ids[b]!==ids[c]&&ids[a]!==ids[c])kept.push(a,b,c);}
  geometry.setIndex(kept);return geometry;
 }
 // Independent indexed triangle checks used for workshop exports and tests.
 export function validateMesh(geometry) {
- const pos=geometry.attributes.position,idx=geometry.index,edges=new Map();
- const vertices=new Map(),ids=[];let nonFinite=0,degenerate=0,volume=0;
- for(let i=0;i<pos.count;i++){
-  const p=[pos.getX(i),pos.getY(i),pos.getZ(i)];if(!p.every(Number.isFinite))nonFinite++;
-  const key=p.join(',');if(!vertices.has(key))vertices.set(key,vertices.size);ids.push(vertices.get(key));
- }
- const count=idx?idx.count:pos.count;const adjacency=new Map(),links=new Map();
+ const pos=geometry.attributes.position,idx=geometry.index;
+ const {ids,unique,first,x,y,z}=positionIds(pos);
+ let nonFinite=0,degenerate=0,volume=0;
+ for(let i=0;i<pos.count;i++)if(!(Number.isFinite(x[i])&&Number.isFinite(y[i])&&Number.isFinite(z[i])))nonFinite++;
+ const count=idx?idx.count:pos.count;
+ // Edges keyed by the pair of vertex ids (a number): how often used, and the
+ // balance of their two directions (+1 / -1).
+ const edgeCount=new Map(),edgeBalance=new Map();
+ const parent=Int32Array.from({length:unique},(_,i)=>i),find=v=>{while(parent[v]!==v)v=parent[v]=parent[parent[v]];return v;};
+ const used=new Uint8Array(unique),faceA=[],faceB=[],faceC=[];
  for(let i=0;i<count;i+=3){
-  const raw=[0,1,2].map(k=>idx?idx.getX(i+k):i+k),v=raw.map(k=>ids[k]);
-  if(new Set(v).size<3){degenerate++;continue;}
-  for(let k=0;k<3;k++){
-   const link=links.get(v[k])||[];link.push(v[(k+1)%3],v[(k+2)%3]);links.set(v[k],link);
+  const r0=idx?idx.getX(i):i,r1=idx?idx.getX(i+1):i+1,r2=idx?idx.getX(i+2):i+2,v0=ids[r0],v1=ids[r1],v2=ids[r2];
+  if(v0===v1||v1===v2||v0===v2){degenerate++;continue;}
+  faceA.push(v0);faceB.push(v1);faceC.push(v2);
+  volume+=(x[r0]*(y[r1]*z[r2]-z[r1]*y[r2])+y[r0]*(z[r1]*x[r2]-x[r1]*z[r2])+z[r0]*(x[r1]*y[r2]-y[r1]*x[r2]))/6;
+  for(const [a,b] of [[v0,v1],[v1,v2],[v2,v0]]){
+   const key=a<b?a*unique+b:b*unique+a;
+   edgeCount.set(key,(edgeCount.get(key)||0)+1);edgeBalance.set(key,(edgeBalance.get(key)||0)+(a<b?1:-1));
+   used[a]=1;parent[find(a)]=find(b);
   }
-  const p=raw.map(k=>[pos.getX(k),pos.getY(k),pos.getZ(k)]),[a,b,c]=p;
-  volume+=(a[0]*(b[1]*c[2]-b[2]*c[1])+a[1]*(b[2]*c[0]-b[0]*c[2])+a[2]*(b[0]*c[1]-b[1]*c[0]))/6;
-  for(let k=0;k<3;k++){const x=v[k],y=v[(k+1)%3],key=x<y?`${x}:${y}`:`${y}:${x}`;const e=edges.get(key)||{count:0,balance:0};e.count++;e.balance+=x<y?1:-1;edges.set(key,e);if(!adjacency.has(x))adjacency.set(x,new Set());adjacency.get(x).add(y);}
  }
- let components=0;const seen=new Set();for(const start of adjacency.keys()){if(seen.has(start))continue;components++;const stack=[start];while(stack.length){const v=stack.pop();if(seen.has(v))continue;seen.add(v);for(const n of adjacency.get(v)||[])if(!seen.has(n))stack.push(n);}}
- const vertexKeys=[...vertices.keys()];
- const problemEdges=[...edges.entries()].filter(([,e])=>e.count!==2||e.balance!==0).slice(0,8).map(([key,e])=>({points:key.split(':').map(i=>vertexKeys[Number(i)]),...e}));
- const boundaryEdges=[...edges.values()].filter(x=>x.count!==2).length,inconsistentEdges=[...edges.values()].filter(x=>x.balance!==0).length;
+ let components=0;for(let v=0;v<unique;v++)if(used[v]&&find(v)===v)components++;
+ let boundaryEdges=0,inconsistentEdges=0;const problemEdges=[],keyOf=v=>[x[first[v]],y[first[v]],z[first[v]]].join(',');
+ for(const [key,n] of edgeCount){
+  const balance=edgeBalance.get(key);
+  if(n!==2)boundaryEdges++;if(balance!==0)inconsistentEdges++;
+  if((n!==2||balance!==0)&&problemEdges.length<8)problemEdges.push({points:[keyOf(Math.floor(key/unique)),keyOf(key%unique)],count:n,balance});
+ }
  // Closed edges alone do not rule out two solids touching at one vertex.
  // The triangles around each vertex must form one continuous fan.
+ const start=new Int32Array(unique+1),faces=faceA.length;
+ for(let f=0;f<faces;f++){start[faceA[f]+1]++;start[faceB[f]+1]++;start[faceC[f]+1]++;}
+ for(let v=0;v<unique;v++)start[v+1]+=start[v];
+ const fill=start.slice(0,unique),linkA=new Int32Array(faces*3),linkB=new Int32Array(faces*3);
+ for(let f=0;f<faces;f++){const t=[faceA[f],faceB[f],faceC[f]];for(let k=0;k<3;k++){const at=fill[t[k]]++;linkA[at]=t[(k+1)%3];linkB[at]=t[(k+2)%3];}}
  let nonManifoldVertices=0;
- for(const link of links.values()){
-  const parent=new Map();
-  const root=x=>{while(parent.get(x)!==x)x=parent.get(x);return x;};
-  for(let i=0;i<link.length;i+=2){const a=link[i],b=link[i+1];if(!parent.has(a))parent.set(a,a);if(!parent.has(b))parent.set(b,b);parent.set(root(a),root(b));}
-  if(new Set([...parent.keys()].map(root)).size!==1)nonManifoldVertices++;
+ for(let v=0;v<unique;v++){
+  const from=start[v],to=start[v+1];if(to-from<2)continue;
+  const nodes=[],up=[];const node=w=>{let i=nodes.indexOf(w);if(i<0){i=nodes.length;nodes.push(w);up.push(i);}return i;};
+  const root=i=>{while(up[i]!==i)i=up[i];return i;};
+  for(let c=from;c<to;c++){const a=node(linkA[c]),b=node(linkB[c]);up[root(a)]=root(b);}
+  const r=root(0);for(let i=1;i<nodes.length;i++)if(root(i)!==r){nonManifoldVertices++;break;}
  }
- return {valid:nonManifoldVertices===0&&nonFinite===0&&degenerate===0&&boundaryEdges===0&&inconsistentEdges===0&&components===1&&volume>0,nonManifoldVertices,problemEdges,vertices:vertices.size,triangles:count/3,nonFinite,degenerate,boundaryEdges,inconsistentEdges,components,signedVolume:volume};
+ return {valid:nonManifoldVertices===0&&nonFinite===0&&degenerate===0&&boundaryEdges===0&&inconsistentEdges===0&&components===1&&volume>0,nonManifoldVertices,problemEdges,vertices:unique,triangles:count/3,nonFinite,degenerate,boundaryEdges,inconsistentEdges,components,signedVolume:volume};
 }
 
 // Float32 conversion can collapse a Boolean sliver into two exactly coincident,
 // oppositely wound triangles. Cancel only those pairs; same-winding duplicates
 // remain invalid and are caught by validateMesh. No vertex is moved.
 export function removeOppositeCoincidentTriangles(geometry) {
- const p=geometry.attributes.position,idx=geometry.index,faces=new Map();
+ const p=geometry.attributes.position,idx=geometry.index,faces=new Map(),{ids}=positionIds(p);
  for(let i=0;i<(idx?idx.count:p.count);i+=3){
-  const raw=[0,1,2].map(k=>idx?idx.getX(i+k):i+k);
-  const keys=raw.map(k=>[p.getX(k),p.getY(k),p.getZ(k)].join(','));
-  if(new Set(keys).size<3)continue;
-  const sorted=[...keys].sort(),key=sorted.join('|');
+  const raw=[0,1,2].map(k=>idx?idx.getX(i+k):i+k),keys=raw.map(k=>ids[k]);
+  if(keys[0]===keys[1]||keys[1]===keys[2]||keys[0]===keys[2])continue;
+  const sorted=[...keys].sort((a,b)=>a-b),key=sorted.join(',');
   const start=keys.indexOf(sorted[0]),sign=keys[(start+1)%3]===sorted[1]?1:-1;
   const pending=faces.get(key)||[],opposite=pending.findIndex(f=>f.sign!==sign);
   if(opposite>=0)pending.splice(opposite,1);else pending.push({raw,sign});

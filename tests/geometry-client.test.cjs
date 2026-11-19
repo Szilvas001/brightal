@@ -19,3 +19,21 @@ test('a poisoned WASM worker is replaced once; persistent errors are reported an
 test('unmount cancels pending work and ignores all later worker callbacks',async()=>{
  const {client,workers,models,errors}=await fixture();client.request({style:'halo'});client.dispose();await tick();assert.equal(workers[0].messages.length,0);assert.equal(workers[0].terminated,true);workers[0].onmessage({data:{id:client.id,packed:'late'}});workers[0].onerror({message:'late'});assert.deepEqual(models,[]);assert.deepEqual(errors,[]);
 });
+test('an early solid is shown while its checks run; the job stays active until the verdict',async()=>{
+ const {GeometryClient}=await import('../public/builder/geometry-client.mjs');const calls=[];let worker;
+ const client=new GeometryClient((model,info)=>calls.push([model,info.early]),()=>{},{delay:0,createWorker:()=>(worker={messages:[],postMessage(d){this.messages.push(d);},terminate(){}})});
+ try{client.request({style:'halo'});await tick();const id=worker.messages[0].id;
+  worker.onmessage({data:{id,early:true,packed:'solid'}});assert.deepEqual(calls,[['solid',true]]);assert.equal(client.busy,true);
+  worker.onmessage({data:{id,packed:'verdict'}});assert.deepEqual(calls,[['solid',true],['verdict',false]]);assert.equal(client.busy,false);
+ }finally{client.dispose();}
+});
+test('the worker sends the finished solid first, then the verdict without repeating the geometry; a cached design is sent whole',async()=>{
+ const messages=[];globalThis.self={postMessage:m=>messages.push(m)};
+ await import('../public/builder/geometry-worker.mjs');const {stylePreset}=await import('../public/builder/catalog.mjs');
+ await self.onmessage({data:{id:7,config:stylePreset('solitaire')}});
+ assert.equal(messages.length,2);assert.equal(messages[0].early,true);assert.ok(messages[0].packed.object);assert.equal(messages[0].packed.engineering.checking,true);
+ assert.equal(messages[1].early,undefined);assert.equal(messages[1].packed.object,null);assert.deepEqual(messages[1].packed.engineering.assemblyValidation.issues,[]);
+ messages.length=0;await self.onmessage({data:{id:8,config:stylePreset('solitaire')}});
+ assert.equal(messages.length,1);assert.ok(messages[0].packed.object);
+ delete globalThis.self;
+});
