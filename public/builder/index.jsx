@@ -619,7 +619,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
       {!['round','cushion','princess','asscher'].includes(s.shape)&&slider('stoneLength',L('Kő hossza','Stone length'),minStoneLength(s),maxStoneLength(s),.1,'mm')}
       {slider('stoneDepth',L('Kő teljes mélysége','Total stone depth'),1,maxStoneDepth(s),.1,'mm')}
       {!singleStone(s)&&!['openpair','fullcircle'].includes(s.style)&&slider('dailyCount',L('Kövek száma','Number of stones'),1,maxDailyStones(s),1,'')}
-      {s.style==='alternating'&&modernLayout(s).stones.length>1&&select('sideShape',L('Váltakozó csiszolás','Alternating cut'))}
+      {s.style==='alternating'&&modernLayout(s).stones.length>2&&select('sideShape',L('Váltakozó csiszolás','Alternating cut'))}
       {modernLayout(s).stones.length>1&&s.style!=='fullcircle'&&slider('dailySpacing',L('Kősor térköze','Stone spacing'),0,.5,.05,'mm')}
       <p className="rb-fine">{L('A méreteket a kiválasztott kövekhez lehet igazítani. A végleges követ és a foglalást az ötvös ellenőrzi.','Match these dimensions to the selected stones. The goldsmith verifies the actual stones and setting.')}</p>
     </>}
@@ -1026,7 +1026,7 @@ function RingBuilder({ lang = "hu", onQuote, onUpload }) {
                   {isDaily(s)?<>
                     {slider('dailyCarat',L('Egy gyémánt súlya','Weight per diamond'),.05,.3,.01,'ct')}
                     {slider('dailyCount',L('Gyémántok száma','Diamond count'),3,maxDailyStones(s),1,'')}
-                    {s.style==='alternating'&&modernLayout(s).stones.length>1&&select('sideShape',L('Váltakozó kőforma','Alternating cut'))}
+                    {s.style==='alternating'&&modernLayout(s).stones.length>2&&select('sideShape',L('Váltakozó kőforma','Alternating cut'))}
                     {slider('dailySpacing',L('Kövek közötti ráhagyás','Stone spacing'),0,.5,.05,'')}
                     {['chevron','ribbon','crown','contour','curvedoval','wavebezel','asymmetric'].includes(s.style)&&slider('sculpt',L('Ív mélysége','Curve depth'),.4,2.5,.1,'')}
                     <p className="rb-fine">{L('A kőszám a látványterv arányaihoz igazodik; a tényleges kőméreteket a műhely ellenőrzi.','Maximum count adapts to the preview proportions; actual stone dimensions require workshop verification.')}</p>

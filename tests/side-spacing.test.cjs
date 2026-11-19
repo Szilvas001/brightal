@@ -11,3 +11,12 @@ test('side spacing moves actual stones independently and keeps old defaults',asy
 test('server order snapshots preserve spacing; incompatible parametric CAD cannot silently drop it',async()=>{
  const {parseDesign}=require('../server/designs');const s=await parseDesign(JSON.stringify({version:3,design:{style:'solitaire',sideMode:'five',sideMainGap:.65,sideSpacing:.35}}));assert.equal(s.config.sideMainGap,.65);assert.equal(s.config.sideSpacing,.35);const text=require('../server/order-workflow').specification({design:s});assert.match(text,/0.65 mm/);assert.match(text,/0.35 mm/);await assert.rejects(require('../server/cad').parameters(s.config),/CUSTOM_SPACING/);
 });
+test('no stone disappears while the spacing sliders move, with side stones and a set band',async()=>{
+ const {initKernel}=await import('../public/builder/kernel.mjs');await initKernel();
+ const {buildRing}=await import('../public/builder/model.mjs'),{normalize}=await import('../public/builder/state.mjs'),{stylePreset}=await import('../public/builder/catalog.mjs');
+ for(const [style,extra] of [['solitaire',{sideMode:'pair',accents:'pave',shape:'oval'}],['trilogy',{accents:'channel'}],['solitaire',{sideMode:'five',accents:'pave'}],['split',{sideMode:'pair',accents:'pave'}]]){
+  const counts=[0,.2,.35,.5,.65,.8].map(sideSpacing=>{const m=buildRing(normalize({...stylePreset(style),...extra,sideSpacing}),null);let band=0,other=0;m.group.traverse(o=>{if(o.userData.gem){if(o.userData.onBand)band++;else other++;}});return [band,other];});
+  assert.ok(counts.every(([band])=>band>0),`${style}: a set band keeps its stones ${JSON.stringify(counts)}`);
+  assert.equal(new Set(counts.map(c=>c[1])).size,1,`${style}: centre and side stones stay ${JSON.stringify(counts)}`);
+ }
+});

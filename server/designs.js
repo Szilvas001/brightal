@@ -69,9 +69,25 @@ async function makePackage(request, files = []) {
   const entries = {
     'design.json': strToU8(JSON.stringify({ ...manifest, design: s }, null, 2)),
     'ring-concept.obj': strToU8(exported.obj),
-    'READ-ME.txt': strToU8('BRIGHTAL – műhely-egyeztetési csomag / workshop review package\n\nNem közvetlenül gyártható CAD vagy nyomtatási fájl. / Not production CAD or a print-ready file.\n\n' + manifest.limitations.join('\n\n')),
+    'READ-ME.txt': strToU8([
+      'BRIGHTAL – műhelycsomag / workshop package · ' + request.requestNumber,
+      '',
+      'Fájlok (minden méret milliméterben) / Files (all dimensions in millimetres):',
+      '  ring-metal-mm.stl   – a fém gyűrűtest egy zárt testként (öntéshez, nyomtatáshoz, CAD-hez) / the metal ring as one closed body',
+      '  ring-stones-mm.stl  – a kövek, a helyükön / the stones in place',
+      '  ring-concept.obj    – fém és minden kő külön, névvel ellátott objektumként / metal and every stone as separate named objects',
+      '  design.json         – a terv összes beállítása / every setting of the design',
+      '  workshop.html       – nyomtatható műhelylap / printable workshop sheet',
+      '',
+      'Megnyitható például: Rhino, MatrixGold, 3Design, ZBrush, Blender, Meshmixer, PrusaSlicer, Chitubox. Importáláskor a mértékegység: milliméter.',
+      'Opens in e.g. Rhino, MatrixGold, 3Design, ZBrush, Blender, Meshmixer, PrusaSlicer, Chitubox. Import units: millimetres.',
+      '',
+      'Ötvösi ellenőrzés szükséges / Goldsmith review required:',
+      ...manifest.limitations,
+    ].join('\n')),
   };
   if(model.engineering?.assemblyValidation?.valid) entries['ring-metal-mm.stl']=exported.stl;
+  entries['ring-stones-mm.stl']=exported.stonesStl;
   const photos = [];
   for (const [i, file] of files.entries()) {
     const ext = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' }[file.mimetype];
@@ -91,6 +107,27 @@ async function savePackage(request, files) {
   await fs.mkdir(DIRECTORY, { recursive: true, mode: 0o700 });
   await fs.writeFile(archivePath(request.id), content, { flag: 'wx', mode: 0o600 });
 }
+// The workshop package of any order that has a ring design: the customer's
+// own design from the designer, or the model the workshop made from a photo.
+// A missing archive (an older order, a photo order) is built on demand from
+// the stored design and kept, keyed by the design's checksum.
+function designOf(request) { return request.design || request.finalOffer?.photoDesign || request.photoDesign || null; }
+async function packageFor(request) {
+  const design = designOf(request);
+  if (!design?.config) throw Object.assign(new Error('NO_DESIGN'), { code: 'NO_DESIGN' });
+  if (request.design) { try { return await fs.readFile(archivePath(request.id)); } catch (e) { if (e.code !== 'ENOENT') throw e; } }
+  if (!/^[a-f0-9-]{36}$/.test(request.id) || !/^[a-f0-9]{64}$/.test(design.sha256 || '')) throw new Error('INVALID_DESIGN_ID');
+  const cached = path.join(DIRECTORY, `${request.id}-${design.sha256.slice(0, 16)}.zip`);
+  try { return await fs.readFile(cached); } catch (e) { if (e.code !== 'ENOENT') throw e; }
+  const cfg = require('./config');
+  const files = (request.images || []).filter(i => i.filename && !/[\\/]/.test(i.filename)).map(i => ({ mimetype: i.mime, path: path.join(cfg.upload.dir, i.filename) }));
+  const readable = [];
+  for (const f of files) { try { await fs.access(f.path); readable.push(f); } catch {} }
+  const content = await makePackage({ ...request, design }, readable);
+  await fs.mkdir(DIRECTORY, { recursive: true, mode: 0o700 });
+  await fs.writeFile(cached, content, { mode: 0o600 }).catch(() => {});
+  return content;
+}
 async function validateGeometry(design) {
  if(!design?.config)return;
  const {initKernel}=await import('../public/builder/kernel.mjs');await initKernel();
@@ -100,4 +137,4 @@ async function validateGeometry(design) {
  try{if(!model.engineering?.assemblyValidation?.valid)throw Error('INVALID_DESIGN_GEOMETRY');}
  finally{model.group.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}
 }
-module.exports = { parseDesign, makePackage, savePackage, archivePath, validateGeometry };
+module.exports = { parseDesign, makePackage, savePackage, archivePath, validateGeometry, designOf, packageFor };

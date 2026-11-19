@@ -260,13 +260,17 @@ router.get('/export.xls', (req, res) => {
 });
 
 /* Immutable submission package; access is protected by requireAdmin above. */
-router.get('/requests/:requestNumber/design.zip', (req, res) => {
+router.get('/requests/:requestNumber/design.zip', async (req, res) => {
   const r = db.requests.find(x => x.requestNumber === req.params.requestNumber);
-  if (!r || !r.design) return res.status(404).json({ error: 'NOT_FOUND' });
-  res.set('Cache-Control', 'private, no-store');
-  res.download(designs.archivePath(r.id), `${r.requestNumber}-workshop.zip`, err => {
-    if (err && !res.headersSent) res.status(err.code === 'ENOENT' ? 404 : 500).json({ error: err.code === 'ENOENT' ? 'NOT_FOUND' : 'SERVER_ERROR' });
-  });
+  if (!r || !designs.designOf(r)) return res.status(404).json({ error: 'NOT_FOUND' });
+  try {
+    const content = await designs.packageFor(r);
+    res.set({'Cache-Control': 'private, no-store', 'Content-Type': 'application/zip', 'Content-Disposition': `attachment; filename="${r.requestNumber}-3D-CAD.zip"`});
+    res.send(content);
+  } catch (e) {
+    console.error('[design.zip]', r.requestNumber, e.message);
+    if (!res.headersSent) res.status(e.code === 'NO_DESIGN' ? 404 : 500).json({ error: e.code === 'NO_DESIGN' ? 'NOT_FOUND' : 'SERVER_ERROR' });
+  }
 });
 
 /* ---------- ügyféllista ---------- */
